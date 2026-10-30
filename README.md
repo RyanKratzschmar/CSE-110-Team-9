@@ -16,7 +16,7 @@ npm run typecheck      # TypeScript errors across the whole project
 |---|---|---|
 | Equations | Oliver | `backend/equations/*`, `tests/equations.test.ts` |
 | Combat | David | `backend/game/Combat.ts`, `Monster.ts`, `BasicMonster.ts`, `backend/routes/combat.ts`, `frontend/src/CombatUI.ts`, `GameOverUI.ts`, `tests/combat.test.ts` |
-| Level map + player | Sally | `backend/game/Level.ts`, `LevelNode.ts`, `GameManager.ts`, `Player.ts`, `Inventory.ts`, `backend/routes/runs.ts`, `frontend/src/LevelMapUI.ts`, `tests/level.test.ts`, `tests/player.test.ts` |
+| Level map + player | Sally | `backend/game/Level.ts`, `LevelNode.ts`, `GameManager.ts`, `Player.ts`, `backend/routes/runs.ts`, `frontend/src/LevelMapUI.ts`, `tests/level.test.ts`, `tests/player.test.ts` |
 | Rest | Lianshi | `backend/game/RestStop.ts`, `backend/routes/rest.ts`, `frontend/src/RestUI.ts`, `tests/rest.test.ts` |
 | Wrong-answer popup | Arushi | `frontend/src/wrongAnswerExplanationPopUp.ts`, `tests/wrongAnswer.test.ts` |
 | Explanations | Darsh | `backend/equations/WrongAnswerExplanation.ts` + `getExplanation()` in each equation, `tests/explanations.test.ts` |
@@ -50,8 +50,7 @@ Shared: `backend/app.ts`, `backend/server.ts`, `backend/game/runStore.ts`, `Game
 | `Level.ts` | `LevelNode` | 3–4 combat stops + 1 rest stop, `currentNode()`, `completeCurrent()` |
 | `Combat.ts` | `EquationFactory` | `currentQuestion()`, `submitAnswer(answer)` → right/wrong, HPs, and win/lose/still fighting |
 | `RestStop.ts` | (nothing) | `rest(player)` → heals the player to full |
-| `Player.ts` | `Health`, `Inventory` | The player's HP and attack, plus their Inventory |
-| `Inventory.ts` | (nothing) | `addItem()`, `removeItem()`, `count()`; empty in sprint 1 |
+| `Player.ts` | `Health` | The player's HP and attack: `takeDamage()`, `healFull()`, `isDead()` |
 | `Monster.ts` | `Health` | Enemy HP and attack; `BasicMonster` extends `Monster` |
 | `EquationFactory.ts` | the 3 equation classes | `create(difficulty)` → a random equation |
 | Each equation class | `RandomEquation` | `getEquation()`, `getAnswer()`, `checkAnswer()`, `getExplanation()` |
