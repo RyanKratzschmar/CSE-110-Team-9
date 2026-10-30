@@ -54,43 +54,71 @@ describe("Health", () => {
 
 
 
-//player tests
+//Player Test
 describe("Player", () => {
   it("starts at full HP with default stats", () => {
     const player = new Player();
     expect(player.hp).toBe(100);
     expect(player.maxHp).toBe(100);
     expect(player.attack).toBe(10);
+    expect(player.defense).toBe(0.1);
     expect(player.isDead()).toBe(false);
   });
 
   it("can start with custom stats", () => {
-    const player = new Player(150, 15);
+    const player = new Player(150, 15, 0.3);
     expect(player.maxHp).toBe(150);
     expect(player.attack).toBe(15);
+    expect(player.defense).toBe(0.3);
   });
 
-  it("loses HP when taking damage", () => {
-    const player = new Player(100);
+  it("takes full damage with 0 defense", () => {
+    const player = new Player(100, 10, 0);
     player.takeDamage(30);
     expect(player.hp).toBe(70);
   });
 
+  it("defense reduces damage by its fraction", () => {
+    const player = new Player(100, 10, 0.25);
+    player.takeDamage(40);          // 40 × 0.75 = 30
+    expect(player.hp).toBe(70);
+  });
+
+  it("rounds reduced damage to a whole number", () => {
+    const player = new Player(100, 10, 0.1);
+    player.takeDamage(15);          // 15 × 0.9 = 13.5 → 14
+    expect(player.hp).toBe(86);
+  });
+
+  it("any hit still does at least 1 damage", () => {
+    const player = new Player(100, 10, 0.9);
+    player.takeDamage(1);           // 1 × 0.1 = 0.1 → still 1
+    expect(player.hp).toBe(99);
+  });
+
+  it("0 damage does nothing", () => {
+    const player = new Player(100, 10, 0);
+    player.takeDamage(0);
+    expect(player.hp).toBe(100);
+  });
+
   it("never drops below 0 HP and is dead at 0", () => {
-    const player = new Player(100);
+    const player = new Player(100, 10, 0);
     player.takeDamage(250);
     expect(player.hp).toBe(0);
     expect(player.isDead()).toBe(true);
   });
 
-  it("rejects negative damage and invalid attack", () => {
+  it("rejects negative damage and invalid stats", () => {
     expect(() => new Player().takeDamage(-5)).toThrow();
     expect(() => new Player(100, -1)).toThrow();
     expect(() => new Player(100, 2.5)).toThrow();
+    expect(() => new Player(100, 10, -0.1)).toThrow();
+    expect(() => new Player(100, 10, 1)).toThrow();
   });
 
   it("heals back to max HP", () => {
-    const player = new Player(100);
+    const player = new Player(100, 10, 0);
     player.takeDamage(60);
     player.healFull();
     expect(player.hp).toBe(100);

@@ -1,7 +1,7 @@
 // Health: current and max HP with updateHealth(); never drops below 0. Used by Player and Monster.
 
 export class Health {
-  private readonly maxHealth: number;
+  private maxHealth: number;
   private current: number;
 
   constructor(maxHealth: number) {
