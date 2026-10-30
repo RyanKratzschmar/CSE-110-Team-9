@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { Health } from "../backend/game/Health";
+import { Player } from "../backend/game/Player";
 
 //Health Test
 describe("Health", () => {
@@ -48,5 +49,50 @@ describe("Health", () => {
     expect(() => new Health(0)).toThrow();
     expect(() => new Health(-10)).toThrow();
     expect(() => new Health(12.5)).toThrow();
+  });
+});
+
+
+
+//player tests
+describe("Player", () => {
+  it("starts at full HP with default stats", () => {
+    const player = new Player();
+    expect(player.hp).toBe(100);
+    expect(player.maxHp).toBe(100);
+    expect(player.attack).toBe(10);
+    expect(player.isDead()).toBe(false);
+  });
+
+  it("can start with custom stats", () => {
+    const player = new Player(150, 15);
+    expect(player.maxHp).toBe(150);
+    expect(player.attack).toBe(15);
+  });
+
+  it("loses HP when taking damage", () => {
+    const player = new Player(100);
+    player.takeDamage(30);
+    expect(player.hp).toBe(70);
+  });
+
+  it("never drops below 0 HP and is dead at 0", () => {
+    const player = new Player(100);
+    player.takeDamage(250);
+    expect(player.hp).toBe(0);
+    expect(player.isDead()).toBe(true);
+  });
+
+  it("rejects negative damage and invalid attack", () => {
+    expect(() => new Player().takeDamage(-5)).toThrow();
+    expect(() => new Player(100, -1)).toThrow();
+    expect(() => new Player(100, 2.5)).toThrow();
+  });
+
+  it("heals back to max HP", () => {
+    const player = new Player(100);
+    player.takeDamage(60);
+    player.healFull();
+    expect(player.hp).toBe(100);
   });
 });
