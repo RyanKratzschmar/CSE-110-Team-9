@@ -24,6 +24,18 @@ npm run typecheck      # TypeScript errors across the whole project
 
 Shared: `backend/app.ts`, `backend/server.ts`, `backend/game/runStore.ts`, `GameState.ts`, `Health.ts`, `frontend/src/api.ts`, `tests/routes.test.ts`.
 
+## Git workflow
+
+1. **`main` always works.** Nobody pushes to it directly; everything goes through a pull request.
+2. **One branch per user story or task**, made from the latest `main`:
+   `git checkout main` → `git pull` → `git checkout -b feature-level-map`
+3. **Keep branches small and short:** a few days at most. Split big stories, for example:
+   - `feature-player-and-game-state` (the shared code, merged first)
+   - `feature-level-map` (level logic and routes)
+   - `feature-level-map-ui` (the map screen)
+4. **Open a PR and get one teammate to review** before merging. This also gives you evidence for the course of reviewing each other's work.
+5. **After merging, delete the branch** (GitHub offers a button), and everyone runs `git pull` on `main`.
+6. **Pull `main` into your branch often** if it lives more than a day or two, so conflicts stay small.
 
 ### Backend: who uses whom
 
