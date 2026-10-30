@@ -1,1 +1,1 @@
-// Player: the player's Health and attack stats; owns an Inventory. (Sally)
+// Player: the player's Health and attack stats. (Sally)
