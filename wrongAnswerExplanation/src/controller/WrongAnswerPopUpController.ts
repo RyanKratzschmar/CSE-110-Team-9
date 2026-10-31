@@ -1,7 +1,9 @@
 import type Konva from 'konva';
 import { WrongAnswerPopUpModel } from '../model/WrongAnswerPopUpModel';
 import { WrongAnswerPopUpView } from '../view/WrongAnswerPopUpView';
-import { LongDivisionExplanation, LongMultiplicationExplanation, type WrongAnswerExplainer } from '../wrongAnswerExplanationPopUp';
+import type { WrongAnswerExplainer } from '../wrongAnswerExplanationPopUp';
+import { LongDivisionExplanation } from '../LongDivisionExplanation';
+import { LongMultiplicationExplanation } from '../LongMultiplicationExplanation';
 
 const LINE_SCROLL = 60;
 
@@ -58,7 +60,7 @@ export class WrongAnswerPopUpController {
         }
 
         const max = this.view.getMaxScroll();
-        const page = this.view.getViewPortHeight() * 0.9;
+        const page = this.view.getViewportHeight() * 0.9;
 
         switch (event.key) {
             case 'ArrowDown':
