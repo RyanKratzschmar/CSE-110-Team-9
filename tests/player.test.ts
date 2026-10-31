@@ -1,1 +1,146 @@
 // Tests Health and Player: starting HP, taking damage never below 0, and healing to full. (Sally)
+
+import { describe, expect, it } from "vitest";
+import { Health } from "../backend/game/Health";
+import { Player } from "../backend/game/Player";
+
+//Health Test
+describe("Health", () => {
+  it("starts at max HP", () => {
+    const health = new Health(100);
+    expect(health.value).toBe(100);
+    expect(health.max).toBe(100);
+  });
+
+  it("goes down when damaged", () => {
+    const health = new Health(100);
+    health.updateHealth(-30);
+    expect(health.value).toBe(70);
+  });
+
+  it("never drops below 0", () => {
+    const health = new Health(100);
+    health.updateHealth(-500);
+    expect(health.value).toBe(0);
+    expect(health.isZero()).toBe(true);
+  });
+
+  it("never heals above max", () => {
+    const health = new Health(100);
+    health.updateHealth(-20);
+    health.updateHealth(50);
+    expect(health.value).toBe(100);
+  });
+
+  it("healFull restores max HP", () => {
+    const health = new Health(100);
+    health.updateHealth(-80);
+    health.healFull();
+    expect(health.value).toBe(100);
+  });
+
+  it("isZero is false while HP is above 0", () => {
+    const health = new Health(100);
+    health.updateHealth(-99);
+    expect(health.isZero()).toBe(false);
+  });
+
+  it("rejects a max that isn't a positive whole number", () => {
+    expect(() => new Health(0)).toThrow();
+    expect(() => new Health(-10)).toThrow();
+    expect(() => new Health(12.5)).toThrow();
+  });
+
+    it("rejects NaN and Infinity, and leaves HP unchanged", () => {
+    const health = new Health(100);
+    health.updateHealth(-20);
+    expect(() => health.updateHealth(NaN)).toThrow();
+    expect(() => health.updateHealth(Infinity)).toThrow();
+    expect(() => health.updateHealth(-Infinity)).toThrow();
+    expect(health.value).toBe(80);
+  });
+
+});
+
+
+
+//Player Test
+describe("Player", () => {
+  it("starts at full HP with default stats", () => {
+    const player = new Player();
+    expect(player.hp).toBe(100);
+    expect(player.maxHp).toBe(100);
+    expect(player.attack).toBe(10);
+    expect(player.defense).toBe(0.1);
+    expect(player.isDead()).toBe(false);
+  });
+
+  it("can start with custom stats", () => {
+    const player = new Player(150, 15, 0.3);
+    expect(player.maxHp).toBe(150);
+    expect(player.attack).toBe(15);
+    expect(player.defense).toBe(0.3);
+  });
+
+  it("takes full damage with 0 defense", () => {
+    const player = new Player(100, 10, 0);
+    player.takeDamage(30);
+    expect(player.hp).toBe(70);
+  });
+
+  it("defense reduces damage by its fraction", () => {
+    const player = new Player(100, 10, 0.25);
+    player.takeDamage(40);          // 40 × 0.75 = 30
+    expect(player.hp).toBe(70);
+  });
+
+  it("rounds reduced damage to a whole number", () => {
+    const player = new Player(100, 10, 0.1);
+    player.takeDamage(15);          // 15 × 0.9 = 13.5 → 14
+    expect(player.hp).toBe(86);
+  });
+
+  it("any hit still does at least 1 damage", () => {
+    const player = new Player(100, 10, 0.9);
+    player.takeDamage(1);           // 1 × 0.1 = 0.1 → still 1
+    expect(player.hp).toBe(99);
+  });
+
+  it("0 damage does nothing", () => {
+    const player = new Player(100, 10, 0);
+    player.takeDamage(0);
+    expect(player.hp).toBe(100);
+  });
+
+  it("never drops below 0 HP and is dead at 0", () => {
+    const player = new Player(100, 10, 0);
+    player.takeDamage(250);
+    expect(player.hp).toBe(0);
+    expect(player.isDead()).toBe(true);
+  });
+
+    it("rejects negative, NaN, or infinite damage and invalid stats", () => {
+    expect(() => new Player().takeDamage(-5)).toThrow();
+    expect(() => new Player().takeDamage(NaN)).toThrow();
+    expect(() => new Player().takeDamage(Infinity)).toThrow();
+    expect(() => new Player(100, -1)).toThrow();
+    expect(() => new Player(100, 2.5)).toThrow();
+    expect(() => new Player(100, 10, -0.1)).toThrow();
+    expect(() => new Player(100, 10, 1)).toThrow();
+  });
+
+  it("can still die after rejected NaN damage", () => {
+    const player = new Player(100, 10, 0);
+    expect(() => player.takeDamage(NaN)).toThrow();
+    player.takeDamage(100);
+    expect(player.hp).toBe(0);
+    expect(player.isDead()).toBe(true);
+  });
+
+  it("heals back to max HP", () => {
+    const player = new Player(100, 10, 0);
+    player.takeDamage(60);
+    player.healFull();
+    expect(player.hp).toBe(100);
+  });
+});
