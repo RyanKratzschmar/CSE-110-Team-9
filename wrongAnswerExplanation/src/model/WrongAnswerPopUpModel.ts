@@ -29,19 +29,19 @@ export class WrongAnswerPopUpModel {
 
   close(): void {
     if (!this.state.isOpen) {
-        return;
+      return;
     }
     this.setState({ isOpen: false });
   }
 
   scrollTo(y: number, maxScroll: number): void {
     if (!this.state.isOpen) {
-        return;
+      return;
     }
     const clamped = Math.max(0, Math.min(Math.max(0, maxScroll), y));
     if (clamped !== this.state.scrollY) {
-        this.setState({ scrollY: clamped })
-    };
+      this.setState({ scrollY: clamped });
+    }
   }
 
   scrollBy(dy: number, maxScroll: number): void {
@@ -51,7 +51,7 @@ export class WrongAnswerPopUpModel {
   private setState(patch: Partial<WrongAnswerPopUpState>): void {
     this.state = { ...this.state, ...patch };
     for (const listener of this.listeners) {
-        listener(this.state)
-    };
+      listener(this.state);
+    }
   }
 }
