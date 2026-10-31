@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { FIGHTS_PER_LEVEL, Level } from "../backend/game/Level";
 import { LevelNode } from "../backend/game/LevelNode";
 
+import { finishCombat, finishRest, GameFlowError, requireCurrentStop } from "../backend/game/GameManager";
+import { GameState } from "../backend/game/GameState";
+
 //LevelNode Test
 describe("LevelNode", () => {
   it("keeps its type and difficulty", () => {
@@ -27,6 +30,9 @@ describe("LevelNode", () => {
     expect(() => new LevelNode("combat", NaN)).toThrow();
   });
 });
+
+
+
 
 //Level Test
 describe("Level", () => {
@@ -67,5 +73,88 @@ describe("Level", () => {
     expect(() => new Level(0)).toThrow();
     expect(() => new Level(1.5)).toThrow();
     expect(() => new Level(NaN)).toThrow();
+  });
+});
+
+
+
+// wins every fight in the current level so the rest stop is next
+function winAllFights(state: GameState): void {
+  for (let i = 0; i < FIGHTS_PER_LEVEL; i++) finishCombat(state, "win");
+}
+
+//GameState Test
+describe("GameState", () => {
+  it("starts at level 1, first stop, full HP, not over", () => {
+    const json = new GameState().toJSON();
+    expect(json.level).toBe(1);
+    expect(json.currentIndex).toBe(0);
+    expect(json.player.hp).toBe(json.player.maxHp);
+    expect(json.gameOver).toBe(false);
+    expect(json.nodes).toEqual([
+      { type: "combat", cleared: false },
+      { type: "combat", cleared: false },
+      { type: "combat", cleared: false },
+      { type: "rest", cleared: false },
+    ]);
+  });
+
+  it("includes the player's attack and defense", () => {
+    const json = new GameState().toJSON();
+    expect(json.player.attack).toBe(10);
+    expect(json.player.defense).toBe(0.1);
+  });
+});
+
+//GameManager Test
+describe("GameManager", () => {
+  it("moves to the next stop after a combat win", () => {
+    const state = new GameState();
+    finishCombat(state, "win");
+    expect(state.level.currentIndex).toBe(1);
+    expect(state.level.nodes[0].cleared).toBe(true);
+    expect(state.gameOver).toBe(false);
+  });
+
+  it("ends the game after a combat loss", () => {
+    const state = new GameState();
+    finishCombat(state, "lose");
+    expect(state.gameOver).toBe(true);
+    expect(state.level.currentIndex).toBe(0);
+  });
+
+  it("refuses any action once the game is over", () => {
+    const state = new GameState();
+    finishCombat(state, "lose");
+    expect(() => finishCombat(state, "win")).toThrow(GameFlowError);
+    expect(() => finishRest(state)).toThrow(GameFlowError);
+  });
+
+  it("won't let the player rest before all fights are won", () => {
+    const state = new GameState();
+    finishCombat(state, "win");
+    expect(() => finishRest(state)).toThrow(GameFlowError);
+  });
+
+  it("won't treat the rest stop as a fight", () => {
+    const state = new GameState();
+    winAllFights(state);
+    expect(() => finishCombat(state, "win")).toThrow(GameFlowError);
+  });
+
+  it("starts a harder level after resting", () => {
+    const state = new GameState();
+    winAllFights(state);
+    finishRest(state);
+    expect(state.level.number).toBe(2);
+    expect(state.level.currentIndex).toBe(0);
+    expect(state.level.nodes.every((node) => node.difficulty === 2)).toBe(true);
+  });
+
+  it("requireCurrentStop returns the current stop when it matches", () => {
+    const state = new GameState();
+    const node = requireCurrentStop(state, "combat");
+    expect(node).toBe(state.level.nodes[0]);
+    expect(node.difficulty).toBe(1);
   });
 });
