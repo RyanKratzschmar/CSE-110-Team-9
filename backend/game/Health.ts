@@ -22,6 +22,9 @@ export class Health {
 
   // Health always stays between 0 and max
   updateHealth(change: number): void {
+    if (!Number.isFinite(change)) {
+      throw new Error("Health change must be a finite number");
+    }
     this.current = Math.min(this.maxHealth, Math.max(0, this.current + change));
   }
 

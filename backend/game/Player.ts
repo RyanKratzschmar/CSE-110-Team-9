@@ -36,7 +36,9 @@ export class Player {
 
   // amount is the attacker's raw damage; defense reduces it, but any hit does at least 1
   takeDamage(amount: number): void {
-    if (amount < 0) throw new Error("Damage can't be negative");
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error("Damage must be a finite, non-negative number");
+    }
     if (amount === 0) return;
     const reduced = Math.max(1, Math.round(amount * (1 - this.defenseRate)));
     this.health.updateHealth(-reduced);

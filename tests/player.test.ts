@@ -50,6 +50,16 @@ describe("Health", () => {
     expect(() => new Health(-10)).toThrow();
     expect(() => new Health(12.5)).toThrow();
   });
+
+    it("rejects NaN and Infinity, and leaves HP unchanged", () => {
+    const health = new Health(100);
+    health.updateHealth(-20);
+    expect(() => health.updateHealth(NaN)).toThrow();
+    expect(() => health.updateHealth(Infinity)).toThrow();
+    expect(() => health.updateHealth(-Infinity)).toThrow();
+    expect(health.value).toBe(80);
+  });
+
 });
 
 
@@ -109,12 +119,22 @@ describe("Player", () => {
     expect(player.isDead()).toBe(true);
   });
 
-  it("rejects negative damage and invalid stats", () => {
+    it("rejects negative, NaN, or infinite damage and invalid stats", () => {
     expect(() => new Player().takeDamage(-5)).toThrow();
+    expect(() => new Player().takeDamage(NaN)).toThrow();
+    expect(() => new Player().takeDamage(Infinity)).toThrow();
     expect(() => new Player(100, -1)).toThrow();
     expect(() => new Player(100, 2.5)).toThrow();
     expect(() => new Player(100, 10, -0.1)).toThrow();
     expect(() => new Player(100, 10, 1)).toThrow();
+  });
+
+  it("can still die after rejected NaN damage", () => {
+    const player = new Player(100, 10, 0);
+    expect(() => player.takeDamage(NaN)).toThrow();
+    player.takeDamage(100);
+    expect(player.hp).toBe(0);
+    expect(player.isDead()).toBe(true);
   });
 
   it("heals back to max HP", () => {
