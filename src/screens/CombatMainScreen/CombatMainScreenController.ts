@@ -1,3 +1,4 @@
+import type { WrongAnswerPopUpController } from "../../../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController.ts";
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { CombatMainScreenView } from "./CombatMainScreenView.ts";
@@ -10,15 +11,22 @@ export class CombatMainScreenController extends ScreenController {
     
     private clickSound: HTMLAudioElement;
 
-    constructor(screenSwitcher: ScreenSwitcher) {
+    private explanationPopUp: WrongAnswerPopUpController;
+
+    constructor(screenSwitcher: ScreenSwitcher, explanationPopUp: WrongAnswerPopUpController) {
         super();
         this.screenSwitcher = screenSwitcher;
+        this.explanationPopUp = explanationPopUp;
 
         this.model = new CombatMainScreenModel();
         this.view = new CombatMainScreenView(
             () => this.handleHintClick(),
             () => this.handleHintXClick(),
+<<<<<<< HEAD
             () => this.handleAttackClick(),
+=======
+            () => this.handleExplanationClick()
+>>>>>>> 744f1b5 (Adding Explanation Button)
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -69,8 +77,17 @@ export class CombatMainScreenController extends ScreenController {
         this.view.hideHint();
     }
 
+<<<<<<< HEAD
     endFight(win: boolean): void {
         this.view.endGameText(win);
+=======
+    handleExplanationClick(): void{
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.explanationPopUp.showLongMultiplicationExplanation(123, 45);
+
+>>>>>>> 744f1b5 (Adding Explanation Button)
     }
 
     startGame(): void {
