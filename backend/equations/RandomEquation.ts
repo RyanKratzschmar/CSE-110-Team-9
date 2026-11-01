@@ -84,14 +84,23 @@ export abstract class RandomEquation {
         // Increases that number to be from startRange to endRange (exclusive)
         random = random + startRange;
 
-        // Rounds the number to the given decimal place (only if that parameter is included, assume never negative)
+        // Adds necessary decimal values to number by multiplying in, truncating, and then dividing
         if (decimalDigits === undefined) {
-            random = Number(random.toFixed());
+            random = Math.trunc(random);
         } else {
             if (decimalDigits < 0) {
                 // Check weird edge case that should not happen
                 throw new Error("Called generateNumber with a negative amount of decimals. Bad.")
             }
+            // Factor should be 10^decimalDigits
+            let factor = Math.pow(10, decimalDigits);
+            // Multiply number by factor to get extra decimal digits
+            random = random * factor;
+            // Truncate all unwanted decimal digits
+            random = Math.trunc(random);
+            // Divide number by factor to get the decimal digits in the decimal place
+            random = random / factor;
+            // Round number to desired decimal places to eliminate chance for floating point errors
             random = Number(random.toFixed(decimalDigits));
         }
         
