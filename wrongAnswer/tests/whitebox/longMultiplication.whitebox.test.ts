@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
 import { rowText } from '../helpers';
 
 describe('LongMultiplicationExplanation steps (white box)', () => {

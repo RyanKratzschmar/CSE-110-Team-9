@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { WrongAnswerPopUpModel } from '../../src/model/WrongAnswerPopUpModel';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
+import { WrongAnswerPopUpModel } from '../../../backend/equations/wrongAnswerExplanation/src/model/WrongAnswerPopUpModel';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
 
 const solution = new LongMultiplicationExplanation(123, 45).explain();
 

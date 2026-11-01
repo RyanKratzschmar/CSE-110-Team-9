@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { LongDivisionExplanation } from '../../src/LongDivisionExplanation';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
+import { LongDivisionExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongDivisionExplanation';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
 
 describe('LongMultiplicationExplanation (black box)', () => {
     it.each([

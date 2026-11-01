@@ -1,6 +1,6 @@
 import type Konva from 'konva';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { WrongAnswerPopUpController } from '../../src/controller/WrongAnswerPopUpController';
+import { WrongAnswerPopUpController } from '../../../backend/equations/wrongAnswerExplanation/src/controller/WrongAnswerPopUpController';
 import { createStage, destroyStage, pressKey } from '../helpers';
 
 describe('WrongAnswerPopUpController (black box)', () => {

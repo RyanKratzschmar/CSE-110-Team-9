@@ -1,7 +1,8 @@
-import { assertWholeNumber, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanationPopUp';
+import { assertWholeNumber, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
 
 //Long Division
 
+//One round of long division: bring down a digit, divide, multiply and subtract
 interface DivisionStage {
     readonly digitIndex: number;
     readonly partial: number;
@@ -11,6 +12,7 @@ interface DivisionStage {
     readonly remainder: number;
 }
 
+//Explains an exact long division problem step by step
 export class LongDivisionExplanation extends WorkedSolutionBase {
     readonly operation = 'long-division' as const;
     readonly operatorSymbol = '÷' as const;
@@ -23,6 +25,7 @@ export class LongDivisionExplanation extends WorkedSolutionBase {
     private readonly startIndex: number;
     private readonly stages: readonly DivisionStage[];
 
+    //Checks the inputs (whole numbers, divisor above 0, no remainder) and works out every stage
     constructor(dividend: number, divisor: number) {
         super();
         assertWholeNumber(dividend, 'dividend');
@@ -45,6 +48,7 @@ export class LongDivisionExplanation extends WorkedSolutionBase {
         this.stages = this.computeStages();
     }
 
+    //Finds the index of the first dividend digit where the leading digits are at least the divisor
     private findStartIndex(): number {
         let prefix = 0;
         for (let i = 0; i < this.dividendDigits.length; i++) {
@@ -56,6 +60,7 @@ export class LongDivisionExplanation extends WorkedSolutionBase {
         return this.dividendDigits.length - 1;
     }
 
+    //Works through the dividend from left to right, recording each round of the division
     private computeStages(): DivisionStage[] {
         const ds = this.dividendDigits;
         const stages: DivisionStage[] = [];
@@ -78,10 +83,12 @@ export class LongDivisionExplanation extends WorkedSolutionBase {
         return stages;
     }
 
+    //Returns the place value power (0 = ones) of the quotient digit above the given dividend digit
     private quotientPlace(digitIndex: number): number {
         return this.dividendDigits.length - 1 - digitIndex;
     }
 
+    //Writes the set-up step, one step per stage, and a final check-by-multiplying step
     protected buildSteps(): ExplanationStep[] {
         const d = this.divisor;
         const ds = this.dividendDigits;
@@ -128,6 +135,7 @@ export class LongDivisionExplanation extends WorkedSolutionBase {
         return steps;
     }
 
+    //Lays out the divisor, bracket, dividend, quotient, products and remainders on the grid
     protected buildLayout(): WorkLayout {
         const g = new GridBuilder();
         const dText = String(this.divisor);

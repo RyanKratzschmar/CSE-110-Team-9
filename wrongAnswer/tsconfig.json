@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": ["src", "tests", "vitest.config.ts"]
+  "include": ["../backend/equations/wrongAnswerExplanation/src", "tests", "../vitest.config.ts", "../frontend/src/wrongAnswerExplanationPopUp/view", "../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation.ts", "../backend/equations/wrongAnswerExplanation/main.ts
 }

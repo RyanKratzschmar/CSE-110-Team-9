@@ -1,7 +1,8 @@
-import { assertWholeNumber, capitalize, digitsLeastFirst, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanationPopUp';
+import { assertWholeNumber, capitalize, digitsLeastFirst, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
 
 //Long Multiplication
 
+//One row of the work: the multiplicand times a single digit of the multiplier
 interface PartialProduct {
     readonly place: number;
     readonly digit: number;
@@ -11,11 +12,13 @@ interface PartialProduct {
     readonly details: readonly string[];
 }
 
+//The column-by-column addition of the partial products
 interface AdditionWork {
     readonly details: readonly string[];
     readonly carries: readonly { col: number; carry: number }[];
 }
 
+//Explains a long multiplication problem step by step
 export class LongMultiplicationExplanation extends WorkedSolutionBase {
     readonly operation = 'long-multiplication' as const;
     readonly operatorSymbol = '×' as const;
@@ -28,6 +31,7 @@ export class LongMultiplicationExplanation extends WorkedSolutionBase {
     private readonly partials: readonly PartialProduct[];
     private readonly addition: AdditionWork;
 
+    //Checks the inputs are whole numbers with an exact product, then works out the partial products and the addition
     constructor(multiplicand: number, multiplier: number) {
         super();
         assertWholeNumber(multiplicand, 'multiplicand');
@@ -45,6 +49,7 @@ export class LongMultiplicationExplanation extends WorkedSolutionBase {
         this.addition = this.partials.length > 1 ? this.computeAddition() : { details: [], carries: [] }; //Only needed when there is more than one row to add
     }
 
+    //Multiplies the multiplicand by one digit of the multiplier, recording the carries and explanation lines
     private computePartial(digit: number, place: number): PartialProduct {
         const top = this.multiplicandDigits;
         const carries: number[] = [];
@@ -83,6 +88,7 @@ export class LongMultiplicationExplanation extends WorkedSolutionBase {
         return { place, digit, value, shiftedText, carries, details };
     }
 
+    //Adds the partial products column by column, recording the carries and explanation lines
     private computeAddition(): AdditionWork {
         const texts = this.partials.map((p) => p.shiftedText);
         const width = Math.max(...texts.map((t) => t.length));
@@ -113,10 +119,12 @@ export class LongMultiplicationExplanation extends WorkedSolutionBase {
         return { details, carries };
     }
 
+    //The step number of the final "add the partial products" step
     private get additionStepIndex(): number {
         return this.partials.length + 1;
     }
 
+    //Writes the set-up step, one step per partial product, and an addition step when there is more than one row
     protected buildSteps(): ExplanationStep[] {
         const a = this.multiplicand;
         const b = this.multiplier;
@@ -142,6 +150,7 @@ export class LongMultiplicationExplanation extends WorkedSolutionBase {
         return steps;
     }
 
+    //Lays out the two numbers, the partial products, the carries and the final answer on the grid
     protected buildLayout(): WorkLayout {
         const g = new GridBuilder();
         const aText = String(this.multiplicand);

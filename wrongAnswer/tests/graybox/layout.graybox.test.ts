@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { LongDivisionExplanation } from '../../src/LongDivisionExplanation';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
-import { isCellVisible, type WorkedSolution } from '../../src/wrongAnswerExplanationPopUp';
+import { LongDivisionExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongDivisionExplanation';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
+import { isCellVisible, type WorkedSolution } from '../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 import { rowText } from '../helpers';
 
 const multiplications: [number, number][] = [];

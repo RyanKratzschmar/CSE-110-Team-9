@@ -1,13 +1,15 @@
 import Konva from 'konva';
 import type { WrongAnswerPopUpState } from '../model/WrongAnswerPopUpModel';
-import { isCellVisible, type ExplanationStep, type WorkCell, type WorkLayout, type WorkedSolution } from '../wrongAnswerExplanationPopUp';
+import { isCellVisible, type ExplanationStep, type WorkCell, type WorkLayout, type WorkedSolution } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
+//Callbacks the view uses to report scrolling and closing back to the controller
 export interface WrongAnswerPopUpViewHandlers {
     onScrollBy(dy: number): void;
     onScrollTo(y: number): void;
     onClose(): void;
 }
 
+//A rectangle's position and size
 interface Box {
     x: number;
     y: number;
@@ -17,6 +19,7 @@ interface Box {
 
 type Slot = Omit<Box, 'height'>;
 
+//Everything kept from the last build so the view can scroll without redrawing
 interface Built {
     solution: WorkedSolution;
     stageWidth: number;
@@ -36,27 +39,14 @@ const PANEL_MARGIN = 16;
 const SCROLLBAR_GUTTER = 16;
 const STEP_GAP = 18;
 
-const COLORS = {
-    overlay: 'rgba(15, 23, 42, 0.55)',
-    panel: '#ffffff',
-    ink: '#1e293b',
-    muted: '#64748b',
-    divider: '#e2e8f0',
-    paper: '#f8fafc',
-    paperBorder: '#e2e8f0',
-    current: '#2563eb',
-    currentBg: '#dbeafe',
-    carry: '#ea580c',
-    placeholder: '#94a3b8',
-    closeBg: '#e2e8f0',
-    track: '#f1f5f9',
-    thumb: '#cbd5e1',
-} as const;
+const COLORS = { overlay: 'rgba(15, 23, 42, 0.55)', panel: '#ffffff', ink: '#1e293b', muted: '#64748b', divider: '#e2e8f0', paper: '#f8fafc', paperBorder: '#e2e8f0', current: '#2563eb', currentBg: '#dbeafe', carry: '#ea580c', placeholder: '#94a3b8', closeBg: '#e2e8f0', track: '#f1f5f9', thumb: '#cbd5e1'} as const;
 
+//Picks a panel width or height that fills the available space (minus margins) but stays between preferredMin and max
 function panelSize(available: number, preferredMin: number, max: number): number {
     return Math.min(max, Math.max(available - PANEL_MARGIN * 2, Math.min(preferredMin, available)));
 }
 
+//Draws the wrong-answer pop-up on its own Konva layer
 export class WrongAnswerPopUpView {
     private readonly stage: Konva.Stage;
     private readonly layer: Konva.Layer;
@@ -64,16 +54,19 @@ export class WrongAnswerPopUpView {
     private lastState: WrongAnswerPopUpState | null = null;
     private built: Built | null = null;
 
+    //Adds a hidden layer for the pop-up to the stage
     constructor(stage: Konva.Stage) {
         this.stage = stage;
         this.layer = new Konva.Layer({ visible: false });
         stage.add(this.layer);
     }
 
+    //Sets the callbacks used to report scrolling and closing
     setHandlers(handlers: WrongAnswerPopUpViewHandlers): void {
         this.handlers = handlers;
     }
 
+    //Shows, hides or scrolls the pop-up to match the state, rebuilding only when the solution or stage size changed
     render(state: WrongAnswerPopUpState): void {
         this.lastState = state;
         const solution = state.solution;
@@ -100,14 +93,17 @@ export class WrongAnswerPopUpView {
         this.layer.batchDraw();
     }
 
+    //Returns how far the content can scroll (0 when it all fits)
     getMaxScroll(): number {
         return this.built ? Math.max(0, this.built.contentHeight - this.built.viewportHeight) : 0;
     }
 
+    //Returns the height of the visible scroll area
     getViewportHeight(): number {
         return this.built?.viewportHeight ?? 0;
     }
 
+    //Forces a full rebuild from the last state (used after a resize)
     refresh(): void {
         this.built = null;
         if (this.lastState) {
@@ -115,6 +111,7 @@ export class WrongAnswerPopUpView {
         }
     }
 
+    //Removes the pop-up layer and clears all saved state
     destroy(): void {
         this.setCursor('default');
         this.layer.destroy();
@@ -123,6 +120,7 @@ export class WrongAnswerPopUpView {
         this.built = null;
     }
 
+    //Draws the overlay, panel, header, close button, every step and the scrollbar for a solution
     private build(solution: WorkedSolution): void {
         this.layer.destroyChildren();
         this.layer.visible(true);
@@ -229,6 +227,7 @@ export class WrongAnswerPopUpView {
         };
     }
 
+    //Draws the scrollbar track and a draggable thumb, and returns the thumb
     private drawScrollbar(panel: Konva.Group, trackX: number, trackY: number, trackHeight: number, visibleRatio: number): Konva.Rect {
         const thumbHeight = Math.min(trackHeight, Math.max(40, trackHeight * visibleRatio));
         const travel = trackHeight - thumbHeight;
@@ -275,6 +274,7 @@ export class WrongAnswerPopUpView {
         return thumb;
     }
 
+    //Moves the content and the scrollbar thumb to the given scroll position
     private applyScroll(scrollY: number): void {
         const b = this.built;
 
@@ -292,6 +292,7 @@ export class WrongAnswerPopUpView {
         }
     }
 
+    //Turns mouse wheel and touch drags on the panel into scroll requests
     private bindScrollInput(target: Konva.Group, thumb: Konva.Rect | null): void {
         target.on('wheel', (event) => {
             const wheel = event.evt as WheelEvent;
@@ -321,6 +322,7 @@ export class WrongAnswerPopUpView {
         });
     }
 
+    //Draws one step (worked grid plus text) side by side or stacked depending on the width, and returns its height
     private drawStep(parent: Konva.Group, layout: WorkLayout, step: ExplanationStep, index: number, top: number, width: number): number {
         const sideBySide = width >= 560;
         const workWidth = sideBySide ? Math.min(300, Math.round(width * 0.42)) : width;
@@ -335,6 +337,7 @@ export class WrongAnswerPopUpView {
         return sideBySide ? Math.max(workHeight, textHeight) : workHeight + 12 + textHeight;
     }
 
+    //Draws the written work grid as it looks at the given step, and returns its height
     private drawWork(parent: Konva.Group, layout: WorkLayout, stepIndex: number, slot: Slot): number {
         const visibleCells = layout.cells.filter((c) => isCellVisible(c, stepIndex));
         const visibleLines = layout.lines.filter((l) => l.step <= stepIndex);
@@ -424,6 +427,7 @@ export class WrongAnswerPopUpView {
         return height;
     }
 
+    //Picks a cell's text color: orange for carries, grey for placeholders, blue for new digits, dark otherwise
     private cellColor(cell: WorkCell, isNewDigit: boolean): string {
         if (cell.kind === 'carry') {
             return COLORS.carry;
@@ -434,6 +438,7 @@ export class WrongAnswerPopUpView {
         return isNewDigit ? COLORS.current : COLORS.ink;
     }
 
+    //Draws the step label, title, description and bullet details, and returns their height
     private drawStepText(parent: Konva.Group, step: ExplanationStep, index: number, slot: Slot): number {
         const compact = slot.width < 420;
         let y = slot.y;
@@ -500,6 +505,7 @@ export class WrongAnswerPopUpView {
         return y - slot.y;
     }
 
+    //Draws the round ✕ button that closes the pop-up
     private drawCloseButton(parent: Konva.Group, x: number, y: number): void {
         const size = 32;
         const button = new Konva.Group({ x, y });
@@ -525,6 +531,7 @@ export class WrongAnswerPopUpView {
         parent.add(button);
     }
 
+    //Sets the mouse cursor shown over the stage
     private setCursor(cursor: string): void {
         this.stage.container().style.cursor = cursor;
     }

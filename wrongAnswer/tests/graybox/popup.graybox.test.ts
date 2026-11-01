@@ -1,8 +1,8 @@
 import Konva from 'konva';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { WrongAnswerPopUpController } from '../../src/controller/WrongAnswerPopUpController';
-import { LongDivisionExplanation } from '../../src/LongDivisionExplanation';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
+import { WrongAnswerPopUpController } from '../../../backend/equations/wrongAnswerExplanation/src/controller/WrongAnswerPopUpController';
+import { LongDivisionExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongDivisionExplanation';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
 import { closeButton, contentGroup, createStage, destroyStage, overlayRect, panelGroup, popupLayer, pressKey, stepLabels } from '../helpers';
 
 describe('pop-up controller, model and view together (gray box)', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LongDivisionExplanation } from '../../src/LongDivisionExplanation';
+import { LongDivisionExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongDivisionExplanation';
 import { rowText } from '../helpers';
 
 describe('LongDivisionExplanation steps (white box)', () => {

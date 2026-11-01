@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { WrongAnswerPopUpModel } from '../../src/model/WrongAnswerPopUpModel';
-import { LongDivisionExplanation } from '../../src/LongDivisionExplanation';
+import { WrongAnswerPopUpModel } from '../../../backend/equations/wrongAnswerExplanation/src/model/WrongAnswerPopUpModel';
+import { LongDivisionExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongDivisionExplanation';
 
 const solution = new LongDivisionExplanation(156, 12).explain();
 

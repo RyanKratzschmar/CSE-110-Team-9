@@ -100,16 +100,19 @@ export class GridBuilder {
     private maxRow = -1;
     private maxCol = -1;
 
+    //Grows the grid size so it covers the given row and column
     private track(row: number, col: number): void {
         this.maxRow = Math.max(this.maxRow, row);
         this.maxCol = Math.max(this.maxCol, col);
     }
 
+    //Adds one cell to the grid (transient defaults to false)
     cell(cell: CellInput): void {
         this.cells.push({ ...cell, transient: cell.transient ?? false });
         this.track(cell.row, cell.col);
     }
 
+    //Writes the text one character per cell, ending at rightCol, and returns the leftmost column used
     rightAligned(row: number, rightCol: number, text: string, kind: CellKind, step: number): number {
         const left = rightCol - text.length + 1;
         for (let i = 0; i < text.length; i++) {
@@ -118,11 +121,13 @@ export class GridBuilder {
         return left;
     }
 
+    //Adds a horizontal line to the grid (fromOffset defaults to 0)
     line(line: LineInput): void {
         this.lines.push({ ...line, fromOffset: line.fromOffset ?? 0 });
         this.track(line.row, line.toCol);
     }
 
+    //Returns the finished layout, at least minColumns wide
     build(minColumns = 0): WorkLayout {
         return {rows: this.maxRow + 1, columns: Math.max(this.maxCol + 1, minColumns), cells: this.cells, lines: this.lines };
     }
@@ -137,6 +142,7 @@ export abstract class WorkedSolutionBase implements WrongAnswerExplainer {
 
     private cached: WorkedSolution | null = null;
 
+    //Builds the worked solution the first time, then returns the cached copy on later calls
     explain(): WorkedSolution {
         if (this.cached) {
             return this.cached;
@@ -146,6 +152,8 @@ export abstract class WorkedSolutionBase implements WrongAnswerExplainer {
         return this.cached;
     }
 
+    //Each subclass writes the text for its own steps
     protected abstract buildSteps(): ExplanationStep[];
+    //Each subclass lays out its own written work on the grid
     protected abstract buildLayout(): WorkLayout;
 }

@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import { isCellVisible, type CellKind, type WorkLayout } from '../src/wrongAnswerExplanationPopUp';
+import { isCellVisible, type CellKind, type WorkLayout } from '../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
 export function createStage(width = 800, height = 600): Konva.Stage {
     const container = document.createElement('div');

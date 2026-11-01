@@ -1,9 +1,9 @@
 import Konva from 'konva';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { WrongAnswerPopUpView, type WrongAnswerPopUpViewHandlers } from '../../src/view/WrongAnswerPopUpView';
-import type { WrongAnswerPopUpState } from '../../src/model/WrongAnswerPopUpModel';
-import { LongMultiplicationExplanation } from '../../src/LongMultiplicationExplanation';
-import type { WorkedSolution } from '../../src/wrongAnswerExplanationPopUp';
+import { WrongAnswerPopUpView, type WrongAnswerPopUpViewHandlers } from '../../../frontend/src/wrongAnswerExplanationPopUp/view/WrongAnswerPopUpView';
+import type { WrongAnswerPopUpState } from '../../../backend/equations/wrongAnswerExplanation/src/model/WrongAnswerPopUpModel';
+import { LongMultiplicationExplanation } from '../../../backend/equations/wrongAnswerExplanation/src/LongMultiplicationExplanation';
+import type { WorkedSolution } from '../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 import { closeButton, contentGroup, createStage, destroyStage, overlayRect, panelGroup, popupLayer, scrollThumb } from '../helpers';
 
 const shortSolution = new LongMultiplicationExplanation(12, 3).explain();

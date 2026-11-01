@@ -11,7 +11,7 @@ import {
     type ExplanationStep,
     type WorkCell,
     type WorkLayout,
-} from '../../src/wrongAnswerExplanationPopUp';
+} from '../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
 function cell(step: number, transient: boolean): WorkCell {
     return { row: 0, col: 0, text: '1', kind: 'carry', step, transient };
