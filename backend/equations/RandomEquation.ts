@@ -20,7 +20,14 @@ export abstract class RandomEquation {
             // This should be pretty difficult to break, assume user best judgement (this case mainly used only for testing)
             this.print = String(print);
             this.answer = Number(answer);
-            this.equation = Array<any>(equation);
+
+            // Prevent double stacking arrays
+            if (Array.isArray(equation)) {
+                this.equation = (equation);
+            } else {
+                this.equation = Array<any>(equation);
+            }
+            
         }
         // ELSE IMPLEMENTED IN THE CONCRETE IMPLEMENTATIONS
     }
@@ -47,6 +54,12 @@ export abstract class RandomEquation {
 
     // Returns whether a given number is equivalent to the answer to the equation
     checkAnswer(submission: number): boolean {
+        // Ensures that submission is not NaN
+        if (Number.isNaN(submission)) {
+            return false;
+        }
+
+        // Checks if submitted number is a number
         if (submission == this.answer) {
             return true;
         } else {
@@ -62,13 +75,13 @@ export abstract class RandomEquation {
             throw new Error("Called generateNumber with the startRange being at or larger than the endRange. Bad.")
         }
 
-        // Gets a random number from 0 to 1
+        // Gets a random number from 0 to 1 (exclusive)
         let random = Math.random();
 
-        // Scales that number to be from 0 to (endRange-startRange)
+        // Scales that number to be from 0 to (endRange-startRange) (exclusive)
         random = random * (endRange - startRange);
 
-        // Increases that number to be from startRange to endRange
+        // Increases that number to be from startRange to endRange (exclusive)
         random = random + startRange;
 
         // Rounds the number to the given decimal place (only if that parameter is included, assume never negative)

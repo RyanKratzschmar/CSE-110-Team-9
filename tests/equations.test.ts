@@ -13,13 +13,13 @@ describe("Multiplication", () => {
         const equation = [37, "*", 15];
         const multiplication = new MultiplicationEquation(true, print, answer, equation);
         // Print
-        expect(multiplication.getEquation()).toBe(print);
+        expect(multiplication.getPrint()).toBe(print);
         // Type
         expect(multiplication.getType()).toBe("Multiplication");
         // Answer
         expect(multiplication.getAnswer()).toBe(answer);
         // Equation
-        expect(multiplication.getEquation).toBe(equation);
+        expect(multiplication.getEquation()).toBe(equation);
     });
 
     // Test random equation
@@ -43,13 +43,13 @@ describe("Division", () => {
         const equation = [600, "/", 15];
         const division = new DivisionEquation(true, print, answer, equation);
         // Print
-        expect(division.getEquation()).toBe(print);
+        expect(division.getPrint()).toBe(print);
         // Type
         expect(division.getType()).toBe("Division");
         // Answer
         expect(division.getAnswer()).toBe(answer);
         // Equation
-        expect(division.getEquation).toBe(equation);
+        expect(division.getEquation()).toBe(equation);
     });
 
     // Test random equation

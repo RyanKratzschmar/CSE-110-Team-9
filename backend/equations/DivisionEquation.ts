@@ -28,7 +28,7 @@ export class DivisionEquation extends RandomEquation{
             this.equation = [product, "/", factorTwo];
 
             // Print holds the string version of the equation
-            this.print = String(factorOne) + " / " + String(factorTwo) + " = ";
+            this.print = String(product) + " / " + String(factorTwo) + " = ";
         }
     }
 
