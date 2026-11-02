@@ -2,11 +2,8 @@ import {
     assertWholeNumber,
     BaseHint,
     digitsLeastFirst,
-    GridBuilder,
-    placeName,
     plural,
     type HintStep,
-    type WorkLayout,
 } from './hint';
 
 export class LongMultiplicationHint extends BaseHint {
@@ -115,34 +112,5 @@ export class LongMultiplicationHint extends BaseHint {
         }
 
         return steps;
-    }
-
-    protected buildLayout(): WorkLayout {
-        const g = new GridBuilder();
-        const aText = String(this.multiplicand);
-        const bText = String(this.multiplier);
-        const R = Math.max(aText.length, bText.length, 4);
-
-        // Row 1: multiplicand
-        g.rightAligned(1, R, aText, 'digit', 1);
-
-        // Row 2: multiplier with '×' symbol and underline
-        g.rightAligned(2, R, bText, 'digit', 1);
-        g.cell({ row: 2, col: R - Math.max(aText.length, bText.length), text: '×', kind: 'symbol', step: 1 });
-        g.line({ row: 2, fromCol: 0, toCol: R, edge: 'bottom', step: 1 });
-
-        // Row 3: first partial product hint
-        // Show where the ones digit result goes (placeholder question mark or starter)
-        g.cell({ row: 3, col: R, text: '?', kind: 'hint-highlight', step: 2 });
-
-        // If multi-digit multiplier, show second row with placeholder 0 and '+' symbol
-        if (this.multiplierDigits.length > 1) {
-            g.cell({ row: 4, col: R, text: '0', kind: 'placeholder', step: 3 });
-            g.cell({ row: 4, col: R - 1, text: '?', kind: 'hint-highlight', step: 3 });
-            g.cell({ row: 4, col: R - Math.max(aText.length, bText.length), text: '+', kind: 'symbol', step: 3 });
-            g.line({ row: 4, fromCol: 0, toCol: R, edge: 'bottom', step: 4 });
-        }
-
-        return g.build(R + 1);
     }
 }

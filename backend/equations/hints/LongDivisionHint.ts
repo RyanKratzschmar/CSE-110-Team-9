@@ -1,9 +1,7 @@
 import {
     assertWholeNumber,
     BaseHint,
-    GridBuilder,
     type HintStep,
-    type WorkLayout,
 } from './hint';
 
 export class LongDivisionHint extends BaseHint {
@@ -133,42 +131,4 @@ export class LongDivisionHint extends BaseHint {
 
         return steps;
     }
-
-    protected buildLayout(): WorkLayout {
-        const g = new GridBuilder();
-        const dText = String(this.divisor);
-        const nText = String(this.dividend);
-        const bracketCol = dText.length;
-        const firstDividendCol = bracketCol + 1;
-        const lastCol = firstDividendCol + nText.length - 1;
-
-        // Divisor outside
-        g.rightAligned(1, bracketCol - 1, dText, 'digit', 1);
-
-        // Right bracket ')'
-        g.cell({ row: 1, col: bracketCol, text: ')', kind: 'bracket', step: 1 });
-
-        // Dividend inside
-        g.rightAligned(1, lastCol, nText, 'digit', 1);
-
-        // Horizontal line over dividend
-        g.line({ row: 1, fromCol: bracketCol, toCol: lastCol, edge: 'top', step: 1, fromOffset: 0.55 });
-
-        // Step 2: Show question mark above the starting quotient digit column
-        const activeCol = firstDividendCol + this.startIndex;
-        g.cell({ row: 0, col: activeCol, text: '?', kind: 'hint-highlight', step: 2 });
-
-        // Step 3: Starter subtraction line under first partial
-        const firstPrefix = Number(this.dividendDigits.slice(0, this.startIndex + 1).join(''));
-        const estimate = Math.floor(firstPrefix / this.divisor);
-        if (estimate > 0) {
-            const product = estimate * this.divisor;
-            const left = g.rightAligned(2, activeCol, String(product), 'digit', 3);
-            g.cell({ row: 2, col: left - 1, text: '−', kind: 'symbol', step: 3 });
-            g.line({ row: 2, fromCol: left - 1, toCol: activeCol, edge: 'bottom', step: 3 });
-        }
-
-        return g.build(lastCol + 1);
-    }
 }
-

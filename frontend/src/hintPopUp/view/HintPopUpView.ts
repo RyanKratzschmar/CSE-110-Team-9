@@ -1,13 +1,6 @@
 import Konva from 'konva';
 import type { HintPopUpState } from '../model/HintPopUpModel';
-import {
-    isCellVisible,
-    type HintData,
-    type HintStep,
-    type WorkCell,
-    type WorkLine,
-    type WorkLayout,
-} from '../../../../backend/equations/hints/hint';
+import type { HintData, HintStep } from '../../../../backend/equations/hints/hint';
 
 export interface HintPopUpViewHandlers {
     onScrollBy(dy: number): void;
@@ -22,8 +15,6 @@ interface Box {
     height: number;
 }
 
-type Slot = Omit<Box, 'height'>;
-
 interface Built {
     hint: HintData;
     stageWidth: number;
@@ -37,11 +28,10 @@ interface Built {
 }
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
-const PAD = 20;
+const PAD = 24;
 const PANEL_MARGIN = 16;
-const SCROLLBAR_GUTTER = 16;
-const STEP_GAP = 20;
+const SCROLLBAR_GUTTER = 18;
+const STEP_GAP = 22;
 
 const COLORS = {
     overlay: 'rgba(15, 23, 42, 0.60)',
@@ -49,13 +39,8 @@ const COLORS = {
     ink: '#1e293b',
     muted: '#64748b',
     divider: '#e2e8f0',
-    paper: '#f8fafc',
-    paperBorder: '#cbd5e1',
     accent: '#0284c7',
     accentBg: '#e0f2fe',
-    highlightText: '#2563eb',
-    placeholder: '#94a3b8',
-    carry: '#ea580c',
     tipBg: '#fffbeb',
     tipBorder: '#fef08a',
     tipText: '#854d0e',
@@ -70,6 +55,9 @@ function panelSize(available: number, preferredMin: number, max: number): number
     return Math.min(max, Math.max(available - PANEL_MARGIN * 2, Math.min(preferredMin, available)));
 }
 
+/**
+ * Renders the hints popup using text-only guidance, cards, and callout tips.
+ */
 export class HintPopUpView {
     private readonly stage: Konva.Stage;
     private readonly layer: Konva.Layer;
@@ -149,7 +137,7 @@ export class HintPopUpView {
         const sw = this.stage.width();
         const sh = this.stage.height();
 
-        // Semi-transparent background overlay
+        // Dark dim overlay
         const overlay = new Konva.Rect({
             x: 0,
             y: 0,
@@ -160,9 +148,9 @@ export class HintPopUpView {
         overlay.on('click tap', () => this.handlers?.onClose());
         this.layer.add(overlay);
 
-        // Modal Panel
-        const pw = panelSize(sw, 320, 900);
-        const ph = panelSize(sh, 380, 780);
+        // Center card modal panel
+        const pw = panelSize(sw, 320, 800);
+        const ph = panelSize(sh, 360, 720);
         const panel = new Konva.Group({
             x: Math.round((sw - pw) / 2),
             y: Math.round((sh - ph) / 2),
@@ -176,13 +164,13 @@ export class HintPopUpView {
                 fill: COLORS.panel,
                 cornerRadius: 16,
                 shadowColor: '#000',
-                shadowBlur: 30,
-                shadowOpacity: 0.25,
+                shadowBlur: 28,
+                shadowOpacity: 0.22,
                 shadowOffsetY: 10,
             }),
         );
 
-        // Header
+        // Header Title
         const title = new Konva.Text({
             x: PAD,
             y: PAD,
@@ -193,6 +181,7 @@ export class HintPopUpView {
             fontStyle: 'bold',
             fill: COLORS.ink,
         });
+
         const subtitle = new Konva.Text({
             x: PAD,
             y: title.y() + title.height() + 4,
@@ -213,12 +202,12 @@ export class HintPopUpView {
             }),
         );
 
-        // Viewport & Content Container
+        // Viewport Group (clipping bounds)
         const viewport: Box = {
             x: PAD,
             y: headerBottom + 1,
             width: pw - PAD * 2,
-            height: ph - headerBottom - 1 - 8,
+            height: ph - headerBottom - 1 - 10,
         };
 
         const viewportGroup = new Konva.Group({
@@ -228,6 +217,7 @@ export class HintPopUpView {
         });
         panel.add(viewportGroup);
 
+        // Content
         const content = new Konva.Group();
         viewportGroup.add(content);
         const contentWidth = viewport.width - SCROLLBAR_GUTTER;
@@ -244,11 +234,11 @@ export class HintPopUpView {
                 );
                 y += STEP_GAP;
             }
-            y += this.drawStep(content, hint.layout, step, i, y, contentWidth) + STEP_GAP;
+            y += this.drawStepText(content, step, i, y, contentWidth) + STEP_GAP;
         });
         const contentHeight = y;
 
-        // Custom Scrollbar
+        // Scrollbar
         let thumb: Konva.Rect | null = null;
         const trackY = viewport.y + 6;
         const trackHeight = viewport.height - 12;
@@ -370,192 +360,55 @@ export class HintPopUpView {
         });
     }
 
-    private drawStep(
+    /**
+     * Draws a single text-based hint step card across the full available content width.
+     */
+    private drawStepText(
         parent: Konva.Group,
-        layout: WorkLayout,
         step: HintStep,
         index: number,
         top: number,
         width: number,
     ): number {
-        const sideBySide = width >= 560;
-        const workWidth = sideBySide ? Math.min(300, Math.round(width * 0.40)) : width;
+        let y = top;
 
-        const workHeight = this.drawWork(parent, layout, index + 1, {
+        // Badge: e.g. "HINT 1"
+        const badge = new Konva.Text({
             x: 0,
-            y: top,
-            width: workWidth,
-        });
-
-        const textSlot: Slot = sideBySide
-            ? { x: workWidth + 20, y: top, width: width - workWidth - 20 }
-            : { x: 0, y: top + workHeight + 14, width };
-
-        const textHeight = this.drawStepText(parent, step, index, textSlot);
-
-        return sideBySide ? Math.max(workHeight, textHeight) : workHeight + 14 + textHeight;
-    }
-
-    private drawWork(
-        parent: Konva.Group,
-        layout: WorkLayout,
-        stepNumber: number,
-        slot: Slot,
-    ): number {
-        const visibleCells = layout.cells.filter((c: WorkCell) => isCellVisible(c, stepNumber));
-        const visibleLines = layout.lines.filter((l: WorkLine) => l.step <= stepNumber);
-
-        const rows =
-            Math.max(
-                0,
-                ...visibleCells.map((c: WorkCell) => c.row),
-                ...visibleLines.map((l: WorkLine) => l.row),
-            ) + 1;
-
-        const inset = 12;
-        const cellW = Math.min(34, Math.max(0, slot.width - inset * 2) / Math.max(1, layout.columns));
-        const cellH = cellW * 1.15;
-        const height = rows * cellH + inset * 2;
-
-        parent.add(
-            new Konva.Rect({
-                x: slot.x,
-                y: slot.y,
-                width: slot.width,
-                height,
-                fill: COLORS.paper,
-                stroke: COLORS.paperBorder,
-                strokeWidth: 1,
-                cornerRadius: 12,
-            }),
-        );
-
-        const gx = slot.x + (slot.width - cellW * layout.columns) / 2;
-        const gy = slot.y + inset;
-
-        for (const cell of visibleCells) {
-            const x = gx + cell.col * cellW;
-            const y = gy + cell.row * cellH;
-
-            if (cell.kind === 'bracket') {
-                parent.add(
-                    new Konva.Line({
-                        points: [
-                            x + cellW * 0.55,
-                            y,
-                            x + cellW * 0.82,
-                            y + cellH / 2,
-                            x + cellW * 0.55,
-                            y + cellH,
-                        ],
-                        tension: 0.5,
-                        stroke: COLORS.ink,
-                        strokeWidth: Math.max(1.5, cellW * 0.07),
-                        lineCap: 'round',
-                    }),
-                );
-                continue;
-            }
-
-            const isCarry = cell.kind === 'carry';
-            const isHighlight = cell.kind === 'hint-highlight';
-
-            if (isHighlight) {
-                parent.add(
-                    new Konva.Rect({
-                        x: x + 1,
-                        y: y + 1,
-                        width: cellW - 2,
-                        height: cellH - 2,
-                        fill: COLORS.accentBg,
-                        stroke: COLORS.accent,
-                        strokeWidth: 1,
-                        cornerRadius: 4,
-                    }),
-                );
-            }
-
-            parent.add(
-                new Konva.Text({
-                    x,
-                    y,
-                    width: cellW,
-                    height: cellH,
-                    align: 'center',
-                    verticalAlign: isCarry ? 'bottom' : 'middle',
-                    text: cell.text,
-                    fontFamily: MONO,
-                    fontSize: isCarry ? cellW * 0.45 : cellW * 0.64,
-                    fontStyle: isHighlight ? 'bold' : 'normal',
-                    fill: isHighlight ? COLORS.highlightText : isCarry ? COLORS.carry : cell.kind === 'placeholder' ? COLORS.placeholder : COLORS.ink,
-                }),
-            );
-        }
-
-        for (const line of visibleLines) {
-            const y = gy + (line.row + (line.edge === 'bottom' ? 1 : 0)) * cellH;
-            const fromX = gx + (line.fromCol + line.fromOffset) * cellW;
-            const toX = gx + (line.toCol + 1) * cellW;
-            parent.add(
-                new Konva.Line({
-                    points: [fromX, y, toX, y],
-                    stroke: COLORS.ink,
-                    strokeWidth: Math.max(1.5, cellW * 0.06),
-                    lineCap: 'round',
-                }),
-            );
-        }
-
-        return height;
-    }
-
-    private drawStepText(
-        parent: Konva.Group,
-        step: HintStep,
-        index: number,
-        slot: Slot,
-    ): number {
-        const compact = slot.width < 420;
-        let y = slot.y;
-
-        // Badge
-        const badgeText = `HINT ${index + 1}`;
-        const label = new Konva.Text({
-            x: slot.x,
             y,
-            text: badgeText,
+            text: `HINT ${index + 1}`,
             fontFamily: FONT,
             fontSize: 12,
             fontStyle: 'bold',
             letterSpacing: 1,
             fill: COLORS.accent,
         });
-        parent.add(label);
-        y += label.height() + 6;
+        parent.add(badge);
+        y += badge.height() + 6;
 
         // Step Title
         const title = new Konva.Text({
-            x: slot.x,
+            x: 0,
             y,
-            width: slot.width,
+            width,
             text: step.title,
             fontFamily: FONT,
-            fontSize: compact ? 16 : 18,
+            fontSize: 18,
             fontStyle: 'bold',
             fill: COLORS.ink,
         });
         parent.add(title);
-        y += title.height() + 6;
+        y += title.height() + 8;
 
         // Step Description
         const description = new Konva.Text({
-            x: slot.x,
+            x: 0,
             y,
-            width: slot.width,
+            width,
             text: step.description,
             fontFamily: FONT,
-            fontSize: compact ? 13 : 15,
-            lineHeight: 1.4,
+            fontSize: 15,
+            lineHeight: 1.45,
             fill: COLORS.ink,
         });
         parent.add(description);
@@ -563,56 +416,57 @@ export class HintPopUpView {
 
         // Bullet Details
         if (step.details.length > 0) {
-            y += 8;
+            y += 10;
         }
         for (const detail of step.details) {
-            parent.add(
-                new Konva.Text({
-                    x: slot.x,
-                    y,
-                    text: '•',
-                    fontFamily: FONT,
-                    fontSize: 14,
-                    lineHeight: 1.35,
-                    fill: COLORS.accent,
-                }),
-            );
-            const text = new Konva.Text({
-                x: slot.x + 14,
+            const bullet = new Konva.Text({
+                x: 0,
                 y,
-                width: slot.width - 14,
+                text: '•',
+                fontFamily: FONT,
+                fontSize: 15,
+                lineHeight: 1.4,
+                fill: COLORS.accent,
+            });
+            parent.add(bullet);
+
+            const detailText = new Konva.Text({
+                x: 16,
+                y,
+                width: width - 16,
                 text: detail,
                 fontFamily: FONT,
-                fontSize: compact ? 12 : 13.5,
-                lineHeight: 1.35,
+                fontSize: 14,
+                lineHeight: 1.4,
                 fill: COLORS.ink,
             });
-            parent.add(text);
-            y += text.height() + 5;
+            parent.add(detailText);
+            y += detailText.height() + 6;
         }
 
-        // Tip Box
+        // Tip Box Callout
         if (step.tip) {
-            y += 6;
-            const tipInset = 10;
-            const tipTextWidth = slot.width - tipInset * 2;
+            y += 8;
+            const tipInset = 12;
+            const tipTextWidth = width - tipInset * 2;
+
             const tipText = new Konva.Text({
-                x: slot.x + tipInset,
+                x: tipInset,
                 y: y + tipInset,
                 width: tipTextWidth,
                 text: `💡 Tip: ${step.tip}`,
                 fontFamily: FONT,
-                fontSize: compact ? 12 : 13,
+                fontSize: 13.5,
                 fontStyle: 'italic',
-                lineHeight: 1.35,
+                lineHeight: 1.4,
                 fill: COLORS.tipText,
             });
 
             const tipBoxHeight = tipText.height() + tipInset * 2;
             const tipBox = new Konva.Rect({
-                x: slot.x,
+                x: 0,
                 y,
-                width: slot.width,
+                width,
                 height: tipBoxHeight,
                 fill: COLORS.tipBg,
                 stroke: COLORS.tipBorder,
@@ -625,7 +479,7 @@ export class HintPopUpView {
             y += tipBoxHeight;
         }
 
-        return y - slot.y;
+        return y - top;
     }
 
     private drawCloseButton(parent: Konva.Group, x: number, y: number): void {
