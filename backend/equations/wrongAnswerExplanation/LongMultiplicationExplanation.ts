@@ -1,4 +1,5 @@
-import { assertWholeNumber, capitalize, digitsLeastFirst, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
+import { assertWholeNumber, capitalize, digitsLeastFirst, placeName, plural } from '../equationUtils';
+import { GridBuilder, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
 
 //Long Multiplication
 

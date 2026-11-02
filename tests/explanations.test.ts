@@ -10,9 +10,8 @@ import { WrongAnswerPopUpModel, type WrongAnswerPopUpState } from '../frontend/s
 import { WrongAnswerPopUpView, type WrongAnswerPopUpViewHandlers } from '../frontend/src/wrongAnswerExplanationPopUp/view/WrongAnswerPopUpView';
 import { LongDivisionExplanation } from '../backend/equations/wrongAnswerExplanation/LongDivisionExplanation';
 import { LongMultiplicationExplanation } from '../backend/equations/wrongAnswerExplanation/LongMultiplicationExplanation';
-import { assertWholeNumber, capitalize, digitsLeastFirst, GridBuilder, isCellVisible, placeName, plural, WorkedSolutionBase, type CellKind, type ExplanationStep, type WorkCell, type WorkedSolution, type WorkLayout } from '../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
-
-//Black Box Tests
+import { assertWholeNumber, capitalize, digitsLeastFirst, placeName, plural } from '../backend/equations/equationUtils';
+import { GridBuilder, isCellVisible, WorkedSolutionBase, type CellKind, type ExplanationStep, type WorkCell, type WorkedSolution, type WorkLayout } from '../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
 //Controller Tests
 
@@ -257,8 +256,6 @@ describe('WrongAnswerPopUpModel (black box)', () => {
     });
 });
 
-//Gray Box Tests
-
 //Layout Tests
 
 const multiplications: [number, number][] = [];
@@ -489,8 +486,6 @@ describe('pop-up controller, model and view together (gray box)', () => {
         expect(stage.getLayers()).toHaveLength(0);
     });
 });
-
-//White Box Tests
 
 //Long Division Tests
 

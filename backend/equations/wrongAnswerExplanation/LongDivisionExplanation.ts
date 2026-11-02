@@ -1,4 +1,5 @@
-import { assertWholeNumber, GridBuilder, placeName, plural, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
+import { assertWholeNumber, placeName, plural } from '../equationUtils';
+import { GridBuilder, WorkedSolutionBase, type ExplanationStep, type WorkLayout } from './wrongAnswerExplanation';
 
 //Long Division
 

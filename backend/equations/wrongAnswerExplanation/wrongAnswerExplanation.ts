@@ -1,4 +1,4 @@
-export type OperationKind = 'long-multiplication' | 'long-division'; //Describes the kind of operation we are working with
+import type { OperationKind } from '../equationUtils';
 
 export type CellKind = 'digit' | 'placeholder' | 'carry' | 'symbol' | 'bracket'; //Describes the type of cell that we are dealing with to differentiate the view styles
 
@@ -53,38 +53,9 @@ export interface WrongAnswerExplainer {
     explain(): WorkedSolution;
 }
 
-const PLACE_NAMES = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands', 'hundred-thousands', 'millions', 'ten-millions', 'hundred-millions', 'billions', 'ten-billions', 'hundred-billions', 'trillions', 'ten-trillions', 'hundred-trillions', 'quadrillions'];
-
-//Function to get the place value name
-export function placeName(power: number): string {
-    return PLACE_NAMES[power] ?? `10^${power}`;
-}
-
 //Function to check a cell's visibility at a given step
 export function isCellVisible(cell: WorkCell, step: number): boolean {
     return cell.transient ? cell.step === step : cell.step <= step; //If the cell is transient, it should only be displayed for its own step. If not, it should be displayed from its own step onwards.
-}
-
-//Function to capitalize the first letter of a string
-export function capitalize(text: string): string {
-    return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-//Function to return the count with the word, pluralized if needed (1 time, 2 times)
-export function plural(count: number, word: string): string {
-    return `${count} ${word}${count === 1 ? '' : 's'}`;
-}
-
-//Function that throws an error if a number is not a whole number
-export function assertWholeNumber(value: number, name: string): void {
-    if ((!Number.isSafeInteger(value)) || (value < 0)) {
-        throw new RangeError(`${name} must be a whole number (0 or more), got ${value}.`);
-    }
-}
-
-//Function to split a number into its digits, ones digit first
-export function digitsLeastFirst(n: number): number[] {
-    return String(n).split('').reverse().map(Number);
 }
 
 //Defines a WorkCell where transient is optional (defaults to false)
