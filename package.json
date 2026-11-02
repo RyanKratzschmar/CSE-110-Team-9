@@ -2,6 +2,7 @@
   "name": "my-konva-app",
   "private": true,
   "type": "module",
+  "description": "Turn-based dungeon math RPG for 5th graders",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
