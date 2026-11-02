@@ -1,10 +1,9 @@
 // Combat: one fight: gets questions, damages the enemy on right answers and the player on wrong ones, detects win/loss. (David)
 
-import { Health } from "./Health";
 import {Player} from "./Player";
 import {Monster} from "./Monster";
 
-class Combat {
+export class Combat {
 
     private player: Player;
     private enemy: Monster;
@@ -16,48 +15,57 @@ class Combat {
         this.enemy = enemy;
         this.gameStatus = "active";
         this.questionResolved = false;
+
+        this.checkBattleStatus();
     }
 
     // this boolean check prevents things like double clicking submit when answering a question and causing double damage 
     setQuestionResolvedToFalse() {
-        this.questionResolved = false;
+        if (this.gameStatus === "active") {
+            this.questionResolved = false;
+        }
     }
 
-    getGameStatus(): string {
+    getGameStatus(): "active" | "won" | "lost" {
         return this.gameStatus;
     }
 
-    resolveAsnwer(isCorrect: boolean) {
+    getPlayerHp(): number {
+        return this.player.hp;
+    }
+
+    getEnemyHp(): number {
+        return this.enemy.hp;
+    }
+
+    resolveAnswer(isCorrect: boolean) {
         // call Oliver's math-specific checking
-        
+       
+        //Ignore repeated submissions or answers after combat ends.
+        if (this.gameStatus !== "active" || this.questionResolved) {
+            return;
+        }
         // if answer is valid
         this.questionResolved = true;
 
         // damage the monster
         if(isCorrect) {
-
+            this.enemy.takeDamage(this.player.attack);
         }
         else { // damage the player
-
+            this.player.takeDamage(this.enemy.attack);
         }
 
-        //check health
-        if (this.enemy.hp <= 0) {
-            this.gameWon();
+        this.checkBattleStatus();
+    }
+    
+
+    private checkBattleStatus(): void {
+        if (this.player.isDead()) {
+            this.gameStatus = "lost";
+        } else if (this.enemy.hp <= 0) {
+            this.gameStatus = "won";
         }
-    }
-
-    gameWon() { 
-        this.gameStatus = "won";
-        // TODO: logic connected to the frontend to display winning screen
-    }
-
-    applyDamage() {
-
-    }
-
-    checkBattleStatus() {
-
     }
 
 }
