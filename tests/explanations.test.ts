@@ -15,7 +15,7 @@ import { GridBuilder, isCellVisible, WorkedSolutionBase, type CellKind, type Exp
 
 //Controller Tests
 
-describe('WrongAnswerPopUpController (black box)', () => {
+describe('WrongAnswerPopUpController', () => {
     let stage: Konva.Stage;
     let controller: WrongAnswerPopUpController;
 
@@ -87,7 +87,7 @@ describe('WrongAnswerPopUpController (black box)', () => {
 
 //Explainers Tests
 
-describe('LongMultiplicationExplanation (black box)', () => {
+describe('LongMultiplicationExplanation', () => {
     it.each([[123, 45, 5535], [12, 3, 36], [0, 987, 0], [987, 0, 0], [1, 1, 1], [99, 99, 9801], [12, 102, 1224], [987654, 123456, 121931812224]])('%i × %i = %i', (a, b, expected) => {
         const solution = new LongMultiplicationExplanation(a, b).explain();
         expect(solution.answer).toBe(expected);
@@ -134,7 +134,7 @@ describe('LongMultiplicationExplanation (black box)', () => {
     });
 });
 
-describe('LongDivisionExplanation (black box)', () => {
+describe('LongDivisionExplanation', () => {
     it.each([[156, 12, 13], [408, 4, 102], [0, 5, 0], [81, 9, 9], [7, 7, 1], [7, 1, 7], [1000, 8, 125], [123456, 3, 41152]])('%i ÷ %i = %i', (dividend, divisor, expected) => {
         expect(new LongDivisionExplanation(dividend, divisor).explain().answer).toBe(expected);
     });
@@ -186,7 +186,7 @@ describe('LongDivisionExplanation (black box)', () => {
 
 const multiplicationSolution = new LongMultiplicationExplanation(123, 45).explain();
 
-describe('WrongAnswerPopUpModel (black box)', () => {
+describe('WrongAnswerPopUpModel', () => {
     it('starts closed with no solution and no scroll', () => {
         expect(new WrongAnswerPopUpModel().getState()).toEqual({ isOpen: false, solution: null, scrollY: 0 });
     });
@@ -274,7 +274,7 @@ for (let divisor = 1; divisor <= 25; divisor += 3) {
 
 const solutions: [string, WorkedSolution][] = [...multiplications.map(([a, b]): [string, WorkedSolution] => [`${a} × ${b}`, new LongMultiplicationExplanation(a, b).explain()]), ...divisions.map(([n, d]): [string, WorkedSolution] => [`${n} ÷ ${d}`, new LongDivisionExplanation(n, d).explain()])];
 
-describe('layout invariants for every explanation (gray box)', () => {
+describe('layout invariants for every explanation', () => {
     it.each(solutions)('%s keeps every cell and line inside the grid', (_, { layout }) => {
         for (const cell of layout.cells) {
             expect(cell.row).toBeGreaterThanOrEqual(0);
@@ -318,7 +318,7 @@ describe('layout invariants for every explanation (gray box)', () => {
     });
 });
 
-describe('long multiplication rows (gray box)', () => {
+describe('long multiplication rows', () => {
     it.each(multiplications)('%i × %i writes each partial product and the answer', (a, b) => {
         const { layout, steps, answer } = new LongMultiplicationExplanation(a, b).explain();
         const multiplierDigits = String(b).split('').reverse().map(Number);
@@ -342,7 +342,7 @@ describe('long multiplication rows (gray box)', () => {
     });
 });
 
-describe('long division rows (gray box)', () => {
+describe('long division rows', () => {
     it.each(divisions)('%i ÷ %i writes the quotient above the dividend', (dividend, divisor) => {
         const { layout, steps, answer } = new LongDivisionExplanation(dividend, divisor).explain();
         expect(rowText(layout, steps.length - 1, 0)).toBe(String(answer));
@@ -364,7 +364,7 @@ describe('long division rows (gray box)', () => {
 
 //Popup Tests
 
-describe('pop-up controller, model and view together (gray box)', () => {
+describe('pop-up controller, model and view together', () => {
     let stage: Konva.Stage;
     let controller: WrongAnswerPopUpController;
 
@@ -489,7 +489,7 @@ describe('pop-up controller, model and view together (gray box)', () => {
 
 //Long Division Tests
 
-describe('LongDivisionExplanation steps (white box)', () => {
+describe('LongDivisionExplanation steps', () => {
     it('starts with more than one digit when the divisor does not go into the first digit', () => {
         expect(new LongDivisionExplanation(156, 12).explain().steps[0].details).toEqual([
             '12 is the divisor (outside the bracket); 156 is the dividend (inside).',
@@ -539,7 +539,7 @@ describe('LongDivisionExplanation steps (white box)', () => {
     });
 });
 
-describe('LongDivisionExplanation layout (white box)', () => {
+describe('LongDivisionExplanation layout', () => {
     const { layout } = new LongDivisionExplanation(156, 12).explain();
     const at = (row: number, col: number) => layout.cells.filter((c) => c.row === row && c.col === col);
 
@@ -585,7 +585,7 @@ describe('LongDivisionExplanation layout (white box)', () => {
 
 //Long Multiplication Tests
 
-describe('LongMultiplicationExplanation steps (white box)', () => {
+describe('LongMultiplicationExplanation steps', () => {
     const { steps } = new LongMultiplicationExplanation(123, 45).explain();
 
     it('explains multi-digit multipliers in the set-up step', () => {
@@ -644,7 +644,7 @@ describe('LongMultiplicationExplanation steps (white box)', () => {
     });
 });
 
-describe('LongMultiplicationExplanation layout (white box)', () => {
+describe('LongMultiplicationExplanation layout', () => {
     const { layout } = new LongMultiplicationExplanation(123, 45).explain();
     const at = (row: number, col: number) => layout.cells.filter((c) => c.row === row && c.col === col);
 
@@ -693,7 +693,7 @@ function openModel(): WrongAnswerPopUpModel {
     return model;
 }
 
-describe('WrongAnswerPopUpModel (white box)', () => {
+describe('WrongAnswerPopUpModel', () => {
     it('does not notify when closing an already closed pop-up', () => {
         const model = new WrongAnswerPopUpModel();
         const listener = vi.fn();
@@ -946,7 +946,7 @@ afterEach(() => {
     }
 });
 
-describe('WrongAnswerPopUpView construction and closed rendering (white box)', () => {
+describe('WrongAnswerPopUpView construction and closed rendering', () => {
     it('adds one hidden, empty layer to the stage', () => {
         const { stage } = setup(800, 600);
         expect(stage.getLayers()).toHaveLength(1);
@@ -982,7 +982,7 @@ describe('WrongAnswerPopUpView construction and closed rendering (white box)', (
     });
 });
 
-describe('WrongAnswerPopUpView panel sizing (white box)', () => {
+describe('WrongAnswerPopUpView panel sizing', () => {
     it.each([[1000, 800, 70, 20, 860, 760], [320, 400, 10, 16, 300, 368], [250, 300, 0, 0, 250, 300]])('on a %ix%i stage puts the panel at (%i, %i) sized %ix%i', (sw, sh, x, y, w, h) => {
         const { view, stage } = setup(sw, sh);
         view.render(openState(shortSolution));
@@ -1022,7 +1022,7 @@ describe('WrongAnswerPopUpView panel sizing (white box)', () => {
     });
 });
 
-describe('WrongAnswerPopUpView rebuilding (white box)', () => {
+describe('WrongAnswerPopUpView rebuilding', () => {
     it('reuses the built nodes when only the scroll position changes', () => {
         const { view, stage } = setup(800, 600);
         view.render(openState(longSolution));
@@ -1074,7 +1074,7 @@ describe('WrongAnswerPopUpView rebuilding (white box)', () => {
     });
 });
 
-describe('WrongAnswerPopUpView scrolling (white box)', () => {
+describe('WrongAnswerPopUpView scrolling', () => {
     it('has no scrollbar or scroll range when everything fits', () => {
         const { view, stage } = setup(2000, 2000);
         view.render(openState(shortSolution));
@@ -1159,7 +1159,7 @@ describe('WrongAnswerPopUpView scrolling (white box)', () => {
     });
 });
 
-describe('WrongAnswerPopUpView pointer handling (white box)', () => {
+describe('WrongAnswerPopUpView pointer handling', () => {
     it('asks to close when the overlay is clicked', () => {
         const { view, handlers, stage } = setup(800, 600);
         view.render(openState(shortSolution));
