@@ -15,8 +15,8 @@ export class TitleScreenController extends ScreenController{
 		this.screenSwitcher = screenSwitcher;
 		this.view = new TitleScreenView(
 			() => this.handleNewGameClick(),
-			() => this.handleContinueClick(),
-			() => this.handleLeaderBoardClick());
+			() => this.handleLeaderBoardClick(),
+			() => this.handleContinueClick());
 
         this.clickSound = new Audio("/click.mp3");
 	}
@@ -31,7 +31,7 @@ export class TitleScreenController extends ScreenController{
 		this.clickSound.currentTime = 0;
 		this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({type : "game"});
+        this.screenSwitcher.switchToScreen({type : "map"});
     }
 
 	private handleContinueClick(): void {
