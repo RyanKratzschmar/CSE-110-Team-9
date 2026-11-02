@@ -1,7 +1,7 @@
 // Health: current and max HP with updateHealth(); never drops below 0. Used by Player and Monster.
 
 export class Health {
-  private readonly maxHealth: number;
+  private maxHealth: number;
   private current: number;
 
   constructor(maxHealth: number) {
@@ -22,6 +22,9 @@ export class Health {
 
   // Health always stays between 0 and max
   updateHealth(change: number): void {
+    if (!Number.isFinite(change)) {
+      throw new Error("Health change must be a finite number");
+    }
     this.current = Math.min(this.maxHealth, Math.max(0, this.current + change));
   }
 
