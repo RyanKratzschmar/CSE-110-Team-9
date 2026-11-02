@@ -2,31 +2,34 @@
 
 import {Player} from "./Player";
 import {Monster} from "./Monster";
+import type { RandomEquation } from "../equations/RandomEquation";
+import { MultiplicationEquation } from "../equations/MultiplicationEquation";
+import { DivisionEquation } from "../equations/DivisionEquation";
+
+type BattleStatus = "active" | "won" | "lost";
 
 export class Combat {
 
     private player: Player;
     private enemy: Monster;
-    private gameStatus: "active" | "won" | "lost";
-    private questionResolved: boolean;
+    private gameStatus: BattleStatus = "active";
+    private currentEquation: RandomEquation;
+    private questionId = 1;
+    private questionResolved = false;
 
-    constructor(player: Player, enemy: Monster) {
+    constructor(player: Player, enemy: Monster,
+        private readonly generateEquation: () => RandomEquation = () =>
+            Math.random() < 0.5
+                ? new MultiplicationEquation(false)
+                : new DivisionEquation(false)
+    ) {
         this.player = player;
         this.enemy = enemy;
-        this.gameStatus = "active";
-        this.questionResolved = false;
-
+        this.currentEquation = this.generateEquation();
         this.checkBattleStatus();
     }
 
-    // this boolean check prevents things like double clicking submit when answering a question and causing double damage 
-    setQuestionResolvedToFalse() {
-        if (this.gameStatus === "active") {
-            this.questionResolved = false;
-        }
-    }
-
-    getGameStatus(): "active" | "won" | "lost" {
+    getGameStatus(): BattleStatus {
         return this.gameStatus;
     }
 
@@ -38,18 +41,35 @@ export class Combat {
         return this.enemy.hp;
     }
 
-    resolveAnswer(isCorrect: boolean) {
-        // call Oliver's math-specific checking
-       
-        //Ignore repeated submissions or answers after combat ends.
-        if (this.gameStatus !== "active" || this.questionResolved) {
-            return;
+    currentQuestion() {
+        return {
+            questionId: this.questionId,
+            question: this.currentEquation.getPrint(),
+            playerHp: this.player.hp,
+            enemyHp: this.enemy.hp,
+        };
+    }
+
+    resolveAnswer(submission: number, questionId: number) {
+        if (
+            this.getGameStatus() !== "active" ||
+            this.questionResolved ||
+            questionId !== this.questionId
+        ) {
+            return undefined;
         }
-        // if answer is valid
+
+        if (!Number.isFinite(submission)) {
+            throw new Error("Answer must be a finite number");
+        }
+
+        const correct = this.currentEquation.checkAnswer(submission);
+        const correctAnswer = this.currentEquation.getAnswer();
+
         this.questionResolved = true;
 
         // damage the monster
-        if(isCorrect) {
+        if (correct) {
             this.enemy.takeDamage(this.player.attack);
         }
         else { // damage the player
@@ -57,8 +77,36 @@ export class Combat {
         }
 
         this.checkBattleStatus();
+
+        const status = this.getGameStatus();
+
+        return {
+            questionId: this.questionId,
+            correct,
+            correctAnswer,
+            playerHp: this.player.hp,
+            enemyHp: this.enemy.hp,
+            result:
+                status === "won" 
+                    ? "win"
+                    : status === "lost"
+                        ? "lose"
+                        : "ongoing",
+        };
     }
-    
+
+    startNextQuestion(): void {
+        if (this.gameStatus !== "active" || !this.questionResolved) {
+            return;
+        }
+
+        const nextEquation = this.generateEquation();
+
+        this.currentEquation = nextEquation;
+        this.questionId += 1;
+        this.questionResolved = false;
+    }
+
 
     private checkBattleStatus(): void {
         if (this.player.isDead()) {
@@ -67,5 +115,4 @@ export class Combat {
             this.gameStatus = "won";
         }
     }
-
 }
