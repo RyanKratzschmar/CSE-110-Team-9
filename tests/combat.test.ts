@@ -6,12 +6,11 @@ import { Player } from "../backend/game/Player";
 import { Monster } from "../backend/game/Monster";
 import { Health } from "../backend/game/Health";
 import { MultiplicationEquation } from "../backend/equations/MultiplicationEquation";
-import { a } from "vitest/dist/chunks/suite.B2jumIFP.js";
 
 describe("Cobmat", () => {
     function createCombat() {
         const player = new Player(100, 20, 0);
-        const enemy = new Monster(new Health(50), 15);
+        const enemy = new Monster(50, 15);
         const combat = new Combat(player, enemy, fixedEquation);
          
         return { player, enemy, combat };
@@ -95,7 +94,7 @@ describe("Cobmat", () => {
         "wins with %s damage and never drops enemy Hp below zero",
         (attack) => {
             const player = new Player(100, attack, 0);
-            const enemy = new Monster(new Health(50), 15);
+            const enemy = new Monster(50, 15);
             const combat = new Combat(player, enemy, fixedEquation);
             const { questionId } = combat.currentQuestion();
 
@@ -112,7 +111,7 @@ describe("Cobmat", () => {
         "loses with %s incoming damage and never drops player HP below zero",
         (attack) => {
             const player = new Player(100, 20, 0);
-            const enemy = new Monster(new Health(50), attack);
+            const enemy = new Monster(50, attack);
             const combat = new Combat(player, enemy, fixedEquation);
             const { questionId } = combat.currentQuestion();
 
@@ -127,7 +126,7 @@ describe("Cobmat", () => {
 
     it("cannot restart or apply more damage after winning", () => {
         const player = new Player(100, 50, 0);
-        const enemy = new Monster(new Health(50), 15);
+        const enemy = new Monster(50, 15);
         const combat = new Combat(player, enemy, fixedEquation);
         const { questionId } = combat.currentQuestion();
 
@@ -143,7 +142,7 @@ describe("Cobmat", () => {
 
     it("cannot restart or apply more damage after losing", () => {
         const player = new Player(100, 20, 0);
-        const enemy = new Monster(new Health(50), 100);
+        const enemy = new Monster(50, 100);
         const combat = new Combat(player, enemy, fixedEquation);
         const { questionId } = combat.currentQuestion();
          
@@ -160,7 +159,7 @@ describe("Cobmat", () => {
     it("starts lost if the supplied player is already dead", () => {
         const player = new Player(100, 20, 0);
         player.takeDamage(100);
-        const enemy = new Monster(new Health(50), 15);
+        const enemy = new Monster(50, 15);
         const combat = new Combat(player, enemy, fixedEquation);
         const { questionId } = combat.currentQuestion();
          
@@ -171,7 +170,7 @@ describe("Cobmat", () => {
 
     it("starts won if the supplied enemy is already defeated", () => {
         const player = new Player(100, 20, 0);
-        const enemy = new Monster(new Health(50), 15);
+        const enemy = new Monster(50, 15);
         enemy.takeDamage(50);
         const combat = new Combat(player, enemy, fixedEquation);
         const { questionId } = combat.currentQuestion();

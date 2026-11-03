@@ -5,11 +5,11 @@ export class Monster {
     private health: Health;
     private attackPower: number;
 
-    constructor(health: Health, attack: number) {
+    constructor(maxHp: number, attack: number) {
         if (!Number.isInteger(attack) || attack < 0) {
             throw new Error("Attack must be a whole number of 0 or more");
         }
-        this.health = health;
+        this.health = new Health(maxHp);
         this.attackPower = attack;
     }
 
@@ -25,8 +25,13 @@ export class Monster {
         return this.attackPower;
     }
 
-    takeDamage(amount: number) {
+    takeDamage(amount: number) : void {
         if (amount < 0) throw new Error("Damage can't be negative");
         this.health.updateHealth(-amount);
     }
+
+    isDead(): boolean {
+        return this.health.isZero();
+    }
+    
 }

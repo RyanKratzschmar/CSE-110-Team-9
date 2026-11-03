@@ -8,6 +8,22 @@ import { DivisionEquation } from "../equations/DivisionEquation";
 
 type BattleStatus = "active" | "won" | "lost";
 
+type CurrentQuestion = {
+    questionId: number;
+    question: string;
+    playerHp: number;
+    enemyHp: number;
+};
+
+type AnswerResult = {
+    questionId: number;
+    correct: boolean;
+    correctAnswer: number;
+    playerHp: number;
+    enemyHp: number;
+    result: "win" | "lose" | "ongoing";
+};
+
 export class Combat {
 
     private player: Player;
@@ -41,7 +57,7 @@ export class Combat {
         return this.enemy.hp;
     }
 
-    currentQuestion() {
+    currentQuestion() : CurrentQuestion {
         return {
             questionId: this.questionId,
             question: this.currentEquation.getPrint(),
@@ -50,7 +66,7 @@ export class Combat {
         };
     }
 
-    resolveAnswer(submission: number, questionId: number) {
+    resolveAnswer(submission: number, questionId: number): AnswerResult | undefined{
         if (
             this.getGameStatus() !== "active" ||
             this.questionResolved ||
@@ -111,7 +127,7 @@ export class Combat {
     private checkBattleStatus(): void {
         if (this.player.isDead()) {
             this.gameStatus = "lost";
-        } else if (this.enemy.hp <= 0) {
+        } else if (this.enemy.isDead()) {
             this.gameStatus = "won";
         }
     }
