@@ -18,6 +18,7 @@ export type Screen =
 	| { type: "menu" }
 	| { type: "game" }
 	| { type: "result"; score: number };
+	| { type: "map"};
 
 export abstract class ScreenController {
 	abstract getView(): View;

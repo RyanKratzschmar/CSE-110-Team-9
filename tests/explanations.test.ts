@@ -1276,3 +1276,4 @@ function pressKey(key: string): KeyboardEvent {
     window.dispatchEvent(event);
     return event;
 }
+// Tests that explanations and solution steps are mathematically correct for each equation type. (Darsh)

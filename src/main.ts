@@ -5,6 +5,8 @@ import { CombatMainScreenController } from "./screens/CombatMainScreen/CombatMai
 //import { ResultsScreenController } from "./screens/ResultsScreen/ResultsScreenController.ts"; //
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
+import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScreenController.ts"; //
+import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 
 /**
  * Main Application - Coordinates all screens
@@ -23,6 +25,7 @@ class App implements ScreenSwitcher {
 	private titleScreenController: TitleScreenController;
 	private combatMainScreenController: CombatMainScreenController;
 	//private resultsController: ResultsScreenController;
+	private levelMapScreenController: LevelMapScreenController;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -43,12 +46,15 @@ class App implements ScreenSwitcher {
 		this.titleScreenController = new TitleScreenController(this);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp);
 		//this.resultsController = new ResultsScreenController(this); //
+		this.combatMainScreenController = new CombatMainScreenController(this);
+		this.levelMapScreenController = new LevelMapScreenController(this); //
 
 		// Add all screen groups to the layer
 		// All screens exist simultaneously but only one is visible at a time
 		this.layer.add(this.titleScreenController.getView().getGroup());
 		this.layer.add(this.combatMainScreenController.getView().getGroup());
 		//this.layer.add(this.resultsController.getView().getGroup()); //
+		this.layer.add(this.levelMapScreenController.getView().getGroup()); //
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -73,6 +79,7 @@ class App implements ScreenSwitcher {
 		this.titleScreenController.hide();
 		this.combatMainScreenController.hide(); // TODO
 		//this.resultsController.hide();
+		this.levelMapScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
@@ -89,6 +96,10 @@ class App implements ScreenSwitcher {
 				// Show results with the final score
 				this.resultsController.showResults(screen.score);
 				break;*/
+			case "map":
+				// Show results with the final score
+				this.levelMapScreenController.startMapScreen();
+				break;
 		}
 	}
 }
