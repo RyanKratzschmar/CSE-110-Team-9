@@ -35,6 +35,7 @@ export class CombatMainScreenView implements View {
         onHintXClick : () => void,
         onAttackClick : () => void,
         onSubmitClick: () => void,
+        onExplanationClick: () => void
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -333,6 +334,45 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.defeatText);
 
+        // Create Explanation Button
+        const explanationButton = new Konva.Rect({
+            x: 1050,
+            y: 787.5,
+            width: 200,
+            height: 75,
+            fill: "#FF9E42",
+            stroke: "#cc721d",
+            cornerRadius: 10,
+        });
+        this.group.add(explanationButton);
+
+        explanationButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+        });
+
+        explanationButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+        });
+
+        explanationButton.on("click tap", () => {
+            document.body.style.cursor = "default";
+            onExplanationClick();
+        });
+
+        // Text that says "Explain"
+        const explanationText = new Konva.Text({
+            x: 1050,
+            y: 802.5,
+            width: 200,
+            align: "center",
+            fontSize: 40,
+            text: "Explain",
+            fill: "#000000",
+            fontFamily: "arial",
+            fontStyle: "bold",
+            listening: false,
+        });
+        this.group.add(explanationText);
 
         // Create overlay when equation is being solved
         this.equationOverlay = new Konva.Rect({
