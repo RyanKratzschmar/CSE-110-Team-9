@@ -53,6 +53,10 @@ export class CombatMainScreenController extends ScreenController {
 
     // Closes equation screen
     handleSubmitClick(): void {
+
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
         this.view.returnToCombat();
 
         const currentHealth = this.model.getEnemyHealth();
