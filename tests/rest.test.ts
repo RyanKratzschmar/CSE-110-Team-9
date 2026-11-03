@@ -1,5 +1,5 @@
 /**
- * We test backend behavior directly without a browser, React, or a server.
+ * We test backend behavior directly without a server.
  * Every test makes its own GameState so the tests are independent.
  */
 import { describe, expect, it } from "vitest";
