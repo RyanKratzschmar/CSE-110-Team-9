@@ -19,6 +19,7 @@ export class CombatMainScreenController extends ScreenController {
             () => this.handleHintClick(),
             () => this.handleHintXClick(),
             () => this.handleAttackClick(),
+            () => this.handleSubmitClick(),
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -29,26 +30,7 @@ export class CombatMainScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
-        //this.view.solveEquation();
-
-        /* Test Code */
-        const currentHealth = this.model.getEnemyHealth();
-
-        const newHealth = Math.max(0, currentHealth - 10);
-
-        // Update the model
-        this.model.setEnemyCurrentHealth(newHealth);
-
-        // Update the view
-        this.view.updateEnemyHealthBar(newHealth, this.model.getEnemyMaxHealth());
-
-        if(this.model.getEnemyHealth() <= 0){
-            this.endFight(true);
-
-            setTimeout(() => {
-                this.screenSwitcher.switchToScreen({ type: "map" });
-            }, 3000);
-        }
+        this.view.solveEquation();
 
     }
 
@@ -69,6 +51,32 @@ export class CombatMainScreenController extends ScreenController {
         this.view.hideHint();
     }
 
+    // Closes equation screen
+    handleSubmitClick(): void {
+        this.view.returnToCombat();
+
+        const currentHealth = this.model.getEnemyHealth();
+
+        const newHealth = Math.max(0, currentHealth - 10);
+
+        // Update the model
+        this.model.setEnemyCurrentHealth(newHealth);
+
+        // Update the view after 1 second delay
+            setTimeout(() => {
+                this.view.updateEnemyHealthBar(newHealth, this.model.getEnemyMaxHealth());
+
+                if(this.model.getEnemyHealth() <= 0){
+                    this.endFight(true);
+
+                    setTimeout(() => {
+                        this.screenSwitcher.switchToScreen({ type: "map" });
+                    }, 3000);
+                }
+            }, 500);
+    }
+
+    // Ends the fight
     endFight(win: boolean): void {
         this.view.endGameText(win);
     }
