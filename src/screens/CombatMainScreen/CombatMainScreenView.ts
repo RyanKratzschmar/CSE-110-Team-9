@@ -24,11 +24,8 @@ export class CombatMainScreenView implements View {
     constructor(
         onHintClick : () => void,
         onHintXClick : () => void,
-<<<<<<< HEAD
         onAttackClick : () => void,
-=======
         onExplanationClick: () => void
->>>>>>> 744f1b5 (Adding Explanation Button)
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -290,7 +287,6 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(hintText);
 
-<<<<<<< HEAD
         // Adds Victory Text
         this.victoryText = new Konva.Text({
             fill: "green",
@@ -316,7 +312,6 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.defeatText);
 
-=======
         // Create Explanation Button
         const explanationButton = new Konva.Rect({
             x: 1050,
@@ -356,7 +351,6 @@ export class CombatMainScreenView implements View {
             listening: false,
         });
         this.group.add(explanationText);
->>>>>>> 744f1b5 (Adding Explanation Button)
 
         // Create Dim Overlay
         this.dimOverlay = new Konva.Rect({

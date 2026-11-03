@@ -22,11 +22,8 @@ export class CombatMainScreenController extends ScreenController {
         this.view = new CombatMainScreenView(
             () => this.handleHintClick(),
             () => this.handleHintXClick(),
-<<<<<<< HEAD
             () => this.handleAttackClick(),
-=======
             () => this.handleExplanationClick()
->>>>>>> 744f1b5 (Adding Explanation Button)
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -77,17 +74,15 @@ export class CombatMainScreenController extends ScreenController {
         this.view.hideHint();
     }
 
-<<<<<<< HEAD
     endFight(win: boolean): void {
         this.view.endGameText(win);
-=======
+    }
+
     handleExplanationClick(): void{
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
         this.explanationPopUp.showLongMultiplicationExplanation(123, 45);
-
->>>>>>> 744f1b5 (Adding Explanation Button)
     }
 
     startGame(): void {

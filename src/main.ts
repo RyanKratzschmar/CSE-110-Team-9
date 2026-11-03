@@ -41,13 +41,8 @@ class App implements ScreenSwitcher {
 		// Each controller manages a Model, View, and handles user interactions
 
 		this.titleScreenController = new TitleScreenController(this);
-<<<<<<< HEAD
-		this.combatMainScreenController = new CombatMainScreenController(this);
-		this.levelMapScreenController = new LevelMapScreenController(this); //
-=======
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp);
-		//this.resultsController = new ResultsScreenController(this); //
->>>>>>> 744f1b5 (Adding Explanation Button)
+		this.levelMapScreenController = new LevelMapScreenController(this); //
 
 		// Add all screen groups to the layer
 		// All screens exist simultaneously but only one is visible at a time
