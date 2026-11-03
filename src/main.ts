@@ -2,8 +2,9 @@ import Konva from "konva";
 import type { ScreenSwitcher, Screen } from "./types.ts";
 import { TitleScreenController } from "./screens/TitleScreen/TitleScreenController.ts";
 import { CombatMainScreenController } from "./screens/CombatMainScreen/CombatMainScreenController.ts";
-import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScreenController.ts"; //
+//import { ResultsScreenController } from "./screens/ResultsScreen/ResultsScreenController.ts"; //
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
+import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
 
 /**
  * Main Application - Coordinates all screens
@@ -21,7 +22,7 @@ class App implements ScreenSwitcher {
 
 	private titleScreenController: TitleScreenController;
 	private combatMainScreenController: CombatMainScreenController;
-	private levelMapScreenController: LevelMapScreenController;
+	//private resultsController: ResultsScreenController;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -34,19 +35,20 @@ class App implements ScreenSwitcher {
 		// Create a layer (screens will be added to this layer)
 		this.layer = new Konva.Layer();
 		this.stage.add(this.layer);
+		const explanationPopUp = new WrongAnswerPopUpController(this.stage);
 
 		// Initialize all screen controllers
 		// Each controller manages a Model, View, and handles user interactions
 
 		this.titleScreenController = new TitleScreenController(this);
-		this.combatMainScreenController = new CombatMainScreenController(this);
-		this.levelMapScreenController = new LevelMapScreenController(this); //
+		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp);
+		//this.resultsController = new ResultsScreenController(this); //
 
 		// Add all screen groups to the layer
 		// All screens exist simultaneously but only one is visible at a time
 		this.layer.add(this.titleScreenController.getView().getGroup());
 		this.layer.add(this.combatMainScreenController.getView().getGroup());
-		this.layer.add(this.levelMapScreenController.getView().getGroup()); //
+		//this.layer.add(this.resultsController.getView().getGroup()); //
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -70,7 +72,7 @@ class App implements ScreenSwitcher {
 		// Hide all screens first by setting their Groups to invisible
 		this.titleScreenController.hide();
 		this.combatMainScreenController.hide(); // TODO
-		this.levelMapScreenController.hide();
+		//this.resultsController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
@@ -83,10 +85,10 @@ class App implements ScreenSwitcher {
 				this.combatMainScreenController.startGame();
 				break;
 
-			case "map":
+			/*case "result":
 				// Show results with the final score
-				this.levelMapScreenController.startMapScreen();
-				break;
+				this.resultsController.showResults(screen.score);
+				break;*/
 		}
 	}
 }

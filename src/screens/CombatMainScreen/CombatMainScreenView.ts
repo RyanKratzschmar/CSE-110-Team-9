@@ -4,27 +4,15 @@ import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 
 export class CombatMainScreenView implements View {
     private group: Konva.Group;
-
     private dimOverlay: Konva.Rect;
     private hintPopUp: Konva.Rect;
     private hintXButton: Konva.Rect;
     private hintXText: Konva.Text;
-    private enemyHealthBar: Konva.Rect;
-    private victoryText: Konva.Text;
-    private defeatText: Konva.Text;
-    private attackButton: Konva.Rect;
-    private attackButtonText: Konva.Text;
-    private potionButton: Konva.Rect;
-    private potionButtonText: Konva.Text;
-    private enemy: Konva.Rect;
-    private player: Konva.Rect;
-    private enemyHealthBarBG: Konva.Rect;
-    private equationOverlay: Konva.Rect;
 
     constructor(
         onHintClick : () => void,
         onHintXClick : () => void,
-        onAttackClick : () => void,
+        onExplanationClick: () => void
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -115,7 +103,7 @@ export class CombatMainScreenView implements View {
         this.group.add(settingsText);
 
         // Button to go view potions
-        this.potionButton = new Konva.Rect({
+        const potionButton = new Konva.Rect({
             y: 200,
             x: 100,
             width: 150,
@@ -124,10 +112,10 @@ export class CombatMainScreenView implements View {
             fill: "#219bd9",
             stroke: "#1884ba",
         });
-        this.group.add(this.potionButton);
+        this.group.add(potionButton);
 
         //Text that says "Potion"
-        this.potionButtonText = new Konva.Text({
+        const potionButtonText = new Konva.Text({
             text: "Potion",
             y: 232.5,
             x: 130,
@@ -136,11 +124,11 @@ export class CombatMainScreenView implements View {
 			fontSize: 30,
             fill: "#ffff",
         })
-        this.group.add(this.potionButtonText);
+        this.group.add(potionButtonText);
 
 
         // Button to attack
-        this.attackButton = new Konva.Rect({
+        const attackButton = new Konva.Rect({
             y: 200,
             x: 400,
             width: 150,
@@ -148,12 +136,11 @@ export class CombatMainScreenView implements View {
             cornerRadius: 10,
             fill: "#219bd9",
             stroke: "#1884ba",
-            visible: true,
         });
-        this.group.add(this.attackButton);
+        this.group.add(attackButton);
 
         //Text that says "Attack"
-        this.attackButtonText = new Konva.Text({
+        const attackButtonText = new Konva.Text({
             text: "Attack",
             y: 232.5,
             x: 432.5,
@@ -161,49 +148,35 @@ export class CombatMainScreenView implements View {
             fontFamily: "Arial",
 			fontSize: 30,
             fill: "#ffff",
-            listening: false,
-            visible: true,
         });
-        this.group.add(this.attackButtonText);
-
-        this.attackButton.on("mouseenter", () => {
-			document.body.style.cursor = "pointer";
-		});
-
-		this.attackButton.on("mouseleave", () => {
-			document.body.style.cursor = "default";
-		});
-
-        this.attackButton.on("click tap", () => {
-			onAttackClick();
-        });
+        this.group.add(attackButtonText);
 
         // The player Character
-        this.player = new Konva.Rect({
+        const player = new Konva.Rect({
             width: 300,
             height: 350,
             x: 175,
             y:350,
             fill: "#ffff"
         });
-        this.group.add(this.player);
+        this.group.add(player);
 
 
 
 
 
         // The enemy character
-        this.enemy = new Konva.Rect({
+        const enemy = new Konva.Rect({
             width: 300,
             height: 350,
             x: STAGE_WIDTH - 475,
             y: 350,
             fill: "#ffff"
         });
-        this.group.add(this.enemy);
+        this.group.add(enemy);
 
         //Background for when enemy health is missing
-        this.enemyHealthBarBG = new Konva.Rect({
+        const enemyHealthBarBG = new Konva.Rect({
             width: 350,
             height: 60,
             x: STAGE_WIDTH - 500,
@@ -211,18 +184,18 @@ export class CombatMainScreenView implements View {
             fill: "#c4c4c4ff",
             Stroke: "#940d03",
         });
-        this.group.add(this.enemyHealthBarBG);
+        this.group.add(enemyHealthBarBG);
 
         // enemy health bar
-        this.enemyHealthBar = new Konva.Rect({
-            width: 350,
+        const enemyHealthBar = new Konva.Rect({
+            width: 300,
             height: 60,
             x: STAGE_WIDTH - 500,
             y: 250,
             fill: "#F24822",
             Stroke: "#940d03",
         });
-        this.group.add(this.enemyHealthBar);
+        this.group.add(enemyHealthBar);
 
         // Score Text
         const scoreText = new Konva.Text({
@@ -286,31 +259,45 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(hintText);
 
-        // Adds Victory Text
-        this.victoryText = new Konva.Text({
-            fill: "green",
-            fontSize: 80,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            text: "Victory!",
-            x: 625,
-            y: 200,
-            visible: false,
+        // Create Explanation Button
+        const explanationButton = new Konva.Rect({
+            x: 1050,
+            y: 787.5,
+            width: 200,
+            height: 75,
+            fill: "#FF9E42",
+            stroke: "#cc721d",
+            cornerRadius: 10,
         });
-        this.group.add(this.victoryText);
+        this.group.add(explanationButton);
 
-        this.defeatText = new Konva.Text({
-            fill: "red",
-            fontSize: 80,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            text: "Defeat",
-            x: 800,
-            y: 200,
-            visible: false,
+        explanationButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
         });
-        this.group.add(this.defeatText);
 
+        explanationButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+        });
+
+        explanationButton.on("click tap", () => {
+            document.body.style.cursor = "default";
+            onExplanationClick();
+        });
+
+        // Text that says "Explain"
+        const explanationText = new Konva.Text({
+            x: 1050,
+            y: 802.5,
+            width: 200,
+            align: "center",
+            fontSize: 40,
+            text: "Explain",
+            fill: "#000000",
+            fontFamily: "arial",
+            fontStyle: "bold",
+            listening: false,
+        });
+        this.group.add(explanationText);
 
         // Create Dim Overlay
         this.dimOverlay = new Konva.Rect({
@@ -373,17 +360,6 @@ export class CombatMainScreenView implements View {
         this.hintXButton.on("click tap", () => {
 			onHintXClick();
         });
-
-        // Create overlay when equation is being solved
-        this.equationOverlay = new Konva.Rect({
-            x: 0,
-            y: 150,
-            width: STAGE_WIDTH,
-            height: 600,
-            fill: "#433550",
-            visible: false,
-        });
-        this.group.add(this.equationOverlay);
     }
 
     showHint(): void {
@@ -402,52 +378,6 @@ export class CombatMainScreenView implements View {
         this.group.getLayer()?.batchDraw();    
     }
 
-    // Updates enemy health
-    updateEnemyHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.enemyHealthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.enemyHealthBar.width(350 * percentage);
-
-        this.group.getLayer()?.batchDraw();
-    }
-
-    // Resets victory or defeat text, and shows attack and potion buttons
-    resetFight(): void {
-        this.victoryText.visible(false);
-        this.defeatText.visible(false);
-
-        this.potionButton.visible(true);
-        this.attackButton.visible(true);
-
-        this.potionButtonText.visible(true);
-        this.attackButtonText.visible(true);
-    }
-
-    // Changes display to account for player winning or losing
-    endGameText(win: boolean): void {
-        if(win){
-            this.victoryText.visible(true);
-        } else {
-            this.defeatText.visible(true);
-        }
-        this.attackButton.visible(false);
-        this.attackButtonText.visible(false);
-        this.potionButton.visible(false);
-        this.potionButtonText.visible(false);
-
-        this.group.getLayer()?.batchDraw();
-    }
-
-    // Pop Up Equation Solving
-    solveEquation(): void{
-        this.equationOverlay.visible(true);
-    }
     /**
 	 * Show the screen
 	 */
