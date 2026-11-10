@@ -4,6 +4,8 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { CombatMainScreenView } from "./CombatMainScreenView.ts";
 import { CombatMainScreenModel } from "./CombatMainScreenModel.ts";
+import type { GameSession } from "../../GameSession.ts";
+import { finishCombat } from "../../../backend/game/GameManager.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -14,13 +16,16 @@ export class CombatMainScreenController extends ScreenController {
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
+    private gameSession: GameSession;
 
     constructor(
         screenSwitcher: ScreenSwitcher,
         explanationPopUp: WrongAnswerPopUpController,
-        hintPopUp: HintPopUpController
+        hintPopUp: HintPopUpController,
+        gameSession: GameSession
     ) {
         super();
+        this.gameSession = gameSession;
         this.screenSwitcher = screenSwitcher;
         this.explanationPopUp = explanationPopUp;
         this.hintPopUp = hintPopUp;
@@ -105,6 +110,8 @@ export class CombatMainScreenController extends ScreenController {
                 this.view.updateEnemyHealthBar(newHealth, this.model.getEnemyMaxHealth());
 
                 if(this.model.getEnemyHealth() <= 0){
+                    // Tell GameManager the fight was won so the map moves to the next stop
+                    finishCombat(this.gameSession.state, "win");
                     this.endFight(true);
 
                     setTimeout(() => {
