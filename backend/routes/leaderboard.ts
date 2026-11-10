@@ -8,13 +8,13 @@ leaderboardRouter.get("/", (_req, res) => {
 });
 
 leaderboardRouter.post("/", (req, res) => {
-    const {timestamp, score} = req.body;
+    const { score } = req.body;
 
-    if ((typeof timestamp !== "string") || (typeof score !== "number")) {
-        res.status(400).json({ error: "timestamp (string) and score (number) required" });
+    if (typeof score !== "number") {
+        res.status(400).json({ error: "score (number) required" });
         return;
     }
 
-    addScore({ timestamp, score });
+    addScore({ timestamp: new Date().toISOString(), score });
     res.json({ message: "Saved" });
 });

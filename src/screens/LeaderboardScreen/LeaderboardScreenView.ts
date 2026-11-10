@@ -11,18 +11,25 @@ export interface LeaderboardViewHandlers {
     onLeave(): void;
 }
 
-const LIST_WIDTH = 1000;
+const LIST_WIDTH = 1440;
 const LIST_X = (STAGE_WIDTH - LIST_WIDTH) / 2;
-const LIST_Y = 230;
-const LIST_HEIGHT = 560;
-const ROW_HEIGHT = 60;
-const SCROLLBAR_X = LIST_X + LIST_WIDTH + 12;
+const LIST_Y = 135;
+const LIST_HEIGHT = 648;
+const ROW_HEIGHT = 72;
+const SCROLLBAR_X = LIST_X + LIST_WIDTH + 8;
 const SCROLLBAR_WIDTH = 14;
 const MIN_THUMB_HEIGHT = 40;
 
-const RANK_X = 40;
-const SCORE_X = 300;
-const DATE_X = 600;
+const RANK_W = 105;
+const DATE_W = 630;
+const SCORE_W = LIST_WIDTH - RANK_W - DATE_W;
+
+const GOLD = "#D4AF37";
+const SILVER = "#C0C0C0";
+const BRONZE = "#CD7F32";
+const ROW_A = "#5A4A78";
+const ROW_B = "#4F4268";
+const DIVIDER = "#3A2E4A";
 
 export class LeaderboardScreenView implements View {
     private readonly group: Konva.Group;
@@ -47,42 +54,30 @@ export class LeaderboardScreenView implements View {
 
         this.group.add(new Konva.Text({
             x: 0,
-            y: 40,
+            y: 15,
             width: STAGE_WIDTH,
-            text: "Leaderboard",
-            fontSize: 80,
-            fontFamily: "Arial",
+            text: "Leader Board",
+            fontSize: 90,
+            fontFamily: "Courier New, monospace",
             fontStyle: "bold",
-            fill: "#FFC943",
+            fill: "#FFD60A",
             align: "center"
         }));
 
-        this.group.add(this.createButton("Back", 60, 50, () => this.handlers.onBack()));
-        this.group.add(this.createButton("Leave", STAGE_WIDTH - 260, 50, () => this.handlers.onLeave()));
-
-        for (const [label, x] of [["Rank", RANK_X], ["Score", SCORE_X], ["Date", DATE_X]] as const) {
-            this.group.add(new Konva.Text({
-                x: LIST_X + x,
-                y: LIST_Y - 45,
-                text: label,
-                fontSize: 30,
-                fontFamily: "Arial",
-                fontStyle: "bold",
-                fill: "white"
-            }));
-        }
+        this.group.add(this.createButton("Back", LIST_X, 815, "#FFC943", "#433550", () => this.handlers.onBack()));
+        this.group.add(this.createButton("Leave", LIST_X + LIST_WIDTH - 200, 815, "#F04A23", "#FFFFFF", () => this.handlers.onLeave()));
 
         const clipGroup = new Konva.Group({
             x: LIST_X,
             y: LIST_Y,
-            clip: { x: 0, y: 0, width: LIST_WIDTH, height: LIST_HEIGHT }
+            clipFunc: (ctx) => { ctx.beginPath(); ctx.roundRect(0, 0, LIST_WIDTH, LIST_HEIGHT, 10); ctx.closePath(); }
         });
 
         clipGroup.add(new Konva.Rect({
             width: LIST_WIDTH,
             height: LIST_HEIGHT,
-            fill: "#2E2438",
-            cornerRadius: 8
+            fill: ROW_B,
+            cornerRadius: 10
         }));
 
         this.listGroup = new Konva.Group();
@@ -156,7 +151,7 @@ export class LeaderboardScreenView implements View {
 
     hide(): void {
         document.body.style.cursor = "default";
-        this.buttonBgs.forEach((bg) => bg.fill("#FFC943"));
+        this.buttonBgs.forEach((bg) => bg.fill(bg.getAttr("baseFill")));
         this.group.visible(false);
     }
 
@@ -166,7 +161,7 @@ export class LeaderboardScreenView implements View {
         if (loading || entries.length === 0) {
             this.listGroup.add(new Konva.Text({
                 x: 0,
-                y: LIST_HEIGHT / 2 - 20,
+                y: LIST_HEIGHT / 2 - 16,
                 width: LIST_WIDTH,
                 text: loading? "Loading..." : "No scores yet",
                 fontSize: 32,
@@ -183,25 +178,45 @@ export class LeaderboardScreenView implements View {
             row.add(new Konva.Rect({
                 width: LIST_WIDTH,
                 height: ROW_HEIGHT,
-                fill: i % 2 === 0 ? "#3A2E46" : "#2E2438"
+                fill: i === 0 ? GOLD : i === 1 ? SILVER : i === 2 ? BRONZE : (i % 2 === 0 ? ROW_A : ROW_B)
+            }));
+            row.add(new Konva.Line({
+                points: [RANK_W + DATE_W, 0, RANK_W + DATE_W, ROW_HEIGHT],
+                stroke: DIVIDER,
+                strokeWidth: 1
             }));
             
-            const cells: [string, number][] = [
-                [`#${i + 1}`, RANK_X],
-                [String(entry.score), SCORE_X],
-                [this.formatDate(entry.timestamp), DATE_X]
+            row.add(new Konva.Line({
+                points: [RANK_W, 0, RANK_W, ROW_HEIGHT],
+                stroke: DIVIDER,
+                strokeWidth: 1 
+            }));
+
+            row.add(new Konva.Line({
+                points: [0, ROW_HEIGHT, LIST_WIDTH, ROW_HEIGHT],
+                stroke: DIVIDER,
+                strokeWidth: 1
+            }));
+            
+            const cells: [string, number, number][] = [
+                [String(i + 1), 0, RANK_W],
+                [this.formatDate(entry.timestamp), RANK_W, DATE_W],
+                [String(entry.score), RANK_W + DATE_W, SCORE_W]
             ];
 
-            for (const [text, x] of cells) {
+            for (const [text, x, width] of cells) {
                 row.add(new Konva.Text({
                     x,
                     y: 0,
+                    width,
+                    align: "center",
                     height: ROW_HEIGHT,
                     verticalAlign: "middle",
                     text,
-                    fontSize: 28,
+                    fontSize: 26,
                     fontFamily: "Arial",
-                    fill: "#FFF"
+                    fontStyle: "bold",
+                    fill: i < 3 ? "#2B2233" : (x === 0 ? "#C9BEDD" : "#FFF")
                 }));
             }
 
@@ -227,38 +242,41 @@ export class LeaderboardScreenView implements View {
 
     private formatDate(timestamp: string): string {
         const date = new Date(timestamp);
-        return Number.isNaN(date.getTime())? timestamp : date.toLocaleDateString();
+
+        return Number.isNaN(date.getTime())? timestamp : date.toLocaleString(undefined, {month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
     }
 
-    private createButton(label: string, x: number, y: number, onClick: () => void): Konva.Group {
+    private createButton(label: string, x: number, y: number, fill: string, textColor: string, onClick: () => void): Konva.Group {
         const button = new Konva.Group({ x, y });
         const bg = new Konva.Rect( {
             width: 200,
-            height: 70,
-            fill: "#FFC943",
-            cornerRadius: 12,
-            stroke: "#FFF",
-            strokeWidth: 3
+            height: 62,
+            fill,
+            cornerRadius: 6,
+            stroke: "#FFE9C2",
+            strokeWidth: 2
         });
         
         this.buttonBgs.push(bg);
+
+        bg.setAttr("baseFill", fill);
         
         const text = new Konva.Text({
             width: 200,
-            height: 70,
+            height: 62,
             text: label,
             align: "center",
             verticalAlign: "middle",
-            fontSize: 32,
+            fontSize: 26,
             fontFamily: "Arial",
-            fontStyle: "bold",
-            fill: "#433550"
+            fontStyle: "normal",
+            fill: textColor
         });
-        
+
         button.add(bg, text);
         button.on("click tap", onClick);
         button.on("mouseenter", () => { document.body.style.cursor = "pointer"; bg.fill("#B678D0")});
-        button.on("mouseleave", () => { document.body.style.cursor = "default"; bg.fill("#FFC943")});
+        button.on("mouseleave", () => { document.body.style.cursor = "default"; bg.fill(fill)});
         return button;
     }
 }
