@@ -3,13 +3,14 @@ import type { LeaderboardEntry } from "../../../backend/game/Leaderboard/Leaderb
 export interface LeaderboardScreenState {
     readonly leaderboard: readonly LeaderboardEntry[];
     readonly scrollY: number;
+    readonly loading: boolean;
 }
 
 export type LeaderboardScreenListener = (state: LeaderboardScreenState) => void;
 
 //Holds the leaderboard entries and scroll position, and notifies listeners whenever they change
 export class LeaderboardScreenModel {
-    private state: LeaderboardScreenState = { leaderboard: [], scrollY: 0 };
+    private state: LeaderboardScreenState = { leaderboard: [], scrollY: 0, loading: true };
     private readonly listeners = new Set<LeaderboardScreenListener>();
 
     //Returns the current state
@@ -27,7 +28,11 @@ export class LeaderboardScreenModel {
 
     //Replaces the entries (sorted in descending order) and scrolls back to the top
     setEntries(entries: readonly LeaderboardEntry[]): void {
-        this.setState({ leaderboard: entries, scrollY: 0 });
+        this.setState({ leaderboard: entries, scrollY: 0, loading: false });
+    }
+
+    setLoading(): void {
+        this.setState({ leaderboard: [], scrollY: 0, loading: true });
     }
 
     //Scrolls to y, kept between 0 and maxScroll
