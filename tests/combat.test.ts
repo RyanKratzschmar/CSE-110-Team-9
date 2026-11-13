@@ -7,7 +7,7 @@ import { Monster } from "../backend/game/Monster";
 import { Health } from "../backend/game/Health";
 import { MultiplicationEquation } from "../backend/equations/MultiplicationEquation";
 
-describe("Cobmat", () => {
+describe("Combat", () => {
     function createCombat() {
         const player = new Player(100, 20, 0);
         const enemy = new Monster(50, 15);
