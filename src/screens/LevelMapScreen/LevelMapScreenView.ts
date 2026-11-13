@@ -15,6 +15,9 @@ export class LevelMapScreenView implements View {
     private stairs: Konva.Line;
     private stairsText: Konva.Text;
     private levelIndicator: Konva.Line;
+    private healthBar: Konva.Rect;
+    private floorText: Konva.Text;
+    private messageText: Konva.Text;
 
     constructor(
         onGoClick : () => void,
@@ -53,15 +56,15 @@ export class LevelMapScreenView implements View {
         this.group.add(healthBarBG);
 
         //Player Health Bar
-        const healthBar = new Konva.Rect({
+        this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
             stroke: "#42a847",        
         });  
-        this.group.add(healthBar);
+        this.group.add(this.healthBar);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -118,7 +121,7 @@ export class LevelMapScreenView implements View {
         });
         this.group.add(settingsText);
 
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -127,7 +130,21 @@ export class LevelMapScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
+
+        // One-line message under the top bar (e.g. after resting)
+        this.messageText = new Konva.Text({
+            x: 0,
+            y: 175,
+            width: STAGE_WIDTH,
+            align: "center",
+            text: "",
+            fill: "#180221",
+            fontSize: 34,
+            fontFamily: "arial",
+            fontStyle: "bold",
+        });
+        this.group.add(this.messageText);
 
         // Create map location for fight 1
         this.fight1 = new Konva.Rect({
@@ -284,34 +301,27 @@ export class LevelMapScreenView implements View {
     }
 
 
-    // Updates icon colors and level indicator
-    updateIconColor(level : number) : void {
-        if(level == 2){
-            this.fight2.fill("#433550");
-            this.levelIndicator.points([475, 200, 525, 200, 500, 250]);
+    // Colors the stops up to the current one, moves the arrow, and updates the floor and HP bar.
+    // currentIndex comes from the backend Level: 0-2 = fights 1-3, 3 = rest stop
+    showProgress(floor: number, currentIndex: number, hp: number, maxHp: number) : void {
+        const stops = [this.fight1, this.fight2, this.fight3, this.rest];
+        const arrows = [
+            [200, 400, 250, 400, 225, 450],
+            [475, 200, 525, 200, 500, 250],
+            [770, 300, 820, 300, 795, 350],
+            [1055, 200, 1105, 200, 1080, 250],
+        ];
+        stops.forEach((stop, i) => stop.fill(i <= currentIndex ? "#433550" : "#3b3a3b"));
+        this.levelIndicator.points(arrows[Math.min(currentIndex, arrows.length - 1)]);
 
-        } else if (level == 3){
-            this.fight3.fill("#433550");
-            this.levelIndicator.points([770, 300, 820, 300, 795, 350]);
-
-        } else if (level == 4){
-            this.rest.fill("#433550");
-            this.levelIndicator.points([1055, 200, 1105, 200, 1080, 250]);
-
-        } else if (level == 5){
-            this.stairs.fill("#433550");
-            this.levelIndicator.points([1330, 500, 1380, 500, 1355, 550]);
-
-        }
+        this.floorText.text(`Floor: ${floor}`);
+        this.healthBar.width(maxHp > 0 ? 400 * Math.max(0, Math.min(hp / maxHp, 1)) : 0);
+        this.group.getLayer()?.batchDraw();
     }
 
-    // Resets Icon Colors
-    resetIconColor() : void {
-        this.fight2.fill("#3b3a3b");
-        this.fight3.fill("#3b3a3b");
-        this.rest.fill("#3b3a3b");
-        this.stairs.fill("#3b3a3b");
-        this.levelIndicator.points([200, 400, 250, 400, 225, 450]);
+    showMessage(text: string) : void {
+        this.messageText.text(text);
+        this.group.getLayer()?.batchDraw();
     }
 
     /**

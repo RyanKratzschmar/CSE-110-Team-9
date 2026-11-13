@@ -6,6 +6,7 @@ import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScree
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
 import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPopUpController.ts";
+import { GameSession } from "./GameSession.ts";
 
 /**
  * Main Application - Coordinates all screens
@@ -24,6 +25,7 @@ class App implements ScreenSwitcher {
 	private titleScreenController: TitleScreenController;
 	private combatMainScreenController: CombatMainScreenController;
 	private levelMapScreenController: LevelMapScreenController;
+	private gameSession: GameSession;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -42,9 +44,12 @@ class App implements ScreenSwitcher {
 		// Initialize all screen controllers
 		// Each controller manages a Model, View, and handles user interactions
 
-		this.titleScreenController = new TitleScreenController(this);
-		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp);
-		this.levelMapScreenController = new LevelMapScreenController(this); //
+		// The one game (player, level map, game over) that every screen reads and updates
+		this.gameSession = new GameSession();
+
+		this.titleScreenController = new TitleScreenController(this, this.gameSession);
+		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp, this.gameSession);
+		this.levelMapScreenController = new LevelMapScreenController(this, this.gameSession); //
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -92,7 +97,7 @@ class App implements ScreenSwitcher {
 				break;
 
 			case "map":
-				// Show results with the final score
+				// Show the level map for the current floor
 				this.levelMapScreenController.startMapScreen();
 				break;
 		}
