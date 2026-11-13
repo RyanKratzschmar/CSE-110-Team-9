@@ -20,7 +20,7 @@ export class CombatMainScreenView implements View {
     private enemy: Konva.Rect;
     private player: Konva.Rect;
     private enemyHealthBarBG: Konva.Rect;
-    private equationOverlay: Konva.Rect;
+    private popUpOverlay: Konva.Rect;
     private equationTextBox: Konva.Rect;
     private hintButton: Konva.Rect;
     private hintText: Konva.Text;
@@ -29,13 +29,15 @@ export class CombatMainScreenView implements View {
     private submitAnswerButton: Konva.Rect;
     private submitText: Konva.Text;
     private responseText: Konva.Text;
+    private healthBar: Konva.Rect;
 
     constructor(
         onHintClick : () => void,
         onHintXClick : () => void,
         onAttackClick : () => void,
         onSubmitClick: () => void,
-        onExplanationClick: () => void
+        onExplanationClick: () => void,
+        onPotionClick: () => void
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -83,7 +85,7 @@ export class CombatMainScreenView implements View {
         this.group.add(healthBarBG);
 
         //Player Health Bar
-        const healthBar = new Konva.Rect({
+        this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
             width: 300,
@@ -91,7 +93,7 @@ export class CombatMainScreenView implements View {
             fill: "#0bba14",
             stroke: "#42a847",        
         });  
-        this.group.add(healthBar);
+        this.group.add(this.healthBar);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -137,6 +139,20 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.potionButton);
 
+                // Handle Hint Click
+        this.potionButton.on("mouseenter", () => {
+			document.body.style.cursor = "pointer";
+		});
+
+		this.potionButton.on("mouseleave", () => {
+			document.body.style.cursor = "default";
+         
+		});
+
+        this.potionButton.on("click tap", () => {
+			onPotionClick();
+        });
+
         //Text that says "Potion"
         this.potionButtonText = new Konva.Text({
             text: "Potion",
@@ -146,6 +162,7 @@ export class CombatMainScreenView implements View {
             fontFamily: "Arial",
 			fontSize: 30,
             fill: "#ffff",
+            listening: false,
         })
         this.group.add(this.potionButtonText);
 
@@ -375,7 +392,7 @@ export class CombatMainScreenView implements View {
         this.group.add(explanationText);
 
         // Create overlay when equation is being solved
-        this.equationOverlay = new Konva.Rect({
+        this.popUpOverlay = new Konva.Rect({
             x: 0,
             y: 150,
             width: STAGE_WIDTH,
@@ -383,7 +400,7 @@ export class CombatMainScreenView implements View {
             fill: "#433550",
             visible: false,
         });
-        this.group.add(this.equationOverlay);
+        this.group.add(this.popUpOverlay);
 
         // Create Text Box for Equation
         this.equationTextBox = new Konva.Rect({
@@ -576,6 +593,21 @@ export class CombatMainScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
+    // Updates Player Health Bar
+    setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
+        if (maxHealth <= 0) {
+            this.healthBar.width(0);
+            this.group.getLayer()?.batchDraw();
+            return;
+        }
+
+        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
+
+        this.healthBar.width(400 * percentage);
+
+        this.group.getLayer()?.batchDraw();
+    }
+
     // Resets victory or defeat text, and shows attack and potion buttons
     resetFight(): void {
         this.victoryText.visible(false);
@@ -605,7 +637,7 @@ export class CombatMainScreenView implements View {
 
     // Pop Up Equation Solving
     solveEquation(): void{
-        this.equationOverlay.visible(true);
+        this.popUpOverlay.visible(true);
         this.equationTextBox.visible(true);
         this.hintButton.visible(true);
         this.hintText.visible(true);
@@ -619,7 +651,7 @@ export class CombatMainScreenView implements View {
 
     // Goes from equation back to combat screen
     returnToCombat(): void {
-        this.equationOverlay.visible(false);
+        this.popUpOverlay.visible(false);
         this.equationTextBox.visible(false);
         this.hintButton.visible(false);
         this.hintText.visible(false);
