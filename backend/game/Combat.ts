@@ -24,6 +24,7 @@ type AnswerResult = {
     result: "win" | "lose" | "ongoing";
 };
 
+/** Manages one fight. Routes and GameManager handle screen and level progression. */
 export class Combat {
 
     private player: Player;
@@ -33,6 +34,7 @@ export class Combat {
     private questionId = 1;
     private questionResolved = false;
 
+    // Reuse the run's player to preserve HP. Tests can supply a fixed equation generator.
     constructor(player: Player, enemy: Monster,
         private readonly generateEquation: () => RandomEquation = () =>
             Math.random() < 0.5
@@ -57,6 +59,11 @@ export class Combat {
         return this.enemy.hp;
     }
 
+    getEnemyMaxHp(): number {
+        return this.enemy.maxHp;
+    }
+
+    /** Reads the question without replacing it or revealing its answer. IDs are local to this fight. */
     currentQuestion() : CurrentQuestion {
         return {
             questionId: this.questionId,
@@ -66,6 +73,12 @@ export class Combat {
         };
     }
 
+    /**
+     * Checks one numeric answer and applies damage once for the current question.
+     * Returns undefined for duplicate/stale submissions or a finished fight.
+     * Non-finite answers throw without consuming the question.
+     * After an ongoing result, call startNextQuestion() to allow another turn.
+     */
     resolveAnswer(submission: number, questionId: number): AnswerResult | undefined{
         if (
             this.getGameStatus() !== "active" ||
@@ -82,6 +95,7 @@ export class Combat {
         const correct = this.currentEquation.checkAnswer(submission);
         const correctAnswer = this.currentEquation.getAnswer();
 
+        // only for main game - questionResolved makes it so you can't reuse the same question
         this.questionResolved = true;
 
         // damage the monster
@@ -111,6 +125,7 @@ export class Combat {
         };
     }
 
+    /** Advances only after an answered question while the fight is still active. */
     startNextQuestion(): void {
         if (this.gameStatus !== "active" || !this.questionResolved) {
             return;
@@ -124,6 +139,7 @@ export class Combat {
     }
 
 
+    // Check starting HP as well as HP after each resolved answer.
     private checkBattleStatus(): void {
         if (this.player.isDead()) {
             this.gameStatus = "lost";

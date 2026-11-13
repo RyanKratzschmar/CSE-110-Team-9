@@ -2,6 +2,7 @@
 import { Level } from "./Level";
 import type { NodeType } from "./LevelNode";
 import { Player } from "./Player";
+import type { Combat } from "./Combat";
 
 // What the frontend receives (see the API table in the README)
 export interface GameStateJSON {
@@ -16,6 +17,10 @@ export class GameState {
   readonly player = new Player();
   level = new Level(1);
   gameOver = false;
+  // Preserve the current fight between requests
+  combat: Combat | null = null;
+  // Identify the fight so submissions from an old fight can be rejected
+  combatId: string | null = null;
 
   toJSON(): GameStateJSON {
     return {
