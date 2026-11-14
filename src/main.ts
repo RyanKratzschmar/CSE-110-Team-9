@@ -102,7 +102,7 @@ class App implements ScreenSwitcher {
 			
 			case "leaderboard":
 				//Show leaderboard
-				this.leaderBoardScreenController.startLeaderboard(screen.returnTo ?? { type: "menu" });
+				this.leaderBoardScreenController.startLeaderboard();
 				break;
 		}
 	}

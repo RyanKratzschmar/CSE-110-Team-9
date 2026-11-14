@@ -1,5 +1,5 @@
 import { ScreenController } from '../../types';
-import type {Screen, ScreenSwitcher } from '../../types';
+import type { ScreenSwitcher } from '../../types';
 import type { LeaderboardEntry } from '../../../backend/game/Leaderboard/Leaderboard';
 import { LeaderboardScreenView } from './LeaderboardScreenView';
 import { LeaderboardScreenModel } from './LeaderboardScreenModel';
@@ -11,7 +11,6 @@ export class LeaderBoardScreenController extends ScreenController {
     private readonly model = new LeaderboardScreenModel();
     private readonly view: LeaderboardScreenView;
     private readonly clickSound = new Audio("/click.mp3");
-    private returnTo: Screen = { type: "menu" };
     private loadId = 0;
 
     constructor(screenSwitcher: ScreenSwitcher) {
@@ -20,15 +19,13 @@ export class LeaderBoardScreenController extends ScreenController {
         this.view = new LeaderboardScreenView({
             onScrollBy: (dy) => this.model.scrollBy(dy, this.view.getMaxScroll()),
             onScrollTo: (y) => this.model.scrollTo(y, this.view.getMaxScroll()),
-            onBack: () => this.handleBack(),
             onLeave: () => this.handleLeave()
         });
         this.model.subscribe((state) => this.view.render(state));
         this.view.render(this.model.getState());
     }
 
-    async startLeaderboard(returnTo: Screen): Promise<void> {
-        this.returnTo = returnTo;
+    async startLeaderboard(): Promise<void> {
         this.model.setLoading();
         this.show();
         await this.loadEntries();
@@ -70,11 +67,6 @@ export class LeaderBoardScreenController extends ScreenController {
     private playClick(): void {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
-    }
-
-    private handleBack(): void {
-        this.playClick();
-        this.screenSwitcher.switchToScreen(this.returnTo);
     }
 
     private handleLeave(): void {

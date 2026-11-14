@@ -7,7 +7,6 @@ import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants";
 export interface LeaderboardViewHandlers {
     onScrollBy(dy: number): void;
     onScrollTo(y: number): void;
-    onBack(): void;
     onLeave(): void;
 }
 
@@ -64,7 +63,6 @@ export class LeaderboardScreenView implements View {
             align: "center"
         }));
 
-        this.group.add(this.createButton("Back", LIST_X, 815, "#FFC943", "#433550", () => this.handlers.onBack()));
         this.group.add(this.createButton("Leave", LIST_X + LIST_WIDTH - 200, 815, "#F04A23", "#FFFFFF", () => this.handlers.onLeave()));
 
         const clipGroup = new Konva.Group({
