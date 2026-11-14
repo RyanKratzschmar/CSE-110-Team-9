@@ -5,6 +5,7 @@ import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 export class CombatMainScreenView implements View {
     private group: Konva.Group;
 
+    // Declare all shapes that must be updated mid game
     private dimOverlay: Konva.Rect;
     private hintPopUp: Konva.Rect;
     private hintXButton: Konva.Rect;
@@ -20,11 +21,21 @@ export class CombatMainScreenView implements View {
     private player: Konva.Rect;
     private enemyHealthBarBG: Konva.Rect;
     private equationOverlay: Konva.Rect;
+    private equationTextBox: Konva.Rect;
+    private hintButton: Konva.Rect;
+    private hintText: Konva.Text;
+    private equationText: Konva.Text;
+    private answerBox: Konva.Rect;
+    private submitAnswerButton: Konva.Rect;
+    private submitText: Konva.Text;
+    private responseText: Konva.Text;
 
     constructor(
         onHintClick : () => void,
         onHintXClick : () => void,
         onAttackClick : () => void,
+        onSubmitClick: () => void,
+        onExplanationClick: () => void
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -188,10 +199,6 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.player);
 
-
-
-
-
         // The enemy character
         this.enemy = new Konva.Rect({
             width: 300,
@@ -248,8 +255,20 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(scoreBug);
 
+        // Text Denoting Which Floor player is on.
+        const floorText = new Konva.Text({
+            x: 1200,
+            y: 50,
+            text: "Floor: X",
+            fill: "white",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+        });
+        this.group.add(floorText);
+
         // Create Hint Button
-        const hintButton = new Konva.Rect({
+        this.hintButton = new Konva.Rect({
             x: 1300,
             y: 787.5,
             width: 200,
@@ -257,24 +276,27 @@ export class CombatMainScreenView implements View {
             fill: "#FF9E42",
             stroke: "#cc721d",
             cornerRadius: 10,
+            visible: false,
         })
-        this.group.add(hintButton);
+        this.group.add(this.hintButton);
 
         // Handle Hint Click
-        hintButton.on("mouseenter", () => {
+        this.hintButton.on("mouseenter", () => {
 			document.body.style.cursor = "pointer";
+            this.hintButton.fill("#B678D0");
 		});
 
-		hintButton.on("mouseleave", () => {
+		this.hintButton.on("mouseleave", () => {
 			document.body.style.cursor = "default";
+            this.hintButton.fill("#FF9E42");
 		});
 
-        hintButton.on("click tap", () => {
+        this.hintButton.on("click tap", () => {
 			onHintClick();
         });
 
         // Text that says "get hint"
-        const hintText = new Konva.Text({
+        this.hintText = new Konva.Text({
             x: 1320,
             y: 802.5,
             fontSize: 40,
@@ -283,8 +305,9 @@ export class CombatMainScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
             listening: false,
+            visible: false,
         });
-        this.group.add(hintText);
+        this.group.add(this.hintText);
 
         // Adds Victory Text
         this.victoryText = new Konva.Text({
@@ -311,6 +334,153 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.defeatText);
 
+        // Create Explanation Button
+        const explanationButton = new Konva.Rect({
+            x: 1050,
+            y: 787.5,
+            width: 200,
+            height: 75,
+            fill: "#FF9E42",
+            stroke: "#cc721d",
+            cornerRadius: 10,
+        });
+        this.group.add(explanationButton);
+
+        explanationButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+        });
+
+        explanationButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+        });
+
+        explanationButton.on("click tap", () => {
+            document.body.style.cursor = "default";
+            onExplanationClick();
+        });
+
+        // Text that says "Explain"
+        const explanationText = new Konva.Text({
+            x: 1050,
+            y: 802.5,
+            width: 200,
+            align: "center",
+            fontSize: 40,
+            text: "Explain",
+            fill: "#000000",
+            fontFamily: "arial",
+            fontStyle: "bold",
+            listening: false,
+        });
+        this.group.add(explanationText);
+
+        // Create overlay when equation is being solved
+        this.equationOverlay = new Konva.Rect({
+            x: 0,
+            y: 150,
+            width: STAGE_WIDTH,
+            height: 600,
+            fill: "#433550",
+            visible: false,
+        });
+        this.group.add(this.equationOverlay);
+
+        // Create Text Box for Equation
+        this.equationTextBox = new Konva.Rect({
+            cornerRadius: 10,
+            width: 800,
+            height: 150,
+            x: 400,
+            y: 200,
+            visible: false,
+            fill: "#feffe0",
+            stroke: "black",
+        });
+        this.group.add(this.equationTextBox);
+
+        // Text For Math Problem
+        this.equationText = new Konva.Text({
+            text: "8 x 8",
+            fontFamily: "arial",
+            fontSize: 60,
+            x: 725,
+            y: 250,
+            visible: false,
+        });
+        this.group.add(this.equationText);
+
+        // Box for player answer
+        this.answerBox = new Konva.Rect({
+            width: 300,
+            height: 75,
+            cornerRadius: 10,
+            fill: "white",
+            stroke: "#cc721d",
+            x: 850,
+            y: 400,
+            visible: false,
+            strokeWidth: 10,
+        });
+        this.group.add(this.answerBox);
+
+        // Button to submit answer
+        this.submitAnswerButton = new Konva.Rect({
+            width: 200,
+            height: 100,
+            fill: "#FF9E42",
+            stroke: "#cc721d", 
+            x: 700,
+            y: 600,
+            visible: false,
+            cornerRadius: 10,
+        });
+        this.group.add(this.submitAnswerButton);
+
+        // Text prompting user for answer
+        this.responseText = new Konva.Text({
+            text: "Your Answer:",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            fill: "#FF9E42",
+            x: 550,
+            y: 420,
+            visible: false,
+        });
+        this.group.add(this.responseText);
+
+        // Text for submit button
+        this.submitText = new Konva.Text({
+            text: "SUBMIT",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            x: 725,
+            y: 630,
+            visible: false,
+            listening: false,
+        });
+        this.group.add(this.submitText);
+
+        // Handle Submit Button Click
+        this.submitAnswerButton.on("mouseenter", () => {
+			document.body.style.cursor = "pointer";
+            this.submitAnswerButton.fill("#B678D0");
+		});
+
+		this.submitAnswerButton.on("mouseleave", () => {
+			document.body.style.cursor = "default";
+            this.submitAnswerButton.fill("#FF9E42");
+		});
+
+        this.submitAnswerButton.on("click tap", () => {
+			onSubmitClick();
+        });
+
+        /////////////////////////////////////////////////
+        // POP UPS //////////////////////////////////////
+        // MUST BE AT BOTTOM ////////////////////////////
+        /////////////////////////////////////////////////
 
         // Create Dim Overlay
         this.dimOverlay = new Konva.Rect({
@@ -373,17 +543,6 @@ export class CombatMainScreenView implements View {
         this.hintXButton.on("click tap", () => {
 			onHintXClick();
         });
-
-        // Create overlay when equation is being solved
-        this.equationOverlay = new Konva.Rect({
-            x: 0,
-            y: 150,
-            width: STAGE_WIDTH,
-            height: 600,
-            fill: "#433550",
-            visible: false,
-        });
-        this.group.add(this.equationOverlay);
     }
 
     showHint(): void {
@@ -447,7 +606,31 @@ export class CombatMainScreenView implements View {
     // Pop Up Equation Solving
     solveEquation(): void{
         this.equationOverlay.visible(true);
+        this.equationTextBox.visible(true);
+        this.hintButton.visible(true);
+        this.hintText.visible(true);
+        this.equationText.visible(true);
+        this.answerBox.visible(true);
+        this.submitAnswerButton.visible(true);
+        this.submitText.visible(true);
+        this.responseText.visible(true);
     }
+
+
+    // Goes from equation back to combat screen
+    returnToCombat(): void {
+        this.equationOverlay.visible(false);
+        this.equationTextBox.visible(false);
+        this.hintButton.visible(false);
+        this.hintText.visible(false);
+        this.equationText.visible(false);
+        this.answerBox.visible(false);
+        this.submitAnswerButton.visible(false);
+        this.submitText.visible(false); 
+        this.responseText.visible(false);
+    }
+
+
     /**
 	 * Show the screen
 	 */

@@ -4,6 +4,8 @@ import { TitleScreenController } from "./screens/TitleScreen/TitleScreenControll
 import { CombatMainScreenController } from "./screens/CombatMainScreen/CombatMainScreenController.ts";
 import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScreenController.ts"; //
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
+import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
+import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPopUpController.ts";
 
 /**
  * Main Application - Coordinates all screens
@@ -34,13 +36,19 @@ class App implements ScreenSwitcher {
 		// Create a layer (screens will be added to this layer)
 		this.layer = new Konva.Layer();
 		this.stage.add(this.layer);
+		const explanationPopUp = new WrongAnswerPopUpController(this.stage);
+		const hintPopUp = new HintPopUpController(this.stage);
 
 		// Initialize all screen controllers
 		// Each controller manages a Model, View, and handles user interactions
 
 		this.titleScreenController = new TitleScreenController(this);
-		this.combatMainScreenController = new CombatMainScreenController(this);
+		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp);
 		this.levelMapScreenController = new LevelMapScreenController(this); //
+
+		window.addEventListener("resize", () => {
+			hintPopUp.handleResize();
+		});
 
 		// Add all screen groups to the layer
 		// All screens exist simultaneously but only one is visible at a time
