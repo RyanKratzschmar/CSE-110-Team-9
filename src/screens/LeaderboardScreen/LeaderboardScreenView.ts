@@ -30,6 +30,7 @@ const ROW_A = "#5A4A78";
 const ROW_B = "#4F4268";
 const DIVIDER = "#3A2E4A";
 
+//Draws the leaderboard screen with Konva: the title, the scrollable list of scores, the scrollbar, and the Leave button
 export class LeaderboardScreenView implements View {
     private readonly group: Konva.Group;
     private readonly listGroup: Konva.Group;
@@ -40,6 +41,7 @@ export class LeaderboardScreenView implements View {
     private renderedLoading: boolean | null = null;
     private readonly buttonBgs: Konva.Rect[] = [];
 
+    //Builds the background, title, Leave button, clipped list area, and draggable scrollbar, and sets up mouse wheel scrolling
     constructor(private readonly handlers: LeaderboardViewHandlers) {
         this.group = new Konva.Group({ visible: false });
 
@@ -120,6 +122,7 @@ export class LeaderboardScreenView implements View {
         });
     }
 
+    //Rebuilds the rows only when the entries or loading state change, then updates the scroll position and scrollbar
     render(state: LeaderboardScreenState): void {
         if (state.leaderboard !== this.renderedEntries || state.loading !== this.renderedLoading) {
             this.buildRows(state.leaderboard, state.loading);
@@ -131,28 +134,34 @@ export class LeaderboardScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
+    //Returns how far the list can scroll, or 0 if every row fits on screen
     getMaxScroll(): number {
         return Math.max(0, this.contentHeight - LIST_HEIGHT);
     }
 
+    //Returns the height of the visible list area
     getViewportHeight(): number {
         return LIST_HEIGHT;
     }
 
+    //Returns the Konva group that holds the whole screen
     getGroup(): Konva.Group {
         return this.group;
     }
 
+    //Makes the screen visible
     show(): void {
         this.group.visible(true);
     }
 
+    //Hides the screen and resets the cursor and button colors so no hover effect stays behind
     hide(): void {
         document.body.style.cursor = "default";
         this.buttonBgs.forEach((bg) => bg.fill(bg.getAttr("baseFill")));
         this.group.visible(false);
     }
 
+    //Draws one row per entry (rank, date, score) with gold, silver, and bronze for the top 3, or a loading/empty message
     private buildRows(entries: readonly LeaderboardEntry[], loading: boolean): void {
         this.listGroup.destroyChildren();
 
@@ -224,6 +233,7 @@ export class LeaderboardScreenView implements View {
         this.contentHeight = entries.length * ROW_HEIGHT;
     }
 
+    //Sizes and positions the scrollbar to match the scroll position, and hides it when there's nothing to scroll
     private updateScrollbar(scrollY: number): void {
         const max = this.getMaxScroll();
         const scrollable = max > 0;
@@ -238,12 +248,14 @@ export class LeaderboardScreenView implements View {
         this.scrollThumb.y(LIST_Y + (scrollY / max) * (LIST_HEIGHT - thumbHeight));
     }
 
+    //Formats a timestamp as a readable date and time, or returns it unchanged if it isn't a valid date
     private formatDate(timestamp: string): string {
         const date = new Date(timestamp);
 
         return Number.isNaN(date.getTime())? timestamp : date.toLocaleString(undefined, {month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
     }
 
+    //Creates a clickable button that changes color and shows a pointer cursor on hover
     private createButton(label: string, x: number, y: number, fill: string, textColor: string, onClick: () => void): Konva.Group {
         const button = new Konva.Group({ x, y });
         const bg = new Konva.Rect( {

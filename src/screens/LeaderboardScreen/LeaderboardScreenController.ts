@@ -6,6 +6,7 @@ import { LeaderboardScreenModel } from './LeaderboardScreenModel';
 
 const LINE_SCROLL = 60;
 
+//Connects the leaderboard model and view, loads scores from the server, and handles input
 export class LeaderBoardScreenController extends ScreenController {
     private readonly screenSwitcher: ScreenSwitcher;
     private readonly model = new LeaderboardScreenModel();
@@ -13,6 +14,7 @@ export class LeaderBoardScreenController extends ScreenController {
     private readonly clickSound = new Audio("/click.mp3");
     private loadId = 0;
 
+    //Creates the view with its scroll and leave handlers, and redraws the view whenever the model changes
     constructor(screenSwitcher: ScreenSwitcher) {
         super();
         this.screenSwitcher = screenSwitcher;
@@ -25,26 +27,31 @@ export class LeaderBoardScreenController extends ScreenController {
         this.view.render(this.model.getState());
     }
 
+    //Shows the screen with a loading message, then fetches and displays the leaderboard
     async startLeaderboard(): Promise<void> {
         this.model.setLoading();
         this.show();
         await this.loadEntries();
     }
 
+    //Shows the screen and starts listening for keyboard scrolling
     show(): void {
         super.show();
         window.addEventListener("keydown", this.handleKeyDown);
     }
 
+    //Stops listening for keyboard scrolling and hides the screen
     hide(): void {
         window.removeEventListener("keydown", this.handleKeyDown);
         super.hide();
     }
 
+    //Returns the leaderboard view
     getView(): LeaderboardScreenView {
         return this.view;
     }
 
+    //Fetches the leaderboard from the server, ignoring results from older requests, and shows an empty list if it fails
     private async loadEntries(): Promise<void> {
         const id = ++this.loadId;
         try {
@@ -64,11 +71,13 @@ export class LeaderBoardScreenController extends ScreenController {
         }
     }
 
+    //Plays the click sound
     private playClick(): void {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
     }
 
+    //Plays the click sound and returns to the main menu
     private handleLeave(): void {
         this.playClick();
         this.screenSwitcher.switchToScreen({ type: "menu" });

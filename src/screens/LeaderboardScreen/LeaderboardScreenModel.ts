@@ -31,6 +31,7 @@ export class LeaderboardScreenModel {
         this.setState({ leaderboard: entries, scrollY: 0, loading: false });
     }
 
+    //Clears the entries, scrolls to the top, and shows the loading message
     setLoading(): void {
         this.setState({ leaderboard: [], scrollY: 0, loading: true });
     }
