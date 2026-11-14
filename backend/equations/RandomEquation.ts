@@ -11,25 +11,15 @@ export abstract class RandomEquation {
     // The equation will store the equation in an array to be analyzed by testing [num, operator, num, operator, num, etc.]
     // Important to note that this will follow strict format rules
     equation!: Array<any>;
+    // Difficulty per term stores scaling value for difficulties
+    difficultyPerTerm: number;
 
     // Constructor has two paths:
     // If fixed, then constructs an equation from given parameters (assumes that inputted values are correct for testing purposes)
     // If not fixed, then constructs a random equation - implemented separately in each concrete implementation
-    constructor(fixed: boolean, print?: string, answer?: number, equation?: Array<any>) {
-        if (fixed) {
-            // This should be pretty difficult to break, assume user best judgement (this case mainly used only for testing)
-            this.print = String(print);
-            this.answer = Number(answer);
-
-            // Prevent double stacking arrays
-            if (Array.isArray(equation)) {
-                this.equation = (equation);
-            } else {
-                this.equation = Array<any>(equation);
-            }
-            
-        }
-        // ELSE IMPLEMENTED IN THE CONCRETE IMPLEMENTATIONS
+    constructor(difficulty: number) {
+        this.equation = [];
+        this.difficultyPerTerm = 25;
     }
 
     // Returns the equation as a string to print out

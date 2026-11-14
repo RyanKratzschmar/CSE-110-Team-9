@@ -4,31 +4,56 @@ import { RandomEquation } from "./RandomEquation";
 
 export class DivisionEquation extends RandomEquation{
 
-    constructor(fixed: boolean, print?: string, answer?: number, equation?: Array<any>) {
+    constructor(difficulty: number) {
 
-        // If fixed, will instantiate with given parameters
-        super(fixed, print, answer, equation);
+        // Start by calling super
+        super(difficulty);
+
         // Sets type regardless
         this.type = "Division";
 
-        // If not fixed, wont be instantiated with parameters: Must fill out print, answer, equation
-        if (!fixed) {
-            // Get the two factors for a basic multiplication equation
-            let factorOne = this.generateNumber(10, 100);
-            let factorTwo = this.generateNumber(10, 100);
-            // Get the answer to that question
+        if (difficulty >= 0) {
+            // Difficulty determines the size of the terms
+            let lowerBound = 10;
+            let upperBound = 100;
+
+            // Divisor can be a 2 digit number
+            let termTwo = this.generateNumber(lowerBound, upperBound);
+            // Let the answer scale ~ linearly with difficulty
+            // Every X difficulty, increase potential size by 1 and factor by 2
+            let extraLength = Math.floor(difficulty / this.difficultyPerTerm);
+            for (let i = 0; i < extraLength; i++) {
+                lowerBound = lowerBound * 10;
+                upperBound = upperBound * 20;
+            }
+            let quotient = this.generateNumber(lowerBound,upperBound);
+            // Dividend size based on the size of the quotient and the answer
+            let termOne = termTwo * quotient;
+
+            // Answer is the quotient
+            this.answer = quotient;
+
+            // Equation stores the terms for the question
+            this.equation = [termOne, "/", termTwo];
+
+            // Print is the written question
+            this.print = String(termOne) + "/" + String(termTwo) + "=?";
+        } else {
+            // If difficulty less than zero, do a basic times table but with division
+            // factorOne = x, factorTwo = y, product = z
+            // Equation is z / x = y
+            let factorOne = this.generateNumber(1,13);
+            let factorTwo = this.generateNumber(1,13);
             let product = factorOne * factorTwo;
 
-            // The division equation is simply a reworked multiplication equation - a*b=c can be c/b = a
+            // y is the answer
+            this.answer = factorTwo;
 
-            // Answer is equal to factorOne
-            this.answer = factorOne;
+            // store equation
+            this.equation = [product, "/", factorOne];
 
-            // Equation is an array holding product, division symbol, factorTwo
-            this.equation = [product, "/", factorTwo];
-
-            // Print holds the string version of the equation
-            this.print = String(product) + " / " + String(factorTwo) + " = ";
+            // print equation
+            this.print = String(product) + "/" + String(factorOne) + "=?";
         }
     }
 

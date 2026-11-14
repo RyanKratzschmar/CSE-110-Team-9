@@ -3,8 +3,8 @@
 import {Player} from "./Player";
 import {Monster} from "./Monster";
 import type { RandomEquation } from "../equations/RandomEquation";
-import { MultiplicationEquation } from "../equations/MultiplicationEquation";
-import { DivisionEquation } from "../equations/DivisionEquation";
+import { getEquation } from "../equations/EquationFactory"; 
+import { equationType } from "../equations/EquationFactory";
 
 type BattleStatus = "active" | "won" | "lost";
 
@@ -33,15 +33,11 @@ export class Combat {
     private questionId = 1;
     private questionResolved = false;
 
-    constructor(player: Player, enemy: Monster,
-        private readonly generateEquation: () => RandomEquation = () =>
-            Math.random() < 0.5
-                ? new MultiplicationEquation(false)
-                : new DivisionEquation(false)
-    ) {
+    constructor(player: Player, enemy: Monster,) {
         this.player = player;
         this.enemy = enemy;
-        this.currentEquation = this.generateEquation();
+        // THE 1 HERE SHOULD BE UPDATED WITH DIFFICULTY IF/WHEN WE GET THERE
+        this.currentEquation = getEquation({type: "Combat"}, 1);
         this.checkBattleStatus();
     }
 
