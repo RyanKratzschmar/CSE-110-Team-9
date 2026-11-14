@@ -616,6 +616,10 @@ export class CombatMainScreenView implements View {
         this.responseText.visible(true);
     }
 
+    setQuestion(question: string): void {
+        this.equationText.text(question);
+       this.group.getLayer()?.batchDraw();
+    }
 
     // Goes from equation back to combat screen
     returnToCombat(): void {
@@ -629,6 +633,8 @@ export class CombatMainScreenView implements View {
         this.submitText.visible(false); 
         this.responseText.visible(false);
     }
+
+
 
 
     /**

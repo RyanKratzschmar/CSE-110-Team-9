@@ -4,6 +4,7 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { CombatMainScreenView } from "./CombatMainScreenView.ts";
 import { CombatMainScreenModel } from "./CombatMainScreenModel.ts";
+import {getCombat } from "../../../frontend/src/api.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -14,6 +15,8 @@ export class CombatMainScreenController extends ScreenController {
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
+
+    private runId: string | null = null;
 
     constructor(
         screenSwitcher: ScreenSwitcher,
@@ -135,5 +138,16 @@ export class CombatMainScreenController extends ScreenController {
 
     getView(): CombatMainScreenView {
         return this.view;
+    }
+
+    // fetch current fight and store it in model
+    // will probably just merge this logic into startGame()
+    async loadFight(runId: string): Promise<void> {
+        const combat = await getCombat(runId);
+
+        this.runId = runId;
+        this.model.loadCombat(combat);
+
+        this.view.setQuestion(this.model.getQuestion());
     }
 }

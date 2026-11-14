@@ -1,12 +1,19 @@
 /*
 /CombatMainScreenModel - Manages game state
 */
+
+import type { CombatResponse } from "../../../frontend/src/api.ts";
+
 export class CombatMainScreenModel {
     private score = 0;
     private playerMaxHealth = 0;
     private enemyMaxHealth = 50;
     private playerCurrentHealth = 0;
     private enemyCurrentHealth = 50;
+
+    private combatId: string | null = null;
+    private questionId: number | null = null;
+    private question = "";
 
     // reset game score
     resetScore(): void{
@@ -33,6 +40,18 @@ export class CombatMainScreenModel {
         return this.enemyMaxHealth;
     }
 
+    getCombatId(): string | null {
+        return this.combatId;
+    }
+
+    getQuestionId(): number | null {
+        return this.questionId;
+    }
+
+    getQuestion(): string {
+        return this.question;
+    }
+
     // Increase player's score by certain amount
     increaseScore(amount: number): void {
         this.score += amount;
@@ -50,7 +69,7 @@ export class CombatMainScreenModel {
 
     // Set player's current health
     setPlayerHealth(amount: number): void {
-        this.playerCurrentHealth += amount;
+        this.playerCurrentHealth = amount;
     }
 
     // Set enemy's current health
@@ -63,5 +82,14 @@ export class CombatMainScreenModel {
         this.enemyCurrentHealth = 50;
         this.enemyMaxHealth = 50;
     }
+
+    loadCombat(data: CombatResponse): void {
+        this.combatId = data.combatId;
+        this.questionId = data.questionId;
+        this.question = data.question;
+        this.setPlayerHealth(data.playerHp);
+        this.setEnemyCurrentHealth(data.enemyHp);
+    }
+
 
 }
