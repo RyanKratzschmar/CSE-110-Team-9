@@ -28,7 +28,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + "*" + String(term2) + "=?";
+        let print = String(term1) + "*" + String(term2) + "= ?";
         expect(mult.getPrint()).toBe(print);
       });
 
@@ -50,7 +50,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + "*" + String(term2) + "=?";
+        let print = String(term1) + "*" + String(term2) + "= ?";
         expect(mult.getPrint()).toBe(print);
     });
 
@@ -72,7 +72,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + "*" + String(term2) + "=?";
+        let print = String(term1) + "*" + String(term2) + "= ?";
         expect(mult.getPrint()).toBe(print);
     });
 
@@ -98,7 +98,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2 * term3);
         // Check print based on terms
-        let print = String(term1) + "*" + String(term2) + "*" + String(term3) + "=?";
+        let print = String(term1) + "*" + String(term2) + "*" + String(term3) + "= ?";
         expect(mult.getPrint()).toBe(print);
       });
 
@@ -118,7 +118,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + "*" + String(term2) + "=?";
+        let print = String(term1) + "*" + String(term2) + "= ?";
         expect(mult.getPrint()).toBe(print);
     });
     
@@ -144,7 +144,7 @@ describe("Division", () => {
         // Answer should be term1 / term 2
         expect(answer).toBe(term1 / term2);
         // Check print based on terms
-        let print = String(term1) + "/" + String(term2) + "=?";
+        let print = String(term1) + "/" + String(term2) + "= ?";
         expect(div.getPrint()).toBe(print);
     });
 
@@ -166,7 +166,7 @@ describe("Division", () => {
         // Answer should be term1 / term 2
         expect(answer).toBe(term1 / term2);
         // Check print based on terms
-        let print = String(term1) + "/" + String(term2) + "=?";
+        let print = String(term1) + "/" + String(term2) + "= ?";
         expect(div.getPrint()).toBe(print);
     });
 
@@ -188,7 +188,7 @@ describe("Division", () => {
         // Answer should be term1 / term 2
         expect(answer).toBe(term1 / term2);
         // Check print based on terms
-        let print = String(term1) + "/" + String(term2) + "=?";
+        let print = String(term1) + "/" + String(term2) + "= ?";
         expect(div.getPrint()).toBe(print);
     });
 
@@ -213,7 +213,7 @@ describe("Division", () => {
         // Answer should be term1 / term 2
         expect(answer).toBe(term1 / term2);
         // Check print based on terms
-        let print = String(term1) + "/" + String(term2) + "=?";
+        let print = String(term1) + "/" + String(term2) + "= ?";
         expect(div.getPrint()).toBe(print);
     });
 });
@@ -264,8 +264,8 @@ describe("Pemdas", () => {
         }
         expect(pemdas.getAnswer()).toBe(final);
         // Print should be based on the bounds of the size
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(13);
-        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(9);
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(14);
+        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(10);
     });
 
     // Test for input 0 -> should be the same as 1
@@ -312,8 +312,8 @@ describe("Pemdas", () => {
         }
         expect(pemdas.getAnswer()).toBe(final);
         // Print should be based on the bounds of the size
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(13);
-        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(9);
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(14);
+        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(10);
     });
 
     // Test for difficulties greater than 25 -> should be larger than 2 equations
@@ -380,8 +380,8 @@ describe("Pemdas", () => {
         }
         expect(pemdas.getAnswer()).toBe(final);
         // Print should be based on the bounds of the size, 6 terms each of size 1 or 2
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(19);
-        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(13);
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(20);
+        expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(14);
     });
 
     // Test for negative difficulties -> should throw error

@@ -4,7 +4,6 @@ import {Player} from "./Player";
 import {Monster} from "./Monster";
 import type { RandomEquation } from "../equations/RandomEquation";
 import { getEquation } from "../equations/EquationFactory"; 
-import { equationType } from "../equations/EquationFactory";
 
 type BattleStatus = "active" | "won" | "lost";
 
@@ -32,12 +31,16 @@ export class Combat {
     private currentEquation: RandomEquation;
     private questionId = 1;
     private questionResolved = false;
+    private difficulty: number;
 
-    constructor(player: Player, enemy: Monster,) {
+    constructor(player: Player, enemy: Monster, difficulty: number,
+        private readonly generateEquation: () => RandomEquation = () =>
+            getEquation({type: "Combat"}, this.difficulty)
+    ) {
         this.player = player;
         this.enemy = enemy;
-        // THE 1 HERE SHOULD BE UPDATED WITH DIFFICULTY IF/WHEN WE GET THERE
-        this.currentEquation = getEquation({type: "Combat"}, 1);
+        this.difficulty = difficulty;
+        this.currentEquation = this.generateEquation();
         this.checkBattleStatus();
     }
 
@@ -112,7 +115,7 @@ export class Combat {
             return;
         }
 
-        const nextEquation = this.generateEquation();
+        const nextEquation = getEquation({type: "Combat"}, this.difficulty);
 
         this.currentEquation = nextEquation;
         this.questionId += 1;

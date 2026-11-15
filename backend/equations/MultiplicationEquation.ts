@@ -4,12 +4,17 @@ import { RandomEquation } from "./RandomEquation";
 
 export class MultiplicationEquation extends RandomEquation{
 
-    constructor(difficulty: number) {
+    constructor(difficulty: number, equation?: Array<any>, answer?: number) {
         // Start by calling super
-        super(difficulty);
+        super(difficulty, equation, answer);
 
         // Sets type regardless
         this.type = "Multiplication";
+
+        // Dont do the rest if there is an equation and answer provided
+        if (equation !== null && equation !== undefined && answer !== null && answer !== undefined) {
+            return;
+        }
 
         if (difficulty >= 0) {
             // Difficulty determines the number of terms (one extra term every X difficulty)
@@ -49,7 +54,7 @@ export class MultiplicationEquation extends RandomEquation{
             for (let i = 0; i < this.equation.length; i++) {
                 written = written + String(this.equation[i]);
             }
-            written = written + "=?";
+            written = written + "= ?";
             this.print = written;
         } else {
             // If difficulty less than zero, do a basic times table but with division
@@ -66,7 +71,7 @@ export class MultiplicationEquation extends RandomEquation{
             this.equation = [factorOne, "*", factorTwo];
 
             // print equation
-            this.print = String(factorOne) + "*" + String(factorTwo) + "=?";
+            this.print = String(factorOne) + "*" + String(factorTwo) + "= ?";
         }
     }
 }

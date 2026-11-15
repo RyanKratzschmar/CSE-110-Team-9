@@ -6,17 +6,23 @@ import { RandomEquation } from "./RandomEquation";
 
 export class MultiOperationEquation extends RandomEquation{
 
-    constructor(difficulty: number) {
-
+    constructor(difficulty: number, equation?: Array<any>, answer?: number) {
+        
+        // Break if negative difficulty
         if (difficulty < 0) {
             throw new Error('Negative difficulty for PEMDAS');
         }
 
         // Start by calling super
-        super(difficulty);
+        super(difficulty, equation, answer);
 
         // Sets type regardless
         this.type = "Pemdas";
+
+        // Dont do the rest if there is an equation and answer provided
+        if (equation !== null && equation !== undefined && answer !== null && answer !== undefined) {
+            return;
+        }
 
         // Term size is always between 1 and 2 digits
         let lowerBound = 1;
@@ -94,10 +100,10 @@ export class MultiOperationEquation extends RandomEquation{
 
         // Get the print from the full array
         let written = "";
-            for (const obj in full) {
-                written = written + String(obj);
-            }
-        written = written + "=?";
+        for (let i = 0; i < this.equation.length; i++) {
+            written = written + String(this.equation[i]);
+        }
+        written = written + "= ?";
         this.print = written;
     }
 
@@ -121,7 +127,7 @@ export class MultiOperationEquation extends RandomEquation{
             for (const obj in full) {
                 written = written + String(obj);
             }
-        written = written + "=?";
+        written = written + "= ?";
         this.print = written;
     }
 }

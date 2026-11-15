@@ -4,13 +4,17 @@ import { RandomEquation } from "./RandomEquation";
 
 export class DivisionEquation extends RandomEquation{
 
-    constructor(difficulty: number) {
-
+    constructor(difficulty: number, equation?: Array<any>, answer?: number) {
         // Start by calling super
-        super(difficulty);
+        super(difficulty, equation, answer);
 
         // Sets type regardless
         this.type = "Division";
+
+        // Dont do the rest if there is an equation and answer provided
+        if (equation !== null && equation !== undefined && answer !== null && answer !== undefined) {
+            return;
+        }
 
         if (difficulty >= 0) {
             // Difficulty determines the size of the terms
@@ -37,7 +41,7 @@ export class DivisionEquation extends RandomEquation{
             this.equation = [termOne, "/", termTwo];
 
             // Print is the written question
-            this.print = String(termOne) + "/" + String(termTwo) + "=?";
+            this.print = String(termOne) + "/" + String(termTwo) + "= ?";
         } else {
             // If difficulty less than zero, do a basic times table but with division
             // factorOne = x, factorTwo = y, product = z
@@ -53,7 +57,7 @@ export class DivisionEquation extends RandomEquation{
             this.equation = [product, "/", factorOne];
 
             // print equation
-            this.print = String(product) + "/" + String(factorOne) + "=?";
+            this.print = String(product) + "/" + String(factorOne) + "= ?";
         }
     }
 

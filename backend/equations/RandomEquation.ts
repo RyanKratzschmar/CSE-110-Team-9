@@ -17,9 +17,21 @@ export abstract class RandomEquation {
     // Constructor has two paths:
     // If fixed, then constructs an equation from given parameters (assumes that inputted values are correct for testing purposes)
     // If not fixed, then constructs a random equation - implemented separately in each concrete implementation
-    constructor(difficulty: number) {
+    constructor(difficulty: number, equation?: Array<any>, answer?: number) {
         this.equation = [];
         this.difficultyPerTerm = 25;
+        // Only runs if given an explicit equation and answer
+        if (equation !== null && equation !== undefined && answer !== null && answer !== undefined) {
+            // Sets the answer equation and print
+            this.answer = answer;
+            this.equation = equation;
+            let written = "";
+            for (let i = 0; i < equation.length; i++) {
+                written = written + String(equation[i]);
+            }
+            written = written + "= ?";
+            this.print = written;
+        }
     }
 
     // Returns the equation as a string to print out
