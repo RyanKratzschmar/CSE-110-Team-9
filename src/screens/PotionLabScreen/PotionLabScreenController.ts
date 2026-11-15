@@ -20,10 +20,36 @@ export class PotionLabScreenController extends ScreenController {
 
         this.combatModel = combatModel;
 
-        this.view = new PotionLabScreenView();
+        this.view = new PotionLabScreenView(
+            () => this.handleLeaveClick(),
+            () => this.handleBasicClick(),
+            () => this.handleAdvancedClick(),
+        );
 
         this.clickSound = new Audio("/click.mp3");
 
+    }
+
+    // Switches back to level map screen when leave is clicked
+    handleLeaveClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.screenSwitcher.switchToScreen({ type : "map" });
+    }
+
+    handleBasicClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.view.startBasicRecipe();
+    }
+
+    handleAdvancedClick() : void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.view.startAdvancedRecipe();
     }
 
     startPotionLabScreen(): void {

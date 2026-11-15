@@ -30,6 +30,8 @@ export class CombatMainScreenView implements View {
     private submitText: Konva.Text;
     private responseText: Konva.Text;
     private healthBar: Konva.Rect;
+    private explanationButton: Konva.Rect;
+    private explanationText: Konva.Text;
 
     constructor(
         onHintClick : () => void,
@@ -352,7 +354,7 @@ export class CombatMainScreenView implements View {
         this.group.add(this.defeatText);
 
         // Create Explanation Button
-        const explanationButton = new Konva.Rect({
+        this.explanationButton = new Konva.Rect({
             x: 1050,
             y: 787.5,
             width: 200,
@@ -360,24 +362,25 @@ export class CombatMainScreenView implements View {
             fill: "#FF9E42",
             stroke: "#cc721d",
             cornerRadius: 10,
+            visible: false,
         });
-        this.group.add(explanationButton);
+        this.group.add(this.explanationButton);
 
-        explanationButton.on("mouseenter", () => {
+        this.explanationButton.on("mouseenter", () => {
             document.body.style.cursor = "pointer";
         });
 
-        explanationButton.on("mouseleave", () => {
+        this.explanationButton.on("mouseleave", () => {
             document.body.style.cursor = "default";
         });
 
-        explanationButton.on("click tap", () => {
+        this.explanationButton.on("click tap", () => {
             document.body.style.cursor = "default";
             onExplanationClick();
         });
 
         // Text that says "Explain"
-        const explanationText = new Konva.Text({
+        this.explanationText = new Konva.Text({
             x: 1050,
             y: 802.5,
             width: 200,
@@ -388,8 +391,9 @@ export class CombatMainScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
             listening: false,
+            visible: false,
         });
-        this.group.add(explanationText);
+        this.group.add(this.explanationText);
 
         // Create overlay when equation is being solved
         this.popUpOverlay = new Konva.Rect({
@@ -646,6 +650,8 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(true);
         this.submitText.visible(true);
         this.responseText.visible(true);
+        this.explanationButton.visible(true);
+        this.explanationText.visible(true);
     }
 
 
@@ -660,6 +666,8 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(false);
         this.submitText.visible(false); 
         this.responseText.visible(false);
+        this.explanationButton.visible(false);
+        this.explanationText.visible(false);
     }
 
 

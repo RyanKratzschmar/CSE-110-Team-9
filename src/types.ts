@@ -18,7 +18,8 @@ export type Screen =
 	| { type: "game" }
 	| { type: "map"}
 	| { type: "potion" }
-	| { type: "rest" };
+	| { type: "rest" }
+	| { type: "upgrade" }
 
 export abstract class ScreenController {
 	abstract getView(): View;

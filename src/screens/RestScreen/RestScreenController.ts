@@ -28,16 +28,25 @@ export class RestScreenController extends ScreenController {
 
     // Handles click on continue button
     handleContinueClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
         this.view.minigamePopUp();
     }
 
     // Handles click on potion button
     handlePotionClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
         this.screenSwitcher.switchToScreen({ type: "potion" });
     }
     
     // Handles click on upgrade button
     handleUpgradeClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
         this.screenSwitcher.switchToScreen({ type: "upgrade" });
     }
 
