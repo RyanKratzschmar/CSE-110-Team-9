@@ -49,8 +49,6 @@ class App implements ScreenSwitcher {
 		this.levelMapScreenController = new LevelMapScreenController(this); //
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this);
 
-		this.upgradeMinigameScreenController.setPlayerHealth(75, 100);
-
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
 		});

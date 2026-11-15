@@ -4,10 +4,12 @@ import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 import { UPGRADE_INFO } from "./UpgradeMinigameScreenModel.ts";
 import type { UpgradeMinigameState, UpgradePhase, UpgradeType } from "./UpgradeMinigameScreenModel.ts";
 
+//Functions the view calls when the player clicks a button or presses a key
 export interface UpgradeMinigameViewHandlers {
     onChoose(type: UpgradeType): void;
     onStart(): void;
     onSubmit(answer: string): void;
+    onNext(): void;
     onBack(): void;
     onLeave(): void;
 }
@@ -55,10 +57,11 @@ const MONO = "Courier New, monospace";
 
 const FEEDBACK_TEXT = {
     correct: { text: "Correct!", color: "#2E8B3E" },
-    incorrect: { text: "Incorrect - next question!", color: "#D7263D" },
+    incorrect: { text: "Incorrect answer!", color: "#D7263D" },
     invalid: { text: "Type a number first.", color: "#4B2C83" }
 } as const;
 
+//Draws the upgrade minigame: one screen whose middle panel and footer buttons change with the phase
 export class UpgradeMinigameScreenView implements View {
     private readonly group: Konva.Group;
     private readonly buttonBgs: Konva.Rect[] = [];
@@ -79,6 +82,8 @@ export class UpgradeMinigameScreenView implements View {
     private readonly workshopTitle: Konva.Text;
     private readonly workshopEmoji: Konva.Text;
     private readonly startButton: Konva.Group;
+    private readonly submitButton: Konva.Group;
+    private readonly nextButton: Konva.Group;
 
     private readonly completeEmoji: Konva.Text;
     private readonly completeSolvedText: Konva.Text;
@@ -95,7 +100,9 @@ export class UpgradeMinigameScreenView implements View {
 
     private answerBuffer = "";
     private lastPhase: UpgradePhase | null = null;
+    private lastAwaitingNext = false;
     
+    //Builds the header, footer, and all three middle panels once; render() only shows, hides, and updates them
     constructor(private readonly handlers: UpgradeMinigameViewHandlers) {
         this.group = new Konva.Group({ visible: false });
         
@@ -212,7 +219,9 @@ export class UpgradeMinigameScreenView implements View {
         });
         
         this.answerGroup.add(this.answerText);
-        this.answerGroup.add(this.createButton("Submit", BOX_X + 280, BOX_Y + 325, 200, 60, BLUE, "#FFFFFF", () => this.submitAnswer()));
+        this.submitButton = this.createButton("Submit", BOX_X + 280, BOX_Y + 325, 200, 60, BLUE, "#FFFFFF", () => this.submitAnswer());
+        this.nextButton = this.createButton("Next", BOX_X + 280, BOX_Y + 325, 200, 60, ORANGE, "#FFFFFF", () => this.handlers.onNext());
+        this.answerGroup.add(this.submitButton, this.nextButton);
 
         this.feedbackText = new Konva.Text({
             x: BOX_X,
@@ -364,6 +373,7 @@ export class UpgradeMinigameScreenView implements View {
         this.group.add(this.choosePanel, this.workshopPanel, this.completePanel);
     }
 
+    //Shows the panel and footer buttons for the current phase and fills in the latest values
     render(state: UpgradeMinigameState): void {
         const { phase } = state;
         if (phase !== this.lastPhase) {
@@ -391,16 +401,19 @@ export class UpgradeMinigameScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
+    //Returns the Konva group that holds the whole screen
     getGroup(): Konva.Group {
         return this.group;
     }
 
+    //Makes the screen visible and starts listening for typed answers
     show(): void {
         this.group.visible(true);
         window.addEventListener("keydown", this.handleKeyDown);
         this.group.getLayer()?.batchDraw();
     }
 
+    //Stops listening for typed answers, clears hover effects, and hides the screen
     hide(): void {
         window.removeEventListener("keydown", this.handleKeyDown);
         this.resetHover();
@@ -408,6 +421,7 @@ export class UpgradeMinigameScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
+    //Updates the ready and solving phases: instructions and Start before the round, then the timer, problem, answer, and Submit/Next during it
     private renderWorkshop(state: UpgradeMinigameState, solving: boolean): void {
         if (state.upgradeType !== null) {
             const info = UPGRADE_INFO[state.upgradeType];
@@ -432,15 +446,24 @@ export class UpgradeMinigameScreenView implements View {
         this.solvedText.text(`Solved: ${state.correctCount}`);
         this.problemText.text(state.problemText);
         this.updateAnswerText();
+        this.submitButton.visible(!state.awaitingNext);
+        this.nextButton.visible(state.awaitingNext);
+        
+        if (state.awaitingNext !== this.lastAwaitingNext) {
+            this.lastAwaitingNext = state.awaitingNext;
+            this.resetHover();
+        }
 
         if (state.feedback === null) {
             this.feedbackText.text("");
-        } else {
-            this.feedbackText.text(FEEDBACK_TEXT[state.feedback].text);
+        } else {            
+            const message = FEEDBACK_TEXT[state.feedback].text;
+            this.feedbackText.text(state.feedback === "incorrect" ? `${message} ${state.revealedAnswer}` : message);
             this.feedbackText.fill(FEEDBACK_TEXT[state.feedback].color);
         }
     }
 
+    //Updates the complete phase: the score, then the stat change, a loading message, or an error
     private renderComplete(state: UpgradeMinigameState): void {
         if (state.upgradeType === null) {
             return;
@@ -473,6 +496,7 @@ export class UpgradeMinigameScreenView implements View {
         }
     }
 
+    //Builds the top bar (HP bar, title, score, and floor) and returns the health bar so it can be resized later
     private buildHeader(): Konva.Rect {
         this.group.add(new Konva.Rect({
             x: 0,
@@ -514,31 +538,10 @@ export class UpgradeMinigameScreenView implements View {
         
         this.group.add(healthBar);
 
-        this.group.add(new Konva.Rect({
-            x: 570, 
-            y: 37, 
-            width: 25, 
-            height: 25, 
-            cornerRadius: 5, 
-            rotation: 45,
-            fill: SCORE_ORANGE, 
-            stroke: "#cc721d"
-        }));
-
         this.group.add(new Konva.Text({
-            x: 600,
-            y: 35,
-            text: "Score",
-            fontSize: 40,
-            fontFamily: FONT,
-            fill: SCORE_ORANGE
-        }));
-
-
-        this.group.add(new Konva.Text({
-            x: 720,
+            x: 0,
             y: 0,
-            width: 530,
+            width: STAGE_WIDTH,
             height: HEADER_HEIGHT,
             align: "center",
             verticalAlign: "middle",
@@ -549,9 +552,33 @@ export class UpgradeMinigameScreenView implements View {
             fill: "#FFFFFF"
         }));
 
+        this.group.add(new Konva.Rect({
+            x: 1250, 
+            y: 37, 
+            width: 25, 
+            height: 25, 
+            cornerRadius: 5, 
+            rotation: 45,
+            fill: SCORE_ORANGE, 
+            stroke: "#cc721d"
+        }));
+
         this.group.add(new Konva.Text({
-            x: 1270,
-            y: 38,
+            x: 1280,
+            y: 35,
+            text: "Score",
+            fontSize: 40,
+            fontFamily: FONT,
+            fill: SCORE_ORANGE
+        }));
+
+        this.group.add(new Konva.Text({
+            x: STAGE_WIDTH - 260,
+            y: 0,
+            width: 200,
+            height: HEADER_HEIGHT,
+            align: "right",
+            verticalAlign: "middle",
             text: "Floor X", 
             fontSize: 32,
             fontFamily: FONT,
@@ -559,29 +586,10 @@ export class UpgradeMinigameScreenView implements View {
             fill: "#F5E6C8"
         }));
 
-        this.group.add(new Konva.Circle({
-            x: 1515,
-            y: 55,
-            radius: 42,
-            fill: "#D9D9D9",
-            stroke: "#FFFFFF",
-            strokeWidth: 3
-        }));
-        
-        this.group.add(new Konva.Text({
-            x: 1473,
-            y: 13,
-            width: 84,
-            height: 84,
-            align: "center",
-            verticalAlign: "middle",
-            text: "⚙️",
-            fontSize: 44
-        }));
-
         return healthBar;
     }
     
+    //Builds the choose phase: the heading and one card per upgrade with its emoji, stat, and Choose button
     private buildChoosePanel(): void {
         this.choosePanel.add(new Konva.Text({
             x: 0,
@@ -653,6 +661,7 @@ export class UpgradeMinigameScreenView implements View {
         });
     }
 
+    //Creates the cream panel background shared by the ready, solving, and complete phases
     private createPanelBackground(): Konva.Rect {
         return new Konva.Rect({
             x: PANEL_X,
@@ -666,12 +675,18 @@ export class UpgradeMinigameScreenView implements View {
         });
     }
 
+    //Handles typing during a round: digits and Backspace edit the answer, and Enter submits it or moves to the next problem
     private readonly handleKeyDown = (event: KeyboardEvent): void => {
         if (this.lastPhase !== "solving") {
             return;
         }
 
-        if (/^[0-9]$/.test(event.key)) {
+        if (this.lastAwaitingNext) {
+            if (event.key !== "Enter") {
+                return;
+            }
+            this.handlers.onNext();
+        } else if (/^[0-9]$/.test(event.key)) {
             if (this.answerBuffer.length < MAX_ANSWER_LENGTH) {
                 this.answerBuffer += event.key;
             }
@@ -688,6 +703,7 @@ export class UpgradeMinigameScreenView implements View {
         this.group.getLayer()?.batchDraw();
     };
 
+    //Clears the typed answer and sends it to the controller
     private submitAnswer(): void {
         const answer = this.answerBuffer;
         this.answerBuffer = "";
@@ -695,25 +711,30 @@ export class UpgradeMinigameScreenView implements View {
         this.handlers.onSubmit(answer);
     }
 
+    //Shows what the player has typed so far, or "_" when empty
     private updateAnswerText(): void {
         this.answerText.text(this.answerBuffer === "" ? "_" : this.answerBuffer);
     }
 
+    //Formats seconds as m:ss (Eg. 45 -> 0:45)
     private formatTime(seconds: number): string {
         const s = Math.max(0, seconds);
         return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     }
 
+    //Resizes the green HP bar to match the player's current health
     private updateHealthBar(hp: number, maxHp: number): void {
         const fraction = maxHp > 0 ? Math.max(0, Math.min(hp / maxHp, 1)) : 0;
         this.healthBar.width(HP_BAR_W * fraction);
     }
 
+    //Puts the cursor and every button color back to normal (used when a button hides while the mouse is over it)
     private resetHover(): void {
         document.body.style.cursor = "default";
         this.buttonBgs.forEach((bg) => bg.fill(bg.getAttr("baseFill")));
     }
 
+    //Creates a clickable button that changes color and shows a pointer cursor on hover
     private createButton(label: string, x: number, y: number, width: number, height: number, fill: string, textColor: string, onClick: () => void): Konva.Group {
         const button = new Konva.Group({ x, y });
         const bg = new Konva.Rect({
