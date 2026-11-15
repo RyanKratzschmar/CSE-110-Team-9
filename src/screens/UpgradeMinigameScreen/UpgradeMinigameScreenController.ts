@@ -48,6 +48,10 @@ export class UpgradeMinigameScreenController extends ScreenController {
         return this.view;
     }
 
+    setPlayerHealth(hp: number, maxHp: number): void {
+        this.model.setPlayerHealth(hp, maxHp);
+    }
+
     private handleChoose(type: UpgradeType): void {
         this.playClick();
         this.model.chooseUpgrade(type);

@@ -22,6 +22,8 @@ export interface UpgradeMinigameState {
     readonly outcomeStatus: UpgradeOutcomeStatus;
     readonly statBefore: number;
     readonly statAfter: number;
+    readonly playerHp: number;
+    readonly playerMaxHp: number;
 }
 
 export type UpgradeMinigameListener = (state: UpgradeMinigameState) => void;
@@ -36,7 +38,9 @@ const INITIAL_STATE: UpgradeMinigameState = {
     feedback: null,
     outcomeStatus: "loading",
     statBefore: 0,
-    statAfter: 0
+    statAfter: 0,
+    playerHp: 100,
+    playerMaxHp: 100
 };
 
 export class UpgradeMinigameScreenModel {
@@ -57,7 +61,7 @@ export class UpgradeMinigameScreenModel {
 
     reset(): void {
         this.currentAnswer = 0;
-        this.setState(INITIAL_STATE);
+        this.setState({ ...INITIAL_STATE, playerHp: this.state.playerHp, playerMaxHp: this.state.playerMaxHp });
     }
 
     chooseUpgrade(type: UpgradeType): void {
@@ -110,6 +114,10 @@ export class UpgradeMinigameScreenModel {
 
     setUpgradeError(): void {
         this.setState({ outcomeStatus: "error" });
+    }
+
+    setPlayerHealth(hp: number, maxHp: number): void {
+        this.setState({ playerHp: hp, playerMaxHp: maxHp });
     }
 
     private nextProblem(): string {

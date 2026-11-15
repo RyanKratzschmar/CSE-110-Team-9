@@ -6,6 +6,7 @@ import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScree
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
 import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPopUpController.ts";
+import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts";
 
 /**
  * Main Application - Coordinates all screens
@@ -24,6 +25,7 @@ class App implements ScreenSwitcher {
 	private titleScreenController: TitleScreenController;
 	private combatMainScreenController: CombatMainScreenController;
 	private levelMapScreenController: LevelMapScreenController;
+	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -45,6 +47,9 @@ class App implements ScreenSwitcher {
 		this.titleScreenController = new TitleScreenController(this);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp);
 		this.levelMapScreenController = new LevelMapScreenController(this); //
+		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this);
+
+		this.upgradeMinigameScreenController.setPlayerHealth(75, 100);
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -55,6 +60,7 @@ class App implements ScreenSwitcher {
 		this.layer.add(this.titleScreenController.getView().getGroup());
 		this.layer.add(this.combatMainScreenController.getView().getGroup());
 		this.layer.add(this.levelMapScreenController.getView().getGroup()); //
+		this.layer.add(this.upgradeMinigameScreenController.getView().getGroup());
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -79,6 +85,7 @@ class App implements ScreenSwitcher {
 		this.titleScreenController.hide();
 		this.combatMainScreenController.hide(); // TODO
 		this.levelMapScreenController.hide();
+		this.upgradeMinigameScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
@@ -94,6 +101,10 @@ class App implements ScreenSwitcher {
 			case "map":
 				// Show results with the final score
 				this.levelMapScreenController.startMapScreen();
+				break;
+			
+			case "upgrade":
+				this.upgradeMinigameScreenController.startUpgradeMinigame();
 				break;
 		}
 	}
