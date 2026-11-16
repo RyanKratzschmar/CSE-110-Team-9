@@ -15,6 +15,7 @@ export class LevelMapScreenView implements View {
     private stairs: Konva.Line;
     private stairsText: Konva.Text;
     private levelIndicator: Konva.Line;
+    private healthBar: Konva.Rect;
 
     constructor(
         onGoClick : () => void,
@@ -53,7 +54,7 @@ export class LevelMapScreenView implements View {
         this.group.add(healthBarBG);
 
         //Player Health Bar
-        const healthBar = new Konva.Rect({
+        this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
             width: 300,
@@ -61,7 +62,7 @@ export class LevelMapScreenView implements View {
             fill: "#0bba14",
             stroke: "#42a847",        
         });  
-        this.group.add(healthBar);
+        this.group.add(this.healthBar);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -312,6 +313,21 @@ export class LevelMapScreenView implements View {
         this.rest.fill("#3b3a3b");
         this.stairs.fill("#3b3a3b");
         this.levelIndicator.points([200, 400, 250, 400, 225, 450]);
+    }
+
+    // Updates Player Health Bar
+    setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
+        if (maxHealth <= 0) {
+            this.healthBar.width(0);
+            this.group.getLayer()?.batchDraw();
+            return;
+        }
+
+        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
+
+        this.healthBar.width(400 * percentage);
+
+        this.group.getLayer()?.batchDraw();
     }
 
     /**
