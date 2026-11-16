@@ -98,6 +98,7 @@ class App implements ScreenSwitcher {
 		this.levelMapScreenController.hide();
 		this.potionLabScreenController.hide();
 		this.restScreenController.hide();
+		this.upgradeMinigameScreenController.hide();
 		this.leaderBoardScreenController.hide();
 
 		// Show the requested screen based on the screen type
@@ -125,7 +126,7 @@ class App implements ScreenSwitcher {
 				break;
 
 			case "upgrade":
-				this.upgradeMinigameScreenController.startUpgradeMinigameScreen();
+				this.upgradeMinigameScreenController.startUpgradeMinigame();
 				break;
 			
 			case "leaderboard":
