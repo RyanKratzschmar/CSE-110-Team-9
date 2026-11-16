@@ -1,5 +1,6 @@
 import { ScreenController } from "../../types";
 import type { ScreenSwitcher } from "../../types";
+import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import { UpgradeMinigameScreenModel } from "./UpgradeMinigameScreenModel.ts";
 import type { UpgradeType } from "./UpgradeMinigameScreenModel.ts";
 import { UpgradeMinigameScreenView } from "./UpgradeMinigameScreenView.ts";
@@ -11,6 +12,7 @@ const TIME_LIMIT_SECONDS = 60;
 //Connects the upgrade minigame model and view, runs the timer, and handles button clicks
 export class UpgradeMinigameScreenController extends ScreenController {
     private readonly screenSwitcher: ScreenSwitcher;
+    private readonly combatModel: CombatMainScreenModel;
     private readonly upgradeService: UpgradeService;
     private readonly model = new UpgradeMinigameScreenModel();
     private readonly view: UpgradeMinigameScreenView;
@@ -19,9 +21,14 @@ export class UpgradeMinigameScreenController extends ScreenController {
     private roundId = 0;
 
     //Creates the view with its button handlers and redraws it whenever the model changes; the upgrade service defaults to a placeholder
-    constructor(screenSwitcher: ScreenSwitcher, upgradeService: UpgradeService = new PlaceholderUpgradeService()) {
+    constructor(
+        screenSwitcher: ScreenSwitcher,
+        combatModel: CombatMainScreenModel,
+        upgradeService: UpgradeService = new PlaceholderUpgradeService()
+    ) {
         super();
         this.screenSwitcher = screenSwitcher;
+        this.combatModel = combatModel;
         this.upgradeService = upgradeService;
         this.view = new UpgradeMinigameScreenView({
             onChoose: (type) => this.handleChoose(type),
@@ -40,6 +47,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.roundId++;
         this.stopTimer();
         this.model.reset();
+        this.setPlayerHealth(this.combatModel.getPlayerHealth(), this.combatModel.getPlayerMaxHealth());
         this.show();
     }
 

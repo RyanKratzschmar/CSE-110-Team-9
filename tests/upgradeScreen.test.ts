@@ -7,6 +7,7 @@ import type { UpgradeMinigameState } from "../src/screens/UpgradeMinigameScreen/
 import { UpgradeMinigameScreenView } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenView";
 import { UpgradeMinigameScreenController } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenController";
 import type { UpgradeService } from "../src/screens/UpgradeMinigameScreen/UpgradeService";
+import { CombatMainScreenModel } from "../src/screens/CombatMainScreen/CombatMainScreenModel";
 
 //Reads "a × b = ?" and returns a * b
 function solve(problemText: string): number {
@@ -89,7 +90,7 @@ describe("UpgradeMinigameScreenController", () => {
         switchToScreen.mockReset();
         applyUpgrade.mockReset();
         const service: UpgradeService = { applyUpgrade };
-        controller = new UpgradeMinigameScreenController({ switchToScreen }, service);
+        controller = new UpgradeMinigameScreenController({ switchToScreen }, new CombatMainScreenModel(), service);
         controller.startUpgradeMinigame();
     });
 
