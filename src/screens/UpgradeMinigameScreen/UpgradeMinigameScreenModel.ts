@@ -1,6 +1,6 @@
 import type { UpgradeOutcome } from "./UpgradeService";
 
-export type UpgradePhase = "choose" | "ready" | "solving" | "complete"; //The four phases of the screen: choose an upgrade, ready to start, solving problems, and upgrade complete
+export type UpgradePhase = "ready" | "solving" | "complete"; //The three phases of the screen: ready to start, solving problems, and upgrade complete
 export type UpgradeType = "weapon" | "armor" | "potion";
 export type UpgradeFeedback = "correct" | "incorrect" | "invalid" | null;
 export type UpgradeOutcomeStatus = "loading" | "ready" | "error";
@@ -14,15 +14,13 @@ export const UPGRADE_INFO = {
 //Everything the view needs to draw the upgrade minigame
 export interface UpgradeMinigameState {
     readonly phase: UpgradePhase;
-    readonly upgradeType: UpgradeType | null;
     readonly problemText: string;
     readonly timeLeft: number;
     readonly correctCount: number;
     readonly attemptedCount: number;
     readonly feedback: UpgradeFeedback;
     readonly outcomeStatus: UpgradeOutcomeStatus;
-    readonly statBefore: number;
-    readonly statAfter: number;
+    readonly outcome: UpgradeOutcome | null;
     readonly playerHp: number;
     readonly playerMaxHp: number;
     readonly revealedAnswer: string;
@@ -32,23 +30,21 @@ export interface UpgradeMinigameState {
 export type UpgradeMinigameListener = (state: UpgradeMinigameState) => void;
 
 const INITIAL_STATE: UpgradeMinigameState = {
-    phase: "choose",
-    upgradeType: null,
+    phase: "ready",
     problemText: "",
     timeLeft: 0,
     correctCount: 0,
     attemptedCount: 0,
     feedback: null,
     outcomeStatus: "loading",
-    statBefore: 0,
-    statAfter: 0,
+    outcome: null,
     playerHp: 100,
     playerMaxHp: 100,
     revealedAnswer: "",
     awaitingNext: false
 };
 
-//Holds the upgrade minigame state (phase, chosen upgrade, problem, timer, score, and result) and notifies listeners when it changes
+//Holds the upgrade minigame state (phase, problem, timer, score, and result) and notifies listeners when it changes
 export class UpgradeMinigameScreenModel {
     private state: UpgradeMinigameState = INITIAL_STATE;
     private readonly listeners = new Set<UpgradeMinigameListener>();
@@ -67,20 +63,10 @@ export class UpgradeMinigameScreenModel {
         };
     }
 
-    //Goes back to the "choose an upgrade" phase, keeping the player's current health
+    //Goes back to the ready phase, keeping the player's current health
     reset(): void {
         this.currentAnswer = 0;
         this.setState({ ...INITIAL_STATE, playerHp: this.state.playerHp, playerMaxHp: this.state.playerMaxHp });
-    }
-
-    //Saves the chosen upgrade and moves to the ready phase
-    chooseUpgrade(type: UpgradeType): void {
-        this.setState({ phase: "ready", upgradeType: type });
-    }
-
-    //Clears the chosen upgrade and returns to the choose phase
-    backToChoose(): void {
-        this.setState({ phase: "choose", upgradeType: null});
     }
 
     //Starts a new round: resets the score, sets the timer, and loads the first problem
@@ -143,13 +129,9 @@ export class UpgradeMinigameScreenModel {
         this.setState({ phase: "complete", feedback: null, outcomeStatus: "loading", awaitingNext: false });
     }
 
-    //Saves the stat change sent back by the upgrade service
+    //Saves the stat changes sent back by the upgrade service
     setUpgradeOutcome(outcome: UpgradeOutcome): void {
-        this.setState({
-            outcomeStatus: "ready",
-            statBefore: outcome.statBefore,
-            statAfter: outcome.statAfter
-        });
+        this.setState({ outcomeStatus: "ready", outcome });
     }
 
     //Marks that the upgrade could not be applied

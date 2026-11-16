@@ -18,7 +18,6 @@ function solve(problemText: string): number {
 //Puts the model in the solving phase with a 60 second round
 function startedModel(): UpgradeMinigameScreenModel {
     const model = new UpgradeMinigameScreenModel();
-    model.chooseUpgrade("weapon");
     model.startRound(60);
     return model;
 }
@@ -101,24 +100,26 @@ describe("UpgradeMinigameScreenController", () => {
     });
 
     it("ends the round after 60 seconds and shows the upgrade result", async () => {
-        applyUpgrade.mockResolvedValue({ statBefore: 5, statAfter: 7 });
-        controller["handleChoose"]("weapon");
+        const outcome = {
+            weapon: { statBefore: 5, statAfter: 7 },
+            armor: { statBefore: 3, statAfter: 4 },
+            potion: { statBefore: 10, statAfter: 12 }
+        };
+        applyUpgrade.mockResolvedValue(outcome);
         controller["handleStart"]();
 
         await vi.advanceTimersByTimeAsync(60_000);
 
-        expect(applyUpgrade).toHaveBeenCalledWith({ upgradeType: "weapon", correctCount: 0, attemptedCount: 0 });
+        expect(applyUpgrade).toHaveBeenCalledWith({ correctCount: 0, attemptedCount: 0 });
         const state = controller["model"].getState();
         expect(state.phase).toBe("complete");
         expect(state.outcomeStatus).toBe("ready");
-        expect(state.statBefore).toBe(5);
-        expect(state.statAfter).toBe(7);
+        expect(state.outcome).toEqual(outcome);
     });
 
     it("shows an error when the upgrade service fails", async () => {
         applyUpgrade.mockRejectedValue(new Error("server down"));
         vi.spyOn(console, "error").mockImplementation(() => {});
-        controller["handleChoose"]("armor");
         controller["handleStart"]();
 
         await vi.advanceTimersByTimeAsync(60_000);
@@ -127,7 +128,6 @@ describe("UpgradeMinigameScreenController", () => {
     });
 
     it("Leave goes to the map and stops the timer", async () => {
-        controller["handleChoose"]("potion");
         controller["handleStart"]();
         await vi.advanceTimersByTimeAsync(5_000);
 
@@ -142,7 +142,7 @@ describe("UpgradeMinigameScreenController", () => {
 });
 
 describe("UpgradeMinigameScreenView", () => {
-    const handlers = { onChoose: vi.fn(), onStart: vi.fn(), onSubmit: vi.fn(), onNext: vi.fn(), onBack: vi.fn(), onLeave: vi.fn() };
+    const handlers = { onStart: vi.fn(), onSubmit: vi.fn(), onNext: vi.fn(), onLeave: vi.fn() };
     let view: UpgradeMinigameScreenView;
 
     beforeEach(() => {
@@ -155,22 +155,22 @@ describe("UpgradeMinigameScreenView", () => {
     });
 
     it("shows the right footer buttons for each phase", () => {
-        view.render(makeState({ phase: "choose" }));
-        expect(findText(view, "Back").isVisible()).toBe(true);
+        view.render(makeState({ phase: "ready" }));
+        expect(view.getGroup().find<Konva.Text>("Text").some((t) => t.text() === "Back")).toBe(false);
         expect(findText(view, "Leave").isVisible()).toBe(true);
         expect(findText(view, "Exit").isVisible()).toBe(false);
 
-        view.render(makeState({ phase: "solving", upgradeType: "weapon", problemText: "7 × 8 = ?" }));
-        expect(findText(view, "Back").isVisible()).toBe(false);
+        view.render(makeState({ phase: "solving", problemText: "7 × 8 = ?" }));
         expect(findText(view, "Leave").isVisible()).toBe(true);
+        expect(findText(view, "Exit").isVisible()).toBe(false);
 
-        view.render(makeState({ phase: "complete", upgradeType: "weapon" }));
+        view.render(makeState({ phase: "complete" }));
         expect(findText(view, "Leave").isVisible()).toBe(false);
         expect(findText(view, "Exit").isVisible()).toBe(true);
     });
 
     it("swaps Submit for Next and shows the correct answer after a wrong answer", () => {
-        const solving = { phase: "solving" as const, upgradeType: "weapon" as const, problemText: "7 × 8 = ?" };
+        const solving = { phase: "solving" as const, problemText: "7 × 8 = ?" };
 
         view.render(makeState(solving));
         expect(findText(view, "Submit").isVisible()).toBe(true);
@@ -180,6 +180,23 @@ describe("UpgradeMinigameScreenView", () => {
         expect(findText(view, "Submit").isVisible()).toBe(false);
         expect(findText(view, "Next").isVisible()).toBe(true);
         expect(findText(view, "Incorrect answer! 7 × 8 = 56").isVisible()).toBe(true);
+    });
+
+    it("shows the weapon, armor, and potion changes once the upgrade is applied", () => {
+        const outcome = {
+            weapon: { statBefore: 5, statAfter: 7 },
+            armor: { statBefore: 3, statAfter: 4 },
+            potion: { statBefore: 10, statAfter: 12 }
+        };
+
+        view.render(makeState({ phase: "complete", outcomeStatus: "loading" }));
+        expect(findText(view, "Applying upgrades...").isVisible()).toBe(true);
+
+        view.render(makeState({ phase: "complete", outcomeStatus: "ready", outcome }));
+        expect(findText(view, "5 → 7  (+2)").isVisible()).toBe(true);
+        expect(findText(view, "3 → 4  (+1)").isVisible()).toBe(true);
+        expect(findText(view, "10 → 12  (+2)").isVisible()).toBe(true);
+        expect(findText(view, "Your gear has been upgraded!").isVisible()).toBe(true);
     });
 
     it("sizes the HP bar to the player's health", () => {
