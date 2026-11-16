@@ -6,7 +6,11 @@ import { LevelMapScreenController } from "./screens/LevelMapScreen/LevelMapScree
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 import { WrongAnswerPopUpController } from "../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController";
 import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPopUpController.ts";
+import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabScreenController.ts";
+import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
+import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
 
+import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
  *
@@ -24,6 +28,10 @@ class App implements ScreenSwitcher {
 	private titleScreenController: TitleScreenController;
 	private combatMainScreenController: CombatMainScreenController;
 	private levelMapScreenController: LevelMapScreenController;
+	private potionLabScreenController: PotionLabScreenController;
+	private restScreenController: RestScreenController;
+	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
+	private leaderBoardScreenController: LeaderBoardScreenController;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -44,7 +52,12 @@ class App implements ScreenSwitcher {
 
 		this.titleScreenController = new TitleScreenController(this);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp);
-		this.levelMapScreenController = new LevelMapScreenController(this); //
+		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
+		this.potionLabScreenController = new PotionLabScreenController(this, this.combatMainScreenController.getModel());
+		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel());
+		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel());
+		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
+		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -55,6 +68,10 @@ class App implements ScreenSwitcher {
 		this.layer.add(this.titleScreenController.getView().getGroup());
 		this.layer.add(this.combatMainScreenController.getView().getGroup());
 		this.layer.add(this.levelMapScreenController.getView().getGroup()); //
+		this.layer.add(this.potionLabScreenController.getView().getGroup());
+		this.layer.add(this.restScreenController.getView().getGroup());
+		this.layer.add(this.upgradeMinigameScreenController.getView().getGroup());
+		this.layer.add(this.leaderBoardScreenController.getView().getGroup());
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -79,6 +96,9 @@ class App implements ScreenSwitcher {
 		this.titleScreenController.hide();
 		this.combatMainScreenController.hide(); // TODO
 		this.levelMapScreenController.hide();
+		this.potionLabScreenController.hide();
+		this.restScreenController.hide();
+		this.leaderBoardScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
@@ -94,6 +114,23 @@ class App implements ScreenSwitcher {
 			case "map":
 				// Show results with the final score
 				this.levelMapScreenController.startMapScreen();
+				break;
+
+			case "potion":
+				this.potionLabScreenController.startPotionLabScreen();
+				break;
+
+			case "rest":
+				this.restScreenController.startRestScreen();
+				break;
+
+			case "upgrade":
+				this.upgradeMinigameScreenController.startUpgradeMinigameScreen();
+				break;
+			
+			case "leaderboard":
+				//Show leaderboard
+				this.leaderBoardScreenController.startLeaderboard();
 				break;
 		}
 	}

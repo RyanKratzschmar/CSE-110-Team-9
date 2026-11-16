@@ -52,6 +52,11 @@ export class Player {
     this.health.healFull();
   }
 
+  heal(amount: number): void {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    this.health.updateHealth(Math.round(amount));
+  }
+
   isDead(): boolean {
     return this.health.isZero();
   }
