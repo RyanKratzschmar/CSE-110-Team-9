@@ -24,6 +24,8 @@ export class PotionLabScreenController extends ScreenController {
             () => this.handleLeaveClick(),
             () => this.handleBasicClick(),
             () => this.handleAdvancedClick(),
+            () => this.handleSubmitClick(),
+            () => this.handleContinueClick(),
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -42,6 +44,8 @@ export class PotionLabScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
+        this.model.setDifficulty(1);
+
         this.view.startBasicRecipe();
     }
 
@@ -49,11 +53,54 @@ export class PotionLabScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
+        this.model.setDifficulty(2);
+
         this.view.startAdvancedRecipe();
+    }
+
+    handleSubmitClick() : void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.model.incrementStep();
+
+        this.view.hideSubmitOverlay();
+
+        setTimeout(() => {
+            this.view.showPotion();
+        }, 500);
+
+        setTimeout(() => {
+            if(this.model.getDifficulty() == 2){
+                if(this.model.getStepIndex() != 6){
+                    this.view.hidePotion(this.model.getStepIndex());
+                } else {
+                    this.view.winScreen();
+                }
+            } else {
+                if(this.model.getStepIndex() != 4){
+                    this.view.hidePotion(this.model.getStepIndex());
+                } else {
+                    this.view.winScreen();
+                }
+            }
+        }, 3000);
+
+    }
+
+    handleContinueClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+        this.screenSwitcher.switchToScreen({ type : "map" });
     }
 
     startPotionLabScreen(): void {
         this.view.setPlayerHealthBar(this.combatModel.getPlayerHealth(), this.combatModel.getPlayerMaxHealth());
+
+        this.model.setDifficulty(0);
+        this.model.resetStep();
+
         this.view.show();
     }
 

@@ -120,7 +120,6 @@ export class CombatMainScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({ type: "potion" });
     }
 
 

@@ -26,11 +26,28 @@ export class PotionLabScreenView implements View {
     private step3Rect: Konva.Rect;
     private step4Rect: Konva.Rect;
     private step5Rect: Konva.Rect;
+    private dimOverlay1: Konva.Rect;
+    private dimOverlay2: Konva.Rect;
+    private dimOverlay3: Konva.Rect;
+    private dimOverlay4: Konva.Rect;
+    private dimOverlay5: Konva.Rect;
+    private equationTextBox: Konva.Rect;
+    private answerBox: Konva.Rect;
+    private submitAnswerButton: Konva.Rect;
+    private submitText: Konva.Text;
+    private responseText: Konva.Text;
+    private leaveButton: Konva.Rect;
+    private leaveText:Konva.Text;
+    private successText: Konva.Text;
+    private continueButton: Konva.Rect;
+    private continueText: Konva.Text;
 
     constructor(
         onLeaveClick : () => void,
         onBasicClick : () => void,
         onAdvancedClick : () => void,
+        onSubmitClick : () => void,
+        onContinueClick : () => void,
     ){
 
     this.group = new Konva.Group({ visible: false });
@@ -336,7 +353,7 @@ export class PotionLabScreenView implements View {
         });
         this.group.add(this.basicStepsNumber);
 
-        const leaveButton = new Konva.Rect({
+        this.leaveButton = new Konva.Rect({
             width: 200,
             height: 75,
             cornerRadius: 10,
@@ -346,28 +363,29 @@ export class PotionLabScreenView implements View {
             x: 1300,
             y: 750,
         });
-        this.group.add(leaveButton);
+        this.group.add(this.leaveButton);
 
-        leaveButton.on("mouseenter", () => {
+        this.leaveButton.on("mouseenter", () => {
 			document.body.style.cursor = "pointer";
 		});
 
-		leaveButton.on("mouseleave", () => {
+		this.leaveButton.on("mouseleave", () => {
 			document.body.style.cursor = "default";
 		});
 
-        leaveButton.on("click tap", () => {
+        this.leaveButton.on("click tap", () => {
 			onLeaveClick();
         });
 
-        const leaveText = new Konva.Text({
+        this.leaveText = new Konva.Text({
             text: "Leave",
             fontSize: 40,
             fill: "white",
             x: 1345,
             y: 765,
+            listening: false,
         });
-        this.group.add(leaveText);
+        this.group.add(this.leaveText);
 
         this.potion = new Konva.Rect({
             height: 300,
@@ -409,10 +427,10 @@ export class PotionLabScreenView implements View {
             width: 200,
             height: 250,
             cornerRadius: 10,
-            fill: "#EEE4C8",
-            stroke: "#d1c4a1",
             x: 300,
             y: 600,
+            fill: "#EEE4C8",
+            stroke: "#d1c4a1",
             strokeWidth: 5,
             visible: false,
         });
@@ -457,6 +475,207 @@ export class PotionLabScreenView implements View {
         });
         this.group.add(this.step5Rect);
 
+
+        // Create Dim Overlay
+        this.dimOverlay1 = new Konva.Rect({
+            width: 200,
+            height: 250,
+            cornerRadius: 10,
+            x: 50,
+            y: 600,
+            strokeWidth: 5,
+            fill: "black",
+            opacity: 0.6,
+            visible: false,
+            stroke: "black",
+        });
+        this.group.add(this.dimOverlay1);
+
+        this.dimOverlay2 = new Konva.Rect({
+            width: 200,
+            height: 250,
+            cornerRadius: 10,
+            x: 300,
+            y: 600,
+            strokeWidth: 5,
+            fill: "black",
+            opacity: 0.6,
+            visible: false,
+            stroke: "black",
+        });
+        this.group.add(this.dimOverlay2);
+
+        this.dimOverlay3 = new Konva.Rect({
+            width: 200,
+            height: 250,
+            cornerRadius: 10,
+            x: 550,
+            y: 600,
+            strokeWidth: 5,
+            fill: "black",
+            opacity: 0.6,
+            visible: false,
+            stroke: "black",
+        });
+        this.group.add(this.dimOverlay3);
+
+        this.dimOverlay4 = new Konva.Rect({
+            width: 200,
+            height: 250,
+            cornerRadius: 10,
+            x: 800,
+            y: 600,
+            strokeWidth: 5,
+            fill: "black",
+            opacity: 0.6,
+            visible: false,
+            stroke: "black",
+        });
+        this.group.add(this.dimOverlay4);
+
+        this.dimOverlay5 = new Konva.Rect({
+            width: 200,
+            height: 250,
+            cornerRadius: 10,
+            x: 1050,
+            y: 600,
+            strokeWidth: 5,
+            fill: "black",
+            opacity: 0.6,
+            visible: false,
+            stroke: "black",
+        });
+        this.group.add(this.dimOverlay5);
+
+        // Create Text Box for Equation
+        this.equationTextBox = new Konva.Rect({
+            cornerRadius: 10,
+            width: 800,
+            height: 150,
+            x: 400,
+            y: 200,
+            visible: false,
+            fill: "#feffe0",
+            stroke: "black",
+        });
+        this.group.add(this.equationTextBox);
+
+        // Box for player answer
+        this.answerBox = new Konva.Rect({
+            width: 300,
+            height: 75,
+            cornerRadius: 10,
+            fill: "white",
+            stroke: "#cc721d",
+            x: 850,
+            y: 400,
+            visible: false,
+            strokeWidth: 10,
+        });
+        this.group.add(this.answerBox);
+
+        // Button to submit answer
+        this.submitAnswerButton = new Konva.Rect({
+            width: 200,
+            height: 75,
+            fill: "#FF9E42",
+            stroke: "#cc721d", 
+            x: 700,
+            y: 500,
+            visible: false,
+            cornerRadius: 10,
+        });
+        this.group.add(this.submitAnswerButton);
+
+        // Text prompting user for answer
+        this.responseText = new Konva.Text({
+            text: "Your Answer:",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            fill: "#FF9E42",
+            x: 550,
+            y: 420,
+            visible: false,
+        });
+        this.group.add(this.responseText);
+
+        // Text for submit button
+        this.submitText = new Konva.Text({
+            text: "SUBMIT",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            x: 725,
+            y: 520,
+            visible: false,
+            listening: false,
+        });
+        this.group.add(this.submitText);
+
+        // Handle Submit Button Click
+        this.submitAnswerButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+            this.submitAnswerButton.fill("#B678D0");
+        });
+
+        this.submitAnswerButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+            this.submitAnswerButton.fill("#FF9E42");
+        });
+
+        this.submitAnswerButton.on("click tap", () => {
+            onSubmitClick();
+        });
+
+        this.successText = new Konva.Text({
+            fill: "green",
+            fontSize: 80,
+            fontStyle: "bold",
+            fontFamily: "arial",
+            text: "Potion Successfully Brewed!",
+            x: 300,
+            y: 175,
+            visible: false,
+        });
+        this.group.add(this.successText);
+
+
+        this.continueButton = new Konva.Rect({
+            width: 200,
+            height: 75,
+            cornerRadius: 10,
+            fill: "#F24822",
+            stroke: "white",
+            strokeWidth: 5,
+            x: 700,
+            y: 750,
+            visible: false,
+        });
+        this.group.add(this.continueButton);
+
+        this.continueButton.on("mouseenter", () => {
+			document.body.style.cursor = "pointer";
+		});
+
+		this.continueButton.on("mouseleave", () => {
+			document.body.style.cursor = "default";
+		});
+
+        this.continueButton.on("click tap", () => {
+			onContinueClick();
+        });
+
+        this.continueText = new Konva.Text({
+            text: "Continue",
+            fontSize: 40,
+            fill: "white",
+            x: 720,
+            y: 765,
+            listening: false,
+            visible: false,
+        });
+        this.group.add(this.continueText);
     }
 
     // set the player's health bar
@@ -494,6 +713,16 @@ export class PotionLabScreenView implements View {
         this.step1Rect.visible(true);
         this.step2Rect.visible(true);
         this.step3Rect.visible(true);
+
+        this.equationTextBox.visible(true);
+
+        this.dimOverlay2.visible(true);
+        this.dimOverlay3.visible(true);
+
+        this.answerBox.visible(true);
+        this.submitAnswerButton.visible(true);
+        this.submitText.visible(true);
+        this.responseText.visible(true);
     }
 
     // Starts Advanced Recipe
@@ -513,11 +742,81 @@ export class PotionLabScreenView implements View {
         this.chooseText.visible(false);
         this.potion.visible(false);
 
+        this.equationTextBox.visible(true);
+
         this.step1Rect.visible(true);
         this.step2Rect.visible(true);
         this.step3Rect.visible(true);
         this.step4Rect.visible(true);
         this.step5Rect.visible(true);
+
+        this.dimOverlay2.visible(true);
+        this.dimOverlay3.visible(true);
+        this.dimOverlay4.visible(true);
+        this.dimOverlay5.visible(true);
+
+        this.answerBox.visible(true);
+        this.submitAnswerButton.visible(true);
+        this.submitText.visible(true);
+        this.responseText.visible(true);
+    }
+
+    hideSubmitOverlay(): void {
+        this.answerBox.visible(false);
+        this.submitAnswerButton.visible(false);
+        this.submitText.visible(false);
+        this.responseText.visible(false);
+        this.equationTextBox.visible(false);
+
+        
+    }
+
+    showPotion(): void {
+        this.potion.visible(true);
+    }
+
+    hidePotion(step: number): void {
+        this.potion.visible(false);
+
+        this.answerBox.visible(true);
+        this.submitAnswerButton.visible(true);
+        this.submitText.visible(true);
+        this.responseText.visible(true);
+        this.equationTextBox.visible(true);
+
+        if(step == 2){
+            this.dimOverlay2.visible(false);
+        } else if (step == 3) {
+            this.dimOverlay3.visible(false);
+        } else if (step == 4) {
+            this.dimOverlay4.visible(false);
+        } else {
+            this.dimOverlay5.visible(false);
+        }
+    }
+
+    winScreen(): void{
+        this.step1Rect.visible(false);
+        this.step2Rect.visible(false);
+        this.step3Rect.visible(false);
+        this.step4Rect.visible(false);
+        this.step5Rect.visible(false);
+        this.leaveButton.visible(false);
+        this.leaveText.visible(false);
+
+        this.equationTextBox.visible(false);
+
+        this.answerBox.visible(false);
+        this.submitAnswerButton.visible(false);
+        this.submitText.visible(false);
+        this.responseText.visible(false);
+
+        this.continueButton.visible(true);
+        this.continueText.visible(true);
+
+        this.potion.y(this.potion.y() + 100);
+
+        this.successText.visible(true);
     }
 
     /**
