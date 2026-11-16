@@ -1,22 +1,29 @@
 import type { WrongAnswerPopUpController } from "../../../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController.ts";
+import type { HintPopUpController } from "../../../frontend/src/hintPopUp/controller/HintPopUpController.ts";
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { CombatMainScreenView } from "./CombatMainScreenView.ts";
-import { CombatMainScreenModel } from "./CombatMainScreenModel.ts"
+import { CombatMainScreenModel } from "./CombatMainScreenModel.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
     private view: CombatMainScreenView;
     private screenSwitcher: ScreenSwitcher;
-    
+
     private clickSound: HTMLAudioElement;
 
     private explanationPopUp: WrongAnswerPopUpController;
+    private hintPopUp: HintPopUpController;
 
-    constructor(screenSwitcher: ScreenSwitcher, explanationPopUp: WrongAnswerPopUpController) {
+    constructor(
+        screenSwitcher: ScreenSwitcher,
+        explanationPopUp: WrongAnswerPopUpController,
+        hintPopUp: HintPopUpController
+    ) {
         super();
         this.screenSwitcher = screenSwitcher;
         this.explanationPopUp = explanationPopUp;
+        this.hintPopUp = hintPopUp;
 
         this.model = new CombatMainScreenModel();
         this.view = new CombatMainScreenView(
@@ -24,11 +31,11 @@ export class CombatMainScreenController extends ScreenController {
             () => this.handleHintXClick(),
             () => this.handleAttackClick(),
             () => this.handleSubmitClick(),
-            () => this.handleExplanationClick()
+            () => this.handleExplanationClick(),
+            () => this.handlePotionClick()
         );
 
         this.clickSound = new Audio("/click.mp3");
-
     }
 
     handleAttackClick(): void {
@@ -40,20 +47,43 @@ export class CombatMainScreenController extends ScreenController {
     }
 
     // Creates hint pop up
-    handleHintClick(): void{
+    handleHintClick(): void {
         this.clickSound.currentTime = 0;
-        this.clickSound.play();
+        try {
+            const promise = this.clickSound.play();
+            if (promise && typeof promise.catch === "function") {
+                promise.catch(() => {});
+            }
+        } catch {
+            // Audio not supported in environment
+        }
 
-        this.view.showHint();
-
+        this.hintPopUp.showLongMultiplicationHint(123, 45);
     }
 
     // Hides hint pop up
-    handleHintXClick(): void{
+    handleHintXClick(): void {
         this.clickSound.currentTime = 0;
-        this.clickSound.play();
+        try {
+            const promise = this.clickSound.play();
+            if (promise && typeof promise.catch === "function") {
+                promise.catch(() => {});
+            }
+        } catch {
+            // Audio not supported in environment
+        }
 
-        this.view.hideHint();
+        this.hintPopUp.close();
+    }
+
+    override hide(): void {
+        if (this.hintPopUp?.isOpen()) {
+            this.hintPopUp.close();
+        }
+        if (this.explanationPopUp?.isOpen()) {
+            this.explanationPopUp.close();
+        }
+        super.hide();
     }
 
     // Closes equation screen
@@ -85,12 +115,20 @@ export class CombatMainScreenController extends ScreenController {
             }, 500);
     }
 
+    // Switches to potion pop up
+    handlePotionClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+    }
+
+
     // Ends the fight
     endFight(win: boolean): void {
         this.view.endGameText(win);
     }
 
-    handleExplanationClick(): void{
+    handleExplanationClick(): void {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
@@ -98,13 +136,18 @@ export class CombatMainScreenController extends ScreenController {
     }
 
     startGame(): void {
-        this.view.show()
+        this.view.show();
         this.model.resetEnemy();
         this.view.updateEnemyHealthBar(this.model.getEnemyHealth(), this.model.getEnemyMaxHealth());
+        this.view.setPlayerHealthBar(this.model.getPlayerHealth(), this.model.getPlayerMaxHealth());
         this.view.resetFight();
     }
 
+    getModel(): CombatMainScreenModel {
+        return this.model;
+    }
+
     getView(): CombatMainScreenView {
-		return this.view;
-	}
+        return this.view;
+    }
 }
