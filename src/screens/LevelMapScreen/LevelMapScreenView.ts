@@ -118,6 +118,17 @@ export class LevelMapScreenView implements View {
         });
         this.group.add(settingsText);
 
+        const floorText = new Konva.Text({
+            x: 1200,
+            y: 50,
+            text: "Floor: X",
+            fill: "white",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+        });
+        this.group.add(floorText);
+
         // Create map location for fight 1
         this.fight1 = new Konva.Rect({
             cornerRadius: 10,
