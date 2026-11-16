@@ -87,7 +87,7 @@ class App implements ScreenSwitcher {
 		if (this.startingRun) return;
 		this.startingRun = true;
 
-		try { 
+		try {
 			const run = await createRun();
 			this.runId = run.id;
 			this.switchToScreen({ type: "map" });

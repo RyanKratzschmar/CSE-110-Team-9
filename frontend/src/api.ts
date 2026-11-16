@@ -1,4 +1,22 @@
-// fetch() helpers for every /api route, used by all the screens.
+// Fetch helpers for the game API.
+export interface RunResponse {
+    id: string;
+    player: { hp: number; maxHp: number; attack: number; defense: number };
+    level: number;
+    currentIndex: number;
+    nodes: { type: "combat" | "rest"; cleared: boolean }[];
+    gameOver: boolean;
+}
+
+export async function createRun(): Promise<RunResponse> {
+    const response = await fetch("/api/runs", { method: "POST" });
+
+    if (!response.ok) {
+        throw new Error("Could not start a new run");
+    }
+
+    return response.json();
+}
 
 export interface CombatResponse {
     combatId: string;
@@ -18,19 +36,7 @@ export interface AnswerResponse {
     result: "ongoing" | "win" | "lose";
 }
 
-export async function createRun() {
-    const response = await fetch("/api/runs", {
-        method: "POST",
-    });
-
-    if (!response.ok) {
-        throw new Error("Could not start a new run");
-    }
-
-    return response.json();
-}
-
-export async function getRun(id: string) {
+export async function getRun(id: string): Promise<RunResponse> {
     const response = await fetch(`/api/runs/${id}`, {
         method: "GET",
     });
