@@ -37,9 +37,5 @@ export abstract class ScreenController {
 
 export interface ScreenSwitcher {
 	switchToScreen(screen: Screen): void;
-}
-
-export interface ScreenSwitcher {
-	switchToScreen(screen: Screen): void;
 	startNewGame(): Promise<void>;
 }
