@@ -9,7 +9,7 @@ import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPo
 import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabScreenController.ts";
 import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
-
+import { createRun } from "../frontend/src/api.ts";
 import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
@@ -32,6 +32,9 @@ class App implements ScreenSwitcher {
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 	private leaderBoardScreenController: LeaderBoardScreenController;
+
+	private runId: string | null = null;
+	private startingRun = false;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -80,6 +83,24 @@ class App implements ScreenSwitcher {
 		this.titleScreenController.getView().show();
 	}
 
+	async startNewGame(): Promise<void> {
+		if (this.startingRun) return;
+		this.startingRun = true;
+
+		try { 
+			const run = await createRun();
+			this.runId = run.id;
+			this.switchToScreen({ type: "map" });
+		} catch (error) {
+			alert (
+				error instanceof Error
+					? error.message
+					: "Could not start a new game"
+			);
+		} finally {
+			this.startingRun = false;
+		}
+	}
 	/**
 	 * Switch to a different screen
 	 *

@@ -27,11 +27,11 @@ export class TitleScreenController extends ScreenController{
 	 * Handle button clicks
 	 */
     private handleNewGameClick(): void {
-        // TODO: Add the action for starting a new game.
 		this.clickSound.currentTime = 0;
 		this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({type : "map"});
+		// Ask App to create the backend run before opening the map.
+		void this.screenSwitcher.startNewGame();
     }
 
 	private handleContinueClick(): void {

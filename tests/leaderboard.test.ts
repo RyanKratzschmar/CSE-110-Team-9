@@ -279,7 +279,10 @@ describe("LeaderboardScreenView", () => {
 });
 
 describe("LeaderBoardScreenController", () => {
-    const makeSwitcher = () => ({ switchToScreen: vi.fn() });
+    const makeSwitcher = () => ({
+        switchToScreen: vi.fn(),
+        startNewGame: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    });
     it("startLeaderboard shows the screen and displays fetched entries", async () => {
         fetchMock.mockResolvedValue(okResponse(ENTRIES));
         const controller = new LeaderBoardScreenController(makeSwitcher());
