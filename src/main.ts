@@ -71,6 +71,7 @@ class App implements ScreenSwitcher {
 		this.layer.add(this.potionLabScreenController.getView().getGroup());
 		this.layer.add(this.restScreenController.getView().getGroup());
 		this.layer.add(this.upgradeMinigameScreenController.getView().getGroup());
+		this.layer.add(this.leaderBoardScreenController.getView().getGroup());
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
