@@ -90,7 +90,11 @@ describe("UpgradeMinigameScreenController", () => {
         switchToScreen.mockReset();
         applyUpgrade.mockReset();
         const service: UpgradeService = { applyUpgrade };
-        controller = new UpgradeMinigameScreenController({ switchToScreen }, new CombatMainScreenModel(), service);
+        const screenSwitcher = {
+            switchToScreen,
+            startNewGame: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+        };
+        controller = new UpgradeMinigameScreenController(screenSwitcher, new CombatMainScreenModel(), service);
         controller.startUpgradeMinigame();
     });
 
