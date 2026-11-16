@@ -24,6 +24,8 @@ export interface CombatResponse {
     question: string;
     playerHp: number;
     enemyHp: number;
+    playerMaxHp: number;
+    enemyMaxHp: number;
 }
 
 export interface AnswerResponse {

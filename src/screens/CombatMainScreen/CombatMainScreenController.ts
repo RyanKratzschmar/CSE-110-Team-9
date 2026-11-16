@@ -138,12 +138,16 @@ export class CombatMainScreenController extends ScreenController {
         this.explanationPopUp.showLongMultiplicationExplanation(123, 45);
     }
 
-    startGame(): void {
-        this.view.show();
-        this.model.resetEnemy();
+    async startGame(runId: string): Promise<void> {
+        await this.loadFight(runId);
+
+        this.view.resetFight();
+        this.view.returnToCombat();
+
         this.view.updateEnemyHealthBar(this.model.getEnemyHealth(), this.model.getEnemyMaxHealth());
         this.view.setPlayerHealthBar(this.model.getPlayerHealth(), this.model.getPlayerMaxHealth());
-        this.view.resetFight();
+
+        this.view.show();
     }
 
     getModel(): CombatMainScreenModel {

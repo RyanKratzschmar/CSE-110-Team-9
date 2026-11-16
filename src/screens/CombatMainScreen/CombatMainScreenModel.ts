@@ -87,8 +87,11 @@ export class CombatMainScreenModel {
         this.combatId = data.combatId;
         this.questionId = data.questionId;
         this.question = data.question;
+
         this.setPlayerHealth(data.playerHp);
+        this.setPlayerMaxHealth(data.playerMaxHp);
         this.setEnemyCurrentHealth(data.enemyHp);
+        this.setEnemyMaxHealth(data.enemyMaxHp);
     }
 
 

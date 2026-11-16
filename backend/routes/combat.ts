@@ -35,6 +35,8 @@ combatRouter.get("/:id/combat", (req, res) => {
         res.json({
             combatId: state.combatId,
             ...state.combat.currentQuestion(),
+            playerMaxHp: state.player.maxHp,
+            enemyMaxHp: state.combat.getEnemyMaxHp(),
         });
     } catch (error) {
         if (error instanceof GameFlowError) {

@@ -59,7 +59,6 @@ class App implements ScreenSwitcher {
 		this.potionLabScreenController = new PotionLabScreenController(this, this.combatMainScreenController.getModel());
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel());
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel());
-		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
 
 		window.addEventListener("resize", () => {
@@ -129,8 +128,22 @@ class App implements ScreenSwitcher {
 				break;
 
 			case "game":
-				// Start the game (which also shows the game screen)
-				this.combatMainScreenController.startGame();
+				if (this.runId === null) {
+					alert("Start a new game first.");
+					this.switchToScreen({ type: "menu" });
+					break;
+				}
+
+				void this.combatMainScreenController
+					.startGame(this.runId)
+					.catch((error: unknown) => {
+						alert(
+							error instanceof Error
+								? error.message
+								: "Could not load combat"
+						);
+						this.switchToScreen({ type: "map" });
+					});
 				break;
 
 			case "map":

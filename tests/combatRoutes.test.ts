@@ -16,6 +16,20 @@ function fixture(enemyHp = 50, attack = 15) {
 }
 
 describe("Combat API", () => {
+    it("returns maximum HP separately from remaining HP without resetting the fight", async () => {
+        const { state, url } = fixture(80);
+        state.player.takeDamage(20);
+        state.combat!.resolveAnswer(200, 1);
+        const response = await request(app).get(url).expect(200);
+        expect(response.body).toMatchObject({
+            playerHp: state.player.hp,
+            playerMaxHp: 100,
+            enemyHp: 70,
+            enemyMaxHp: 80,
+        });
+        expect(response.body.playerHp).toBeLessThan(100);
+    });
+
     it("creates a persistent fight without revealing the answer", async () => {
         const created = await request(app).post("/api/runs");
         const url = `/api/runs/${created.body.id}/combat`;
