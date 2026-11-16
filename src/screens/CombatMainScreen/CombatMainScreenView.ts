@@ -277,6 +277,7 @@ export class CombatMainScreenView implements View {
             stroke: "#cc721d",
             cornerRadius: 10,
             visible: false,
+            
         })
         this.group.add(this.hintButton);
 
