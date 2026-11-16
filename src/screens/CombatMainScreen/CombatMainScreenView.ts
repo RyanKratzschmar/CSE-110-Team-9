@@ -37,7 +37,7 @@ export class CombatMainScreenView implements View {
         onHintClick : () => void,
         onHintXClick : () => void,
         onAttackClick : () => void,
-        onSubmitClick: () => void,
+        onSubmitClick: (answer?: number) => void,
         onExplanationClick: () => void,
         onPotionClick: () => void
     ) {

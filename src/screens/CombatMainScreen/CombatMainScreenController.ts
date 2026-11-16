@@ -4,7 +4,7 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { CombatMainScreenView } from "./CombatMainScreenView.ts";
 import { CombatMainScreenModel } from "./CombatMainScreenModel.ts";
-import {getCombat } from "../../../frontend/src/api.ts";
+import { getCombat, submitAnswer } from "../../../frontend/src/api.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -17,6 +17,8 @@ export class CombatMainScreenController extends ScreenController {
     private hintPopUp: HintPopUpController;
 
     private runId: string | null = null;
+    private submitting = false;
+    private sessionVersion = 0;
 
     constructor(
         screenSwitcher: ScreenSwitcher,
@@ -33,7 +35,7 @@ export class CombatMainScreenController extends ScreenController {
             () => this.handleHintClick(),
             () => this.handleHintXClick(),
             () => this.handleAttackClick(),
-            () => this.handleSubmitClick(),
+            (answer) => { void this.handleSubmitClick(answer); },
             () => this.handleExplanationClick(),
             () => this.handlePotionClick()
         );
@@ -80,6 +82,8 @@ export class CombatMainScreenController extends ScreenController {
     }
 
     override hide(): void {
+        this.sessionVersion += 1;
+        this.submitting = false;
         if (this.hintPopUp?.isOpen()) {
             this.hintPopUp.close();
         }
@@ -89,33 +93,52 @@ export class CombatMainScreenController extends ScreenController {
         super.hide();
     }
 
-    // Closes equation screen
-    handleSubmitClick(): void {
+    // The keypad supplies the entered number through the view's submit callback.
+    async handleSubmitClick(answer?: number): Promise<void> {
+        if (this.submitting || this.runId === null) return;
+        if (typeof answer !== "number" || !Number.isFinite(answer)) {
+            alert("Enter a valid answer first.");
+            return;
+        }
 
-        this.clickSound.currentTime = 0;
-        this.clickSound.play();
+        const runId = this.runId;
+        const combatId = this.model.getCombatId();
+        const questionId = this.model.getQuestionId();
+        if (combatId === null || questionId === null) {
+            alert("Load a fight first.");
+            return;
+        }
 
-        this.view.returnToCombat();
+        const version = this.sessionVersion;
+        this.submitting = true;
+        try {
+            const result = await submitAnswer(runId, combatId, questionId, answer);
+            if (version !== this.sessionVersion) return;
 
-        const currentHealth = this.model.getEnemyHealth();
+            this.model.setPlayerHealth(result.playerHp);
+            this.model.setEnemyCurrentHealth(result.enemyHp);
+            this.view.setPlayerHealthBar(result.playerHp, this.model.getPlayerMaxHealth());
+            this.view.updateEnemyHealthBar(result.enemyHp, this.model.getEnemyMaxHealth());
 
-        const newHealth = Math.max(0, currentHealth - 10);
+            alert(result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`);
+            this.view.returnToCombat();
 
-        // Update the model
-        this.model.setEnemyCurrentHealth(newHealth);
-
-        // Update the view after 1 second delay
-            setTimeout(() => {
-                this.view.updateEnemyHealthBar(newHealth, this.model.getEnemyMaxHealth());
-
-                if(this.model.getEnemyHealth() <= 0){
-                    this.endFight(true);
-
-                    setTimeout(() => {
-                        this.screenSwitcher.switchToScreen({ type: "map" });
-                    }, 3000);
-                }
-            }, 500);
+            if (result.result === "ongoing") {
+                await this.loadFight(runId, version);
+            } else {
+                this.endFight(result.result === "win");
+                alert(result.result === "win" ? "You won!" : "Game over.");
+                this.screenSwitcher.switchToScreen({ type: result.result === "win" ? "map" : "menu" });
+            }
+        } catch (error) {
+            if (version !== this.sessionVersion) return;
+            alert(error instanceof Error ? error.message : "Could not submit the answer");
+            // A lost response may already have applied damage. Re-entry must reload
+            // server state instead of blindly repeating this submission.
+            this.screenSwitcher.switchToScreen({ type: "map" });
+        } finally {
+            if (version === this.sessionVersion) this.submitting = false;
+        }
     }
 
     // Switches to potion pop up
@@ -139,7 +162,14 @@ export class CombatMainScreenController extends ScreenController {
     }
 
     async startGame(runId: string): Promise<void> {
-        await this.loadFight(runId);
+        const version = ++this.sessionVersion;
+        this.submitting = true;
+        try {
+            await this.loadFight(runId, version);
+        } finally {
+            if (version === this.sessionVersion) this.submitting = false;
+        }
+        if (version !== this.sessionVersion) return;
 
         this.view.resetFight();
         this.view.returnToCombat();
@@ -159,10 +189,10 @@ export class CombatMainScreenController extends ScreenController {
     }
 
     // fetch current fight and store it in model
-    // will probably just merge this logic into startGame()
-    async loadFight(runId: string): Promise<void> {
+    async loadFight(runId: string, version = this.sessionVersion): Promise<void> {
         const combat = await getCombat(runId);
 
+        if (version !== this.sessionVersion) return;
         this.runId = runId;
         this.model.loadCombat(combat);
 
