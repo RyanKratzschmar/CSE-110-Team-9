@@ -1,6 +1,6 @@
 // Player: the player's Health, attack, and defense stats. (Sally)
 import { Health } from "./Health";
-import type { Potion } from "./Potion";
+import type {Potion} from "./Potion";
 
 export type Item = Potion;
 
