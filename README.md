@@ -24,6 +24,21 @@ npm run typecheck      # TypeScript errors across the whole project
 
 Shared: `backend/app.ts`, `backend/server.ts`, `backend/game/runStore.ts`, `GameState.ts`, `Health.ts`, `frontend/src/api.ts`, `tests/routes.test.ts`.
 
+## Sprint 2 (rest minigames, potions, leaderboard)
+
+New files hold only a header comment naming the owner, the same as the Sprint 1 skeleton. Task checklists and estimates are in [SPRINT2.md](SPRINT2.md). UI for all new screens: Ryan.
+
+| Story | Owner | Files |
+|---|---|---|
+| Upgrade minigame (60 s times tables, one upgrade per level) | David | `backend/equations/TimesTableEquation.ts`, `backend/game/UpgradeMinigame.ts`, `src/screens/UpgradeMinigameScreen/*`, `tests/upgrade.test.ts` |
+| Potion lab: solve a PEMDAS equation | Sally (lab logic), Oliver (equations) | Sally: `backend/game/PotionLab.ts`, `src/screens/PotionLabScreen/*`, `tests/potionLab.test.ts`. Oliver: `backend/equations/PemdasEquation.ts` (its tests go in `tests/equations.test.ts`) |
+| Potion lab: right answer brews a potion | Oliver | `backend/game/Potion.ts`, `backend/game/Inventory.ts`, `tests/potions.test.ts` |
+| Use potions in battle | Arushi | `src/screens/CombatMainScreen/PotionPopUpView.ts`, `CombatMainScreenController.ts`, `CombatMainScreenView.ts`, `tests/potionCombat.test.ts` |
+| Leaderboard | Darsh | `backend/game/Leaderboard.ts`, `backend/routes/leaderboard.ts`, `src/screens/LeaderboardScreen/*`, `tests/leaderboard.test.ts` |
+| Rest menu | Lianshi | `src/screens/RestScreen/*`, `tests/restMenu.test.ts` |
+
+Shared files Sprint 2 will touch: `backend/game/GameState.ts` (potion inventory, upgrade claimed this level), `backend/game/Player.ts` (healing, stat upgrades), `src/types.ts` and `src/main.ts` (new screens).
+
 ## Git workflow
 
 1. **`main` always works.** Nobody pushes to it directly; everything goes through a pull request.
@@ -45,21 +60,33 @@ Shared: `backend/app.ts`, `backend/server.ts`, `backend/game/runStore.ts`, `Game
 | `app.ts` | the 3 route files | Serves `frontend/` and mounts the `/api` routes |
 | `routes/*.ts` | `runStore`, `GameManager` | The URLs (see API below) |
 | `runStore.ts` | `GameState` | `create()` → new run id, `get(id)` → that run's GameState |
-| `GameState.ts` | `Player`, `Level` | The data for one game: `player`, `level`, `combat` (current fight or none), `gameOver` |
-| `GameManager.ts` | `Level`, `Combat`, `RestStop`, `BasicMonster` | The rules for what happens next: start the current stop, then move on or end the game after a win, loss or rest |
-| `Level.ts` | `LevelNode` | 3–4 combat stops + 1 rest stop, `currentNode()`, `completeCurrent()` |
+| `GameState.ts` | `Player`, `Level` | The data for one game: `player`, `level`, `gameOver`, and `toJSON()` for the frontend. (Combat adds `combat` for the fight in progress.) |
+| `GameManager.ts` | `Level` | The game flow: `requireCurrentStop()`, `finishCombat()`, `finishRest()` (see below) |
+| `Level.ts` | `LevelNode` | 3 combat stops + 1 rest stop: `currentNode()`, `currentIndex`, `completeCurrent()`, `isComplete()` |
+| `LevelNode.ts` | (nothing) | One stop: `type` (`"combat"` or `"rest"`), `difficulty` (= level number), `cleared` |
 | `Combat.ts` | `EquationFactory` | `currentQuestion()`, `submitAnswer(answer)` → right/wrong, HPs, and win/lose/still fighting |
 | `RestStop.ts` | (nothing) | `rest(player)` → heals the player to full |
-| `Player.ts` | `Health` | The player's HP and attack: `takeDamage()`, `healFull()`, `isDead()` |
+| `Player.ts` | `Health` | `hp`, `maxHp`, `attack`, `defense` (0 to <1, the fraction of damage blocked), `takeDamage()` (applies defense, at least 1 damage per hit), `healFull()`, `isDead()` |
+| `Health.ts` | (nothing) | Current and max HP that stay between 0 and max: `value`, `max`, `updateHealth()`, `healFull()`, `isZero()` |
 | `Monster.ts` | `Health` | Enemy HP and attack; `BasicMonster` extends `Monster` |
 | `EquationFactory.ts` | the 3 equation classes | `create(difficulty)` → a random equation |
 | Each equation class | `RandomEquation` | `getEquation()`, `getAnswer()`, `checkAnswer()`, `getExplanation()` |
+
+### Game flow (GameManager)
+
+A level is `[⚔, ⚔, ⚔, 🏕]`. Combat and rest never change the level directly; they call GameManager, which checks the action fits the current stop and throws `GameFlowError` if it doesn't (routes can turn that into a 409).
+
+| Function | Who calls it | What it does |
+|---|---|---|
+| `requireCurrentStop(state, type)` | Combat and rest routes, before doing anything | Returns the current stop if it's the right type (use `node.difficulty` for the fight) |
+| `finishCombat(state, "win" \| "lose")` | Combat route, when a fight ends | Win → next stop. Lose → `gameOver = true` |
+| `finishRest(state)` | Rest route, when the player picks Continue | Clears the rest stop and starts the next level (difficulty + 1). Doesn't heal; `RestStop` does that first |
 
 ### API (the contract between frontend and backend)
 
 | Request | Sends | Gets back |
 |---|---|---|
-| `POST /api/runs` | nothing | `{ id, player:{hp,maxHp}, level, currentIndex, nodes:[{type,cleared}], gameOver }` |
+| `POST /api/runs` | nothing | `{ id, player:{hp,maxHp,attack,defense}, level, currentIndex, nodes:[{type,cleared}], gameOver }` |
 | `GET /api/runs/:id` | nothing | the same state object |
 | `GET /api/runs/:id/combat` | nothing | `{ question, playerHp, enemyHp }` |
 | `POST /api/runs/:id/combat/answer` | `{ answer }` | `{ correct, playerHp, enemyHp, correctAnswer, explanation, result: "ongoing" \| "win" \| "lose" }` |
@@ -81,5 +108,5 @@ Shared: `backend/app.ts`, `backend/server.ts`, `backend/game/runStore.ts`, `Game
 2. **api.ts** → `POST /api/runs/:id/combat/answer` with `{ "answer": 42 }`
 3. **routes/combat.ts** → `runStore.get(id)` → `state.combat.submitAnswer(42)`
 4. **Combat** → `equation.checkAnswer(42)`. If wrong, the player takes damage and the response includes `getAnswer()` and `getExplanation()`.
-5. If the enemy's HP reaches 0, the route calls `GameManager`, which marks the stop cleared and moves to the next one.
+5. If the enemy's HP reaches 0, the route calls `finishCombat(state, "win")`, which marks the stop cleared and moves to the next one.
 6. The JSON comes back → **CombatUI** updates the HP bars. If the answer was wrong, it opens the **wrong-answer popup**. If `result` is `"win"` or `"lose"`, it tells **main.ts**, which shows the map or the game-over screen.
