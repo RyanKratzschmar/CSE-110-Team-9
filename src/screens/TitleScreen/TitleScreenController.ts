@@ -47,7 +47,7 @@ export class TitleScreenController extends ScreenController{
 		this.clickSound.currentTime = 0;
 		this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({type : "menu"});
+        this.screenSwitcher.switchToScreen({type : "leaderboard"});
     }
 
 	/**

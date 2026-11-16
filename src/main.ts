@@ -10,6 +10,7 @@ import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabSc
 import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
 
+import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
  *
@@ -30,6 +31,7 @@ class App implements ScreenSwitcher {
 	private potionLabScreenController: PotionLabScreenController;
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
+	private leaderBoardScreenController: LeaderBoardScreenController;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -54,6 +56,8 @@ class App implements ScreenSwitcher {
 		this.potionLabScreenController = new PotionLabScreenController(this, this.combatMainScreenController.getModel());
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel());
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel());
+		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
+		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -93,6 +97,7 @@ class App implements ScreenSwitcher {
 		this.levelMapScreenController.hide();
 		this.potionLabScreenController.hide();
 		this.restScreenController.hide();
+		this.leaderBoardScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
@@ -120,6 +125,12 @@ class App implements ScreenSwitcher {
 
 			case "upgrade":
 				this.upgradeMinigameScreenController.startUpgradeMinigameScreen();
+				break;
+			
+			case "leaderboard":
+				//Show leaderboard
+				this.leaderBoardScreenController.startLeaderboard();
+				break;
 		}
 	}
 }

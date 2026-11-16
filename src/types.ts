@@ -20,6 +20,8 @@ export type Screen =
 	| { type: "potion" }
 	| { type: "rest" }
 	| { type: "upgrade" }
+	| { type: "map" }
+	| { type: "leaderboard" };
 
 export abstract class ScreenController {
 	abstract getView(): View;
