@@ -3,8 +3,7 @@
 import {Player} from "./Player";
 import {Monster} from "./Monster";
 import type { RandomEquation } from "../equations/RandomEquation";
-import { MultiplicationEquation } from "../equations/MultiplicationEquation";
-import { DivisionEquation } from "../equations/DivisionEquation";
+import { getEquation } from "../equations/EquationFactory"; 
 import { HEAL_PERCENT, type Potion } from "./Potion";
 
 type BattleStatus = "active" | "won" | "lost";
@@ -42,15 +41,15 @@ export class Combat {
     private currentEquation: RandomEquation;
     private questionId = 1;
     private questionResolved = false;
+    private difficulty: number;
 
-    constructor(player: Player, enemy: Monster,
+    constructor(player: Player, enemy: Monster, difficulty: number,
         private readonly generateEquation: () => RandomEquation = () =>
-            Math.random() < 0.5
-                ? new MultiplicationEquation(false)
-                : new DivisionEquation(false)
+            getEquation({type: "Combat"}, this.difficulty)
     ) {
         this.player = player;
         this.enemy = enemy;
+        this.difficulty = difficulty;
         this.currentEquation = this.generateEquation();
         this.checkBattleStatus();
     }

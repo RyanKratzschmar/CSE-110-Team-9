@@ -8,14 +8,14 @@ import type { Potion } from "../backend/game/Potion";
 
 describe("Potion Combat", () => {
     function fixedEquation() {
-        return new MultiplicationEquation(true, "10 * 20 = ", 200, [10, "*", 20]);
+        return new MultiplicationEquation(1, [10, "*", 20], 200);
     }
 
     function createCombatWithPotions(potions: Potion[] = [{ type: "healing", level: "basic" }]) {
         const player = new Player(100, 20, 0); // 0 defense for straightforward damage math
         const enemy = new Monster(50, 15);
         player.inventory.push(...potions);
-        const combat = new Combat(player, enemy, fixedEquation);
+        const combat = new Combat(player, enemy, 1, fixedEquation);
         return { player, enemy, combat };
     }
 
@@ -121,7 +121,7 @@ describe("Potion Combat", () => {
         // Heal 20 -> 21.
         // Let's test with a 30 damage enemy:
         const lethalEnemy = new Monster(50, 30);
-        const lethalCombat = new Combat(player, lethalEnemy, fixedEquation);
+        const lethalCombat = new Combat(player, lethalEnemy, 1, fixedEquation);
         const result = lethalCombat.usePotion(0);
 
         expect(result?.result).toBe("lose");
