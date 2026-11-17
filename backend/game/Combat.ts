@@ -144,7 +144,7 @@ export class Combat {
         this.player.inventory.splice(index, 1);
 
         const prevHp = this.player.hp;
-        const healPercent = HEAL_PERCENT[potion.level] ?? 20;
+        const healPercent = (HEAL_PERCENT[potion.level] ?? 20) + this.player.potionHealingBonus;
         const healAmount = Math.max(1, Math.round((this.player.maxHp * healPercent) / 100));
         this.player.heal(healAmount);
         const healed = this.player.hp - prevHp;

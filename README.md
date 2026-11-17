@@ -30,7 +30,7 @@ New files hold only a header comment naming the owner, the same as the Sprint 1 
 
 | Story | Owner | Files |
 |---|---|---|
-| Upgrade minigame (60 s times tables, one upgrade per level) | David | `backend/equations/TimesTableEquation.ts`, `backend/game/UpgradeMinigame.ts`, `src/screens/UpgradeMinigameScreen/*`, `tests/upgrade.test.ts` |
+| Upgrade minigame (60 s times tables, one upgrade per level) | David | `backend/equations/EquationFactory.ts` (Oliver’s upgrade generator), `backend/game/UpgradeMinigame.ts`, `src/screens/UpgradeMinigameScreen/*`, `tests/upgrade.test.ts` |
 | Potion lab: solve a PEMDAS equation | Sally (lab logic), Oliver (equations) | Sally: `backend/game/PotionLab.ts`, `src/screens/PotionLabScreen/*`, `tests/potionLab.test.ts`. Oliver: `backend/equations/PemdasEquation.ts` (its tests go in `tests/equations.test.ts`) |
 | Potion lab: right answer brews a potion | Oliver | `backend/game/Potion.ts`, `backend/game/Inventory.ts`, `tests/potions.test.ts` |
 | Use potions in battle | Arushi | `src/screens/CombatMainScreen/PotionPopUpView.ts`, `CombatMainScreenController.ts`, `CombatMainScreenView.ts`, `tests/potionCombat.test.ts` |

@@ -12,7 +12,7 @@ function fixedEquations() {
   const askedFor: RecipeLevel[] = [];
   const make = (level: RecipeLevel) => {
     askedFor.push(level);
-    return new MultiplicationEquation(true, "2 * 6 + 18 / 3 - 4 = ", 14, [2, "*", 6, "+", 18, "/", 3, "-", 4]);
+    return new MultiplicationEquation(0, [2, "*", 6, "+", 18, "/", 3, "-", 4], 14);
   };
   return { askedFor, make };
 }
@@ -22,7 +22,7 @@ describe("PotionLab", () => {
     const eq = fixedEquations();
     const lab = new PotionLab(new Player().inventory, eq.make);
     lab.chooseType("poison");
-    expect(lab.chooseRecipe("advanced")).toBe("2 * 6 + 18 / 3 - 4 = ");
+    expect(lab.chooseRecipe("advanced")).toBe("2*6+18/3-4= ?");
     expect(eq.askedFor).toEqual(["advanced"]);
   });
 

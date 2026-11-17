@@ -2,6 +2,7 @@
 import { Level } from "./Level";
 import type { NodeType } from "./LevelNode";
 import { Player } from "./Player";
+import type { UpgradeMinigame } from "./UpgradeMinigame";
 
 // What the frontend receives (see the API table in the README)
 export interface GameStateJSON {
@@ -16,6 +17,9 @@ export class GameState {
   readonly player = new Player();
   level = new Level(1);
   gameOver = false;
+  upgradeMinigame: UpgradeMinigame | null = null;
+  upgradeMinigameLevel: number | null = null;
+  upgradeClaimedLevel: number | null = null;
 
   toJSON(): GameStateJSON {
     return {
