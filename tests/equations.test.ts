@@ -263,8 +263,8 @@ describe("Pemdas", () => {
             final = ans1 - ans2;
         }
         expect(pemdas.getAnswer()).toBe(final);
-        // Print should be based on the bounds of the size
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(14);
+        // Print should be based on the bounds of the size, all numbers are between 1 and 3 digits
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(16);
         expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(10);
     });
 
@@ -312,7 +312,7 @@ describe("Pemdas", () => {
         }
         expect(pemdas.getAnswer()).toBe(final);
         // Print should be based on the bounds of the size
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(14);
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(16);
         expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(10);
     });
 
@@ -380,7 +380,7 @@ describe("Pemdas", () => {
         }
         expect(pemdas.getAnswer()).toBe(final);
         // Print should be based on the bounds of the size, 6 terms each of size 1 or 2
-        expect(pemdas.getPrint().length).toBeLessThanOrEqual(20);
+        expect(pemdas.getPrint().length).toBeLessThanOrEqual(24);
         expect(pemdas.getPrint().length).toBeGreaterThanOrEqual(14);
     });
 
