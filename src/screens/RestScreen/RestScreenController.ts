@@ -2,6 +2,11 @@ import type { GameSession } from "../../GameSession";
 import { RestStop } from "../../../backend/game/RestStop";
 import { finishRest } from "../../../backend/game/GameManager";
 // PotionLabScreenController: picks the difficulty, checks the answer, and puts the brewed potion in the inventory. (Sally)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// This file was merged too early by mistake, the entire file should be included in the PR. - Ryan //
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { RestScreenView } from "./RestScreenView.ts";

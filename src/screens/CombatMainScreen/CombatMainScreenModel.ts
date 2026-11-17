@@ -5,7 +5,7 @@ export class CombatMainScreenModel {
     private score = 0;
     private playerMaxHealth = 100;
     private enemyMaxHealth = 50;
-    private playerCurrentHealth = 75;
+    private playerCurrentHealth = 100;
     private enemyCurrentHealth = 50;
 
     // reset game score
