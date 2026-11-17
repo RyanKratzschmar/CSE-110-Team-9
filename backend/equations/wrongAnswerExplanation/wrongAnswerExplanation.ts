@@ -1,0 +1,130 @@
+import type { OperationKind } from '../equationUtils';
+
+export type CellKind = 'digit' | 'placeholder' | 'carry' | 'symbol' | 'bracket'; //Describes the type of cell that we are dealing with to differentiate the view styles
+
+//Defines the properties for each cell
+export interface WorkCell {
+    readonly row: number;
+    readonly col: number;
+    readonly text: string;
+    readonly kind: CellKind;
+    readonly step: number; //Which step number does the given cell belong to
+    readonly transient: boolean; //Controls how long a cell stays visible. When it is false, it implies that the given cell will show up for its own step and the steps that follow. (Applies to most cells) If this is true, then the given cell will only appear for its own step and will disappear afterwards. (Used for carry functionality)
+}
+
+//Defines the properties for a horizontal line in the written out work, such as the one under "x 12"
+export interface WorkLine {
+    readonly row: number;
+    readonly fromCol: number;
+    readonly toCol: number; //Inclusive
+    readonly edge: 'top' | 'bottom';
+    readonly step: number; //Which step number does the given line belong to
+    readonly fromOffset: number; //Offsets the start of the line by a fraction between 0 and 1, so that we can start the line midway through a cell
+}
+
+//Stores the finished worked out grid solution
+export interface WorkLayout {
+    readonly rows: number;
+    readonly columns: number;
+    readonly cells: readonly WorkCell[];
+    readonly lines: readonly WorkLine[];
+}
+
+//The text for one step of the explanation
+export interface ExplanationStep {
+    readonly title: string;
+    readonly description: string;
+    readonly details: readonly string[];
+}
+
+//Stores the finished worked out solution (grid + text) to a given problem
+export interface WorkedSolution {
+    readonly operation: OperationKind;
+    readonly operands: readonly [number, number];
+    readonly operatorSymbol: '×' | '÷';
+    readonly problemText: string;
+    readonly answer: number;
+    readonly steps: readonly ExplanationStep[];
+    readonly layout: WorkLayout;
+}
+
+//Anything that can produce a WorkedSolution (both explanation classes implement this)
+export interface WrongAnswerExplainer {
+    explain(): WorkedSolution;
+}
+
+//Function to check a cell's visibility at a given step
+export function isCellVisible(cell: WorkCell, step: number): boolean {
+    return cell.transient ? cell.step === step : cell.step <= step; //If the cell is transient, it should only be displayed for its own step. If not, it should be displayed from its own step onwards.
+}
+
+//Defines a WorkCell where transient is optional (defaults to false)
+type CellInput = Omit<WorkCell, 'transient'> & { transient?: boolean };
+
+//Defines a WorkLine where fromOffset is optional (defaults to 0)
+type LineInput = Omit<WorkLine, 'fromOffset'> & { fromOffset?: number };
+
+//Collects the cells and lines and works out the grid size from them
+export class GridBuilder {
+    private readonly cells: WorkCell[] = [];
+    private readonly lines: WorkLine[] = [];
+    private maxRow = -1;
+    private maxCol = -1;
+
+    //Grows the grid size so it covers the given row and column
+    private track(row: number, col: number): void {
+        this.maxRow = Math.max(this.maxRow, row);
+        this.maxCol = Math.max(this.maxCol, col);
+    }
+
+    //Adds one cell to the grid (transient defaults to false)
+    cell(cell: CellInput): void {
+        this.cells.push({ ...cell, transient: cell.transient ?? false });
+        this.track(cell.row, cell.col);
+    }
+
+    //Writes the text one character per cell, ending at rightCol, and returns the leftmost column used
+    rightAligned(row: number, rightCol: number, text: string, kind: CellKind, step: number): number {
+        const left = rightCol - text.length + 1;
+        for (let i = 0; i < text.length; i++) {
+            this.cell({row, col: left + i, text: text.charAt(i), kind, step});
+        }
+        return left;
+    }
+
+    //Adds a horizontal line to the grid (fromOffset defaults to 0)
+    line(line: LineInput): void {
+        this.lines.push({ ...line, fromOffset: line.fromOffset ?? 0 });
+        this.track(line.row, line.toCol);
+    }
+
+    //Returns the finished layout, at least minColumns wide
+    build(minColumns = 0): WorkLayout {
+        return {rows: this.maxRow + 1, columns: Math.max(this.maxCol + 1, minColumns), cells: this.cells, lines: this.lines };
+    }
+}
+
+//Base Class for both explanation classes (Long Multiplication and Long Division)
+export abstract class WorkedSolutionBase implements WrongAnswerExplainer {
+    abstract readonly operation: OperationKind;
+    abstract readonly operands: readonly [number, number];
+    abstract readonly operatorSymbol: '×' | '÷';
+    abstract readonly answer: number;
+
+    private cached: WorkedSolution | null = null;
+
+    //Builds the worked solution the first time, then returns the cached copy on later calls
+    explain(): WorkedSolution {
+        if (this.cached) {
+            return this.cached;
+        }
+        const [left, right] = this.operands;
+        this.cached = {operation: this.operation, operands: this.operands, operatorSymbol: this.operatorSymbol, problemText: `${left} ${this.operatorSymbol} ${right}`, answer: this.answer, steps: this.buildSteps(), layout: this.buildLayout()};
+        return this.cached;
+    }
+
+    //Each subclass writes the text for its own steps
+    protected abstract buildSteps(): ExplanationStep[];
+    //Each subclass lays out its own written work on the grid
+    protected abstract buildLayout(): WorkLayout;
+}
