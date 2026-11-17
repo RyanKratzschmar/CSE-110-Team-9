@@ -387,16 +387,19 @@ export class PotionLabScreenView implements View {
         });
         this.group.add(this.leaveText);
 
-        this.potion = new Konva.Rect({
+        const potionImage = new Image();
+
+        potionImage.src = "/Potion.png";
+
+        this.potion = new Konva.Image({
+            image: potionImage,
             height: 300,
             width: 200,
             x: 700,
             y: 200,
-            fill: "white",
-            stroke: "gray",
-            cornerRadius: 10,
             visible: true,
         });
+
         this.group.add(this.potion);
 
         this.chooseText = new Konva.Text({
