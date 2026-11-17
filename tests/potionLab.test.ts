@@ -4,7 +4,7 @@ import { PotionLab } from "../backend/game/PotionLab";
 import { Player } from "../backend/game/Player";
 import type { RecipeLevel } from "../backend/game/Potion";
 import { HEAL_PERCENT } from "../backend/game/Potion";
-import { MultiplicationEquation } from "../backend/equations/MultiplicationEquation";
+import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
 
 // Always gives the mockup's equation (answer 14) and remembers which level was asked for.
 // MultiplicationEquation is only used because it can hold any fixed equation and answer.
@@ -12,7 +12,7 @@ function fixedEquations() {
   const askedFor: RecipeLevel[] = [];
   const make = (level: RecipeLevel) => {
     askedFor.push(level);
-    return new MultiplicationEquation(true, "2 * 6 + 18 / 3 - 4 = ", 14, [2, "*", 6, "+", 18, "/", 3, "-", 4]);
+    return new MultiOperationEquation(1, [2, "*", 6, "+", 18, "/", 3, "-", 4], 14);
   };
   return { askedFor, make };
 }
@@ -22,7 +22,7 @@ describe("PotionLab", () => {
     const eq = fixedEquations();
     const lab = new PotionLab(new Player().inventory, eq.make);
     lab.chooseType("poison");
-    expect(lab.chooseRecipe("advanced")).toBe("2 * 6 + 18 / 3 - 4 = ");
+    expect(lab.chooseRecipe("advanced")).toBe("2*6+18/3-4= ?");
     expect(eq.askedFor).toEqual(["advanced"]);
   });
 
