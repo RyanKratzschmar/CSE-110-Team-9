@@ -175,7 +175,7 @@ export class UpgradeMinigameScreenView implements View {
             width: BOX_W - 80,
             align: "center",
             lineHeight: 1.3,
-            text: "Solve as many problems as you can in 1 minute!\n\nType your answer and press Enter.\nEvery correct answer upgrades your weapon, armor, and potion!",
+            text: "Solve as many problems as you can in 1 minute!\n\nType your answer and press Enter.\nAnswer at least 10 problems correctly to receive upgrades to your weapon, armor, and potion!",
             fontSize: 32,
             fontFamily: FONT,
             fill: DARK
@@ -417,7 +417,8 @@ export class UpgradeMinigameScreenView implements View {
         if (ready) {
             for (const type of UPGRADE_TYPES) {
                 const { statBefore, statAfter } = outcome[type];
-                this.statValues[type].text(`${statBefore} → ${statAfter}  (+${statAfter - statBefore})`);
+                const format = (n: number) => (type === "armor" ? n.toFixed(2) : String(n));
+                this.statValues[type].text(`${format(statBefore)} → ${format(statAfter)}  (+${format(statAfter - statBefore)})`);
             }
             this.messageText.text("Your gear has been upgraded!");
         } else if (state.outcomeStatus === "loading") {
