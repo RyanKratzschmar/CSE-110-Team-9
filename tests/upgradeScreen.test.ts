@@ -182,10 +182,10 @@ describe("UpgradeMinigameScreenView", () => {
         expect(findText(view, "Incorrect answer! 7 × 8 = 56").isVisible()).toBe(true);
     });
 
-    it("shows the weapon, armor, and potion changes once the upgrade is applied", () => {
+        it("shows the weapon, armor, and potion changes once the upgrade is applied", () => {
         const outcome = {
             weapon: { statBefore: 5, statAfter: 7 },
-            armor: { statBefore: 3, statAfter: 4 },
+            armor: { statBefore: 0.1, statAfter: 0.25 },
             potion: { statBefore: 10, statAfter: 12 }
         };
 
@@ -194,7 +194,7 @@ describe("UpgradeMinigameScreenView", () => {
 
         view.render(makeState({ phase: "complete", outcomeStatus: "ready", outcome }));
         expect(findText(view, "5 → 7  (+2)").isVisible()).toBe(true);
-        expect(findText(view, "3 → 4  (+1)").isVisible()).toBe(true);
+        expect(findText(view, "0.10 → 0.25  (+0.15)").isVisible()).toBe(true);
         expect(findText(view, "10 → 12  (+2)").isVisible()).toBe(true);
         expect(findText(view, "Your gear has been upgraded!").isVisible()).toBe(true);
     });
