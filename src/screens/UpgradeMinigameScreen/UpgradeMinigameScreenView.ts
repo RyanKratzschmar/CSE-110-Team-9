@@ -6,11 +6,9 @@ import type { UpgradeMinigameState, UpgradePhase, UpgradeType } from "./UpgradeM
 
 //Functions the view calls when the player clicks a button or presses a key
 export interface UpgradeMinigameViewHandlers {
-    onChoose(type: UpgradeType): void;
     onStart(): void;
     onSubmit(answer: string): void;
     onNext(): void;
-    onBack(): void;
     onLeave(): void;
 }
 
@@ -47,7 +45,6 @@ const CREAM_BORDER = "#C9B98F";
 const LAVENDER = "#DCCEF7";
 const PURPLE = "#7B4FD6";
 const RED = "#F04A23";
-const YELLOW = "#FFC943";
 const GREEN = "#5FD068";
 const BLUE = "#2F9BF4";
 const ORANGE = "#FF7A1A";
@@ -66,7 +63,6 @@ export class UpgradeMinigameScreenView implements View {
     private readonly group: Konva.Group;
     private readonly buttonBgs: Konva.Rect[] = [];
 
-    private readonly choosePanel: Konva.Group;
     private readonly workshopPanel: Konva.Group;
     private readonly completePanel: Konva.Group;
 
@@ -85,16 +81,13 @@ export class UpgradeMinigameScreenView implements View {
     private readonly submitButton: Konva.Group;
     private readonly nextButton: Konva.Group;
 
-    private readonly completeEmoji: Konva.Text;
     private readonly completeSolvedText: Konva.Text;
-    private readonly statBox: Konva.Rect;
-    private readonly statLabel: Konva.Text;
-    private readonly statValue: Konva.Text;
+    private readonly statRows: Konva.Group;
+    private readonly statValues = {} as Record<UpgradeType, Konva.Text>;
     private readonly statStatusText: Konva.Text;
     private readonly messageBox: Konva.Rect;
     private readonly messageText: Konva.Text;
 
-    private readonly backButton: Konva.Group;
     private readonly leaveButton: Konva.Group;
     private readonly exitButton: Konva.Group;
 
@@ -125,13 +118,9 @@ export class UpgradeMinigameScreenView implements View {
             fill: DARK
         }));
         
-        this.backButton = this.createButton("Back", 60, 800, 200, 70, YELLOW, "#000000", () => this.handlers.onBack());
         this.leaveButton = this.createButton("Leave", STAGE_WIDTH - 260, 800, 200, 70, RED, "#FFFFFF", () => this.handlers.onLeave());
         this.exitButton = this.createButton("Exit", STAGE_WIDTH - 260, 800, 200, 70, RED, "#FFFFFF", () => this.handlers.onLeave());
-        this.group.add(this.backButton, this.leaveButton, this.exitButton);
-
-        this.choosePanel = new Konva.Group();
-        this.buildChoosePanel();
+        this.group.add(this.leaveButton, this.exitButton);
 
         this.workshopPanel = new Konva.Group();
         this.workshopPanel.add(this.createPanelBackground());
@@ -186,7 +175,7 @@ export class UpgradeMinigameScreenView implements View {
             width: BOX_W - 80,
             align: "center",
             lineHeight: 1.3,
-            text: "Solve as many problems as you can in 1 minute!\n\nType your answer and press Enter.\nRight or wrong, you move on to the next one.",
+            text: "Solve as many problems as you can in 1 minute!\n\nType your answer and press Enter.\nAnswer at least 10 problems correctly to receive upgrades to your weapon, armor, and potion!",
             fontSize: 32,
             fontFamily: FONT,
             fill: DARK
@@ -240,7 +229,7 @@ export class UpgradeMinigameScreenView implements View {
             y: BOX_Y + 30,
             width: RIGHT_W,
             align: "center",
-            text: "",
+            text: "Upgrade Gear",
             fontSize: 46,
             fontFamily: FONT,
             fontStyle: "bold",
@@ -249,11 +238,11 @@ export class UpgradeMinigameScreenView implements View {
 
         this.workshopEmoji = new Konva.Text({
             x: RIGHT_X,
-            y: BOX_Y + 130,
+            y: BOX_Y + 150,
             width: RIGHT_W,
             align: "center",
-            text: "",
-            fontSize: 140
+            text: UPGRADE_TYPES.map((type) => UPGRADE_INFO[type].emoji).join(" "),
+            fontSize: 100
         });
 
         this.startButton = this.createButton("Start", RIGHT_X + (RIGHT_W - 220) / 2, BOX_Y + 390, 220, 70, GREEN, "#000000", () => this.handlers.onStart());
@@ -274,20 +263,10 @@ export class UpgradeMinigameScreenView implements View {
             fill: DARK
         }));
 
-        this.completeEmoji = new Konva.Text({
-            x: PANEL_X,
-            y: PANEL_Y + 150,
-            width: 560,
-            align: "center",
-            text: "",
-            fontSize: 200
-        });
-
-        const statCenterX = 1090;
         this.completeSolvedText = new Konva.Text({
-            x: statCenterX - 300,
-            y: PANEL_Y + 140,
-            width: 600,
+            x: PANEL_X,
+            y: PANEL_Y + 110,
+            width: PANEL_W,
             align: "center",
             text: "",
             fontSize: 32,
@@ -296,44 +275,13 @@ export class UpgradeMinigameScreenView implements View {
             fill: DARK
         });
 
-        this.statBox = new Konva.Rect({
-            x: statCenterX - 290,
-            y: PANEL_Y + 210,
-            width: 580,
-            height: 110,
-            fill: "#E8C98F",
-            stroke: "#B8955A",
-            strokeWidth: 3,
-            cornerRadius: 8
-        });
-
-        this.statLabel = new Konva.Text({
-            y: PANEL_Y + 210,
-            height: 110,
-            verticalAlign: "middle",
-            text: "",
-            fontSize: 44,
-            fontFamily: FONT,
-            fontStyle: "bold",
-            fill: DARK
-        });
-
-        this.statValue = new Konva.Text({
-            y: PANEL_Y + 210,
-            height: 110,
-            verticalAlign: "middle",
-            text: "",
-            fontSize: 44,
-            fontFamily: FONT,
-            fontStyle: "bold",
-            fill: ORANGE
-        });
+        this.statRows = this.buildStatRows();
 
         this.statStatusText = new Konva.Text({
-            x: statCenterX - 290,
-            y: PANEL_Y + 210,
-            width: 580,
-            height: 110,
+            x: PANEL_X,
+            y: PANEL_Y + 170,
+            width: PANEL_W,
+            height: 270,
             align: "center",
             verticalAlign: "middle",
             text: "",
@@ -344,8 +292,8 @@ export class UpgradeMinigameScreenView implements View {
         });
 
         this.messageBox = new Konva.Rect({
-            x: statCenterX - 230,
-            y: PANEL_Y + 360,
+            x: PANEL_X + (PANEL_W - 460) / 2,
+            y: PANEL_Y + 460,
             width: 460,
             height: 80,
             fill: "#C9F2CF",
@@ -355,8 +303,8 @@ export class UpgradeMinigameScreenView implements View {
         });
 
         this.messageText = new Konva.Text({
-            x: statCenterX - 230,
-            y: PANEL_Y + 360,
+            x: PANEL_X + (PANEL_W - 460) / 2,
+            y: PANEL_Y + 460,
             width: 460,
             height: 80,
             align: "center",
@@ -368,9 +316,9 @@ export class UpgradeMinigameScreenView implements View {
             fill: DARK
         });
 
-        this.completePanel.add(this.completeEmoji, this.completeSolvedText, this.statBox, this.statLabel,this.statValue, this.statStatusText, this.messageBox, this.messageText);
+        this.completePanel.add(this.completeSolvedText, this.statRows, this.statStatusText, this.messageBox, this.messageText);
 
-        this.group.add(this.choosePanel, this.workshopPanel, this.completePanel);
+        this.group.add(this.workshopPanel, this.completePanel);
     }
 
     //Shows the panel and footer buttons for the current phase and fills in the latest values
@@ -384,11 +332,9 @@ export class UpgradeMinigameScreenView implements View {
 
         this.updateHealthBar(state.playerHp, state.playerMaxHp);
 
-        this.choosePanel.visible(phase === "choose");
         this.workshopPanel.visible(phase === "ready" || phase === "solving");
         this.completePanel.visible(phase === "complete");
 
-        this.backButton.visible(phase === "choose" || phase === "ready");
         this.leaveButton.visible(phase !== "complete");
         this.exitButton.visible(phase === "complete");
 
@@ -423,12 +369,6 @@ export class UpgradeMinigameScreenView implements View {
 
     //Updates the ready and solving phases: instructions and Start before the round, then the timer, problem, answer, and Submit/Next during it
     private renderWorkshop(state: UpgradeMinigameState, solving: boolean): void {
-        if (state.upgradeType !== null) {
-            const info = UPGRADE_INFO[state.upgradeType];
-            this.workshopTitle.text(`Upgrade ${info.label}`);
-            this.workshopEmoji.text(info.emoji);
-        }
-
         this.instructionsText.visible(!solving);
         this.startButton.visible(!solving);
         this.timerText.visible(solving);
@@ -463,37 +403,85 @@ export class UpgradeMinigameScreenView implements View {
         }
     }
 
-    //Updates the complete phase: the score, then the stat change, a loading message, or an error
+    //Updates the complete phase: the score, then the weapon, armor, and potion changes, a loading message, or an error
     private renderComplete(state: UpgradeMinigameState): void {
-        if (state.upgradeType === null) {
-            return;
-        }
-        const info = UPGRADE_INFO[state.upgradeType];
-
-        this.completeEmoji.text(info.emoji);
         this.completeSolvedText.text(`You solved ${state.correctCount} of ${state.attemptedCount}!`);
 
-        const ready = state.outcomeStatus === "ready";
-        this.statLabel.visible(ready);
-        this.statValue.visible(ready);
+        const outcome = state.outcome;
+        const ready = state.outcomeStatus === "ready" && outcome !== null;
+        this.statRows.visible(ready);
         this.messageBox.visible(ready);
         this.messageText.visible(ready);
         this.statStatusText.visible(!ready);
 
         if (ready) {
-            this.statLabel.text(info.stat);
-            this.statValue.text(`${state.statBefore} → ${state.statAfter}`);
-            const gap = 16;
-            const total = this.statLabel.width() + gap + this.statValue.width();
-            const left = this.statBox.x() + (this.statBox.width() - total) / 2;
-            this.statLabel.x(left);
-            this.statValue.x(left + this.statLabel.width() + gap);
-            this.messageText.text(`Your ${info.label.toLowerCase()} has been upgraded!`);
+            for (const type of UPGRADE_TYPES) {
+                const { statBefore, statAfter } = outcome[type];
+                const format = (n: number) => (type === "armor" ? n.toFixed(2) : String(n));
+                this.statValues[type].text(`${format(statBefore)} → ${format(statAfter)}  (+${format(statAfter - statBefore)})`);
+            }
+            this.messageText.text("Your gear has been upgraded!");
         } else if (state.outcomeStatus === "loading") {
-            this.statStatusText.text("Applying upgrade...");
+            this.statStatusText.text("Applying upgrades...");
         } else {
-            this.statStatusText.text("Couldn't apply the upgrade.");
+            this.statStatusText.text("Couldn't apply the upgrades.");
         }
+    }
+
+    //Builds one row per upgrade type (emoji, name, and stat on the left, the change on the right) and saves each value text so it can be filled in later
+    private buildStatRows(): Konva.Group {
+        const rows = new Konva.Group();
+        const rowW = 900;
+        const rowH = 80;
+        const rowGap = 15;
+        const rowX = PANEL_X + (PANEL_W - rowW) / 2;
+
+        UPGRADE_TYPES.forEach((type, i) => {
+            const info = UPGRADE_INFO[type];
+            const y = PANEL_Y + 170 + i * (rowH + rowGap);
+
+            rows.add(new Konva.Rect({
+                x: rowX,
+                y,
+                width: rowW,
+                height: rowH,
+                fill: "#E8C98F",
+                stroke: "#B8955A",
+                strokeWidth: 3,
+                cornerRadius: 8
+            }));
+
+            rows.add(new Konva.Text({
+                x: rowX + 30,
+                y,
+                height: rowH,
+                verticalAlign: "middle",
+                text: `${info.emoji}  ${info.label} (${info.stat})`,
+                fontSize: 34,
+                fontFamily: FONT,
+                fontStyle: "bold",
+                fill: DARK
+            }));
+
+            const value = new Konva.Text({
+                x: rowX,
+                y,
+                width: rowW - 30,
+                height: rowH,
+                align: "right",
+                verticalAlign: "middle",
+                text: "",
+                fontSize: 34,
+                fontFamily: FONT,
+                fontStyle: "bold",
+                fill: ORANGE
+            });
+
+            this.statValues[type] = value;
+            rows.add(value);
+        });
+
+        return rows;
     }
 
     //Builds the top bar (HP bar, title, score, and floor) and returns the health bar so it can be resized later
@@ -589,78 +577,6 @@ export class UpgradeMinigameScreenView implements View {
         return healthBar;
     }
     
-    //Builds the choose phase: the heading and one card per upgrade with its emoji, stat, and Choose button
-    private buildChoosePanel(): void {
-        this.choosePanel.add(new Konva.Text({
-            x: 0,
-            y: 150,
-            width: STAGE_WIDTH,
-            align: "center",
-            text: "Choose an upgrade to work on",
-            fontSize: 36,
-            fontFamily: FONT,
-            fontStyle: "bold",
-            fill: "#FFFFFF"
-        }));
-
-        const cardW = 300;
-        const cardH = 400;
-        const gap = 120;
-        const startX = (STAGE_WIDTH - (UPGRADE_TYPES.length * cardW + (UPGRADE_TYPES.length - 1) * gap)) / 2;
-        const cardY = 230;
-
-        UPGRADE_TYPES.forEach((type, i) => {
-            const info = UPGRADE_INFO[type];
-            const x = startX + i * (cardW + gap);
-
-            this.choosePanel.add(new Konva.Rect({
-                x,
-                y: cardY,
-                width: cardW,
-                height: cardH,
-                fill: CREAM,
-                stroke: CREAM_BORDER,
-                strokeWidth: 4,
-                cornerRadius: 8
-            }));
-
-            this.choosePanel.add(new Konva.Text({
-                x,
-                y: cardY + 30,
-                width: cardW, 
-                align: "center",
-                text: info.label, 
-                fontSize: 36, 
-                fontFamily: FONT, 
-                fontStyle: "bold", 
-                fill: DARK
-            }));
-
-            this.choosePanel.add(new Konva.Text({
-                x, 
-                y: cardY + 95, 
-                width: cardW,
-                align: "center", 
-                text: info.emoji,
-                fontSize: 110
-            }));
-
-            this.choosePanel.add(new Konva.Text({
-                x,
-                y: cardY + 250,
-                width: cardW,
-                align: "center",
-                text: `+${info.stat}`,
-                fontSize: 30,
-                fontFamily: FONT,
-                fontStyle: "bold",
-                fill: DARK
-            }));
-
-            this.choosePanel.add(this.createButton("Choose", x + 40, cardY + 315, cardW - 80, 60, RED, "#FFFFFF", () => this.handlers.onChoose(type)));
-        });
-    }
-
     //Creates the cream panel background shared by the ready, solving, and complete phases
     private createPanelBackground(): Konva.Rect {
         return new Konva.Rect({

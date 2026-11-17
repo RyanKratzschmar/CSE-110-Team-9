@@ -8,7 +8,7 @@ import type { Potion } from "../backend/game/Potion";
 
 describe("Potion Combat", () => {
     function fixedEquation() {
-        return new MultiplicationEquation(0, [10, "*", 20], 200);
+        return new MultiplicationEquation(1, [10, "*", 20], 200);
     }
 
     function createCombatWithPotions(potions: Potion[] = [{ type: "healing", level: "basic" }]) {

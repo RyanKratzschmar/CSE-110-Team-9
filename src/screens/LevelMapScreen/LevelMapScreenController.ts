@@ -24,7 +24,7 @@ export class LevelMapScreenController extends ScreenController {
     }
 
     // GO! enters the current stop from the backend Level:
-    // a fight opens combat, the rest stop heals and starts the next floor
+    // a fight opens combat; leaving Rest starts the next floor.
     handleGoClick(): void {
 
         this.clickSound.currentTime = 0;
@@ -45,8 +45,8 @@ export class LevelMapScreenController extends ScreenController {
     // Draws the map from the backend Level: floor number, cleared stops, current stop, and HP
     startMapScreen(): void {
         const { player, level } = this.gameSession.state;
-        this.view.showProgress(level.number, level.currentIndex, player.hp, player.maxHp);
-        this.view.showMessage("");
+        this.view.showProgress(level.number, level.currentIndex);
+        this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.view.show();
     }
 

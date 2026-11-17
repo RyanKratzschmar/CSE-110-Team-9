@@ -124,9 +124,9 @@ export class MultiOperationEquation extends RandomEquation{
 
         // Get the print from the full array
         let written = "";
-            for (const obj in full) {
-                written = written + String(obj);
-            }
+        for (let i = 0; i < this.equation.length; i++) {
+            written = written + String(this.equation[i]);
+        }
         written = written + "= ?";
         this.print = written;
     }
