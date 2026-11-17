@@ -17,7 +17,6 @@ export class LevelMapScreenView implements View {
     private levelIndicator: Konva.Line;
     private healthBar: Konva.Rect;
     private floorText: Konva.Text;
-    private messageText: Konva.Text;
 
     constructor(
         onGoClick : () => void,
@@ -59,7 +58,7 @@ export class LevelMapScreenView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 400,
+            width: 300,
             height: 70,
             fill: "#0bba14",
             stroke: "#42a847",        
@@ -131,20 +130,6 @@ export class LevelMapScreenView implements View {
             fontStyle: "bold",
         });
         this.group.add(this.floorText);
-
-        // One-line message under the top bar (e.g. after resting)
-        this.messageText = new Konva.Text({
-            x: 0,
-            y: 175,
-            width: STAGE_WIDTH,
-            align: "center",
-            text: "",
-            fill: "#180221",
-            fontSize: 34,
-            fontFamily: "arial",
-            fontStyle: "bold",
-        });
-        this.group.add(this.messageText);
 
         // Create map location for fight 1
         this.fight1 = new Konva.Rect({
@@ -301,9 +286,8 @@ export class LevelMapScreenView implements View {
     }
 
 
-    // Colors the stops up to the current one, moves the arrow, and updates the floor and HP bar.
-    // currentIndex comes from the backend Level: 0-2 = fights 1-3, 3 = rest stop
-    showProgress(floor: number, currentIndex: number, hp: number, maxHp: number) : void {
+    // Lights up the stops reached so far and moves the arrow (currentIndex: 0-2 fights, 3 rest)
+    showProgress(floor: number, currentIndex: number) : void {
         const stops = [this.fight1, this.fight2, this.fight3, this.rest];
         const arrows = [
             [200, 400, 250, 400, 225, 450],
@@ -313,14 +297,22 @@ export class LevelMapScreenView implements View {
         ];
         stops.forEach((stop, i) => stop.fill(i <= currentIndex ? "#433550" : "#3b3a3b"));
         this.levelIndicator.points(arrows[Math.min(currentIndex, arrows.length - 1)]);
-
         this.floorText.text(`Floor: ${floor}`);
-        this.healthBar.width(maxHp > 0 ? 400 * Math.max(0, Math.min(hp / maxHp, 1)) : 0);
         this.group.getLayer()?.batchDraw();
     }
 
-    showMessage(text: string) : void {
-        this.messageText.text(text);
+    // Updates Player Health Bar
+    setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
+        if (maxHealth <= 0) {
+            this.healthBar.width(0);
+            this.group.getLayer()?.batchDraw();
+            return;
+        }
+
+        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
+
+        this.healthBar.width(400 * percentage);
+
         this.group.getLayer()?.batchDraw();
     }
 

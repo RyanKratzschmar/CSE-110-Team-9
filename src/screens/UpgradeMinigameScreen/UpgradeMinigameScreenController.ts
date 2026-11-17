@@ -2,7 +2,6 @@ import { ScreenController } from "../../types";
 import type { ScreenSwitcher } from "../../types";
 import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import { UpgradeMinigameScreenModel } from "./UpgradeMinigameScreenModel.ts";
-import type { UpgradeType } from "./UpgradeMinigameScreenModel.ts";
 import { UpgradeMinigameScreenView } from "./UpgradeMinigameScreenView.ts";
 import type { GameSession } from "../../GameSession";
 import { startUpgradeMinigame, claimUpgrade } from "../../../backend/game/UpgradeManager";
@@ -32,10 +31,8 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.screenSwitcher = screenSwitcher;
         this.combatModel = combatModel;
         this.view = new UpgradeMinigameScreenView({
-            onChoose: (type) => this.handleChoose(type),
             onStart: () => this.handleStart(),
             onSubmit: (answer) => this.handleSubmit(answer),
-            onBack: () => this.handleBack(),
             onLeave: () => this.handleLeave(),
             onNext: () => this.handleNext(),
         });
@@ -43,7 +40,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.view.render(this.model.getState());
     }
 
-    //Resets to the "choose an upgrade" phase and shows the screen
+    //Resets to the ready phase and shows the screen
     startUpgradeMinigame(): void {
         this.game = null;
         this.questionId = null;
@@ -70,12 +67,6 @@ export class UpgradeMinigameScreenController extends ScreenController {
     //Updates the HP bar with the player's current and max health
     setPlayerHealth(hp: number, maxHp: number): void {
         this.model.setPlayerHealth(hp, maxHp);
-    }
-
-    //Plays the click sound and saves the chosen upgrade
-    private handleChoose(type: UpgradeType): void {
-        this.playClick();
-        this.model.chooseUpgrade(type);
     }
 
     // Start or resume the challenge belonging to the shared local game.
@@ -136,18 +127,6 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.model.retryCurrentQuestion();
     }
 
-    //Back from the ready phase returns to the upgrade choices; Back from the choose phase leaves the screen
-    private handleBack(): void {
-        this.playClick();
-        const phase = this.model.getState().phase;
-
-        if (phase === "ready") {
-            this.model.backToChoose();
-        } else if (phase === "choose") {
-            this.leaveScreen();
-        }
-    }
-
     //Plays the click sound and returns to the map (used by both Leave and Exit)
     private handleLeave(): void {
         this.playClick();
@@ -189,10 +168,11 @@ export class UpgradeMinigameScreenController extends ScreenController {
             claimUpgrade(this.gameSession.state);
             this.combatModel.setPlayerHealth(player.hp);
             this.combatModel.setPlayerMaxHealth(player.maxHp);
-            this.model.setResult(
-                `Attack: ${attackBefore} → ${player.attack}\nDefense: ${(defenseBefore * 100).toFixed(1)}% → ${(player.defense * 100).toFixed(1)}%\nPotion bonus: ${potionBonusBefore} → ${player.potionHealingBonus} percentage points`,
-                true
-            );
+            this.model.setUpgradeOutcome({
+                weapon: { statBefore: attackBefore, statAfter: player.attack },
+                armor: { statBefore: defenseBefore, statAfter: player.defense },
+                potion: { statBefore: potionBonusBefore, statAfter: player.potionHealingBonus },
+            });
         } catch (error) {
             this.model.setResult(error instanceof Error ? error.message : "Could not claim upgrade", false);
         }

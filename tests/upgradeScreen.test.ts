@@ -19,7 +19,6 @@ function solve(problemText: string): number {
 //Puts the model in the solving phase with a 60 second round
 function startedModel(): UpgradeMinigameScreenModel {
     const model = new UpgradeMinigameScreenModel();
-    model.chooseUpgrade("weapon");
     model.startRound(60);
     return model;
 }
@@ -95,7 +94,6 @@ describe("UpgradeMinigameScreenController", () => {
         controller = new UpgradeMinigameScreenController({ switchToScreen }, new CombatMainScreenModel(), session);
         controller.startUpgradeMinigame();
         vi.spyOn(Math, "random").mockReturnValue(0.1);
-        controller["handleChoose"]("weapon");
         controller["handleStart"]();
     });
 
@@ -147,7 +145,9 @@ describe("UpgradeMinigameScreenController", () => {
         expect(session.state.player.hp).toBe(hp);
         expect(session.state.upgradeClaimedLevel).toBe(1);
         expect(controller["combatModel"].getPlayerHealth()).toBe(hp);
-        expect(findText(controller.getView(), "Attack: 10 → 12\nDefense: 10.0% → 11.0%\nPotion bonus: 0 → 10 percentage points").isVisible()).toBe(true);
+        expect(findText(controller.getView(), "10 → 12  (+2)").isVisible()).toBe(true);
+        expect(findText(controller.getView(), "0.10 → 0.11  (+0.01)").isVisible()).toBe(true);
+        expect(findText(controller.getView(), "0 → 10  (+10)").isVisible()).toBe(true);
         expect(findText(controller.getView(), "Your gear has been upgraded!").isVisible()).toBe(true);
         expect(switchToScreen).not.toHaveBeenCalled();
         expect(window.alert).not.toHaveBeenCalled();
@@ -161,16 +161,25 @@ describe("UpgradeMinigameScreenController", () => {
         controller.hide();
         vi.advanceTimersByTime(5_000);
         controller.startUpgradeMinigame();
-        controller["handleChoose"]("weapon");
         controller["handleStart"]();
         expect(session.state.upgradeMinigame).toBe(game);
         expect(controller["model"].getState()).toMatchObject({ correctCount: 1, timeLeft: 55 });
     });
 
+    it("Leave goes to the map and stops the displayed timer", () => {
+        vi.advanceTimersByTime(5_000);
+        controller["handleLeave"]();
+        const timeLeft = controller["model"].getState().timeLeft;
+        vi.advanceTimersByTime(10_000);
+
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
+        expect(controller["model"].getState().timeLeft).toBe(timeLeft);
+        expect(session.state.upgradeClaimedLevel).toBeNull();
+    });
+
     it("refuses upgrades outside a rest stop", () => {
         session.newGame();
         controller.startUpgradeMinigame();
-        controller["handleChoose"]("weapon");
         controller["handleStart"]();
         expect(session.state.upgradeMinigame).toBeNull();
         expect(findText(controller.getView(), "The current stop is not a rest stop").isVisible()).toBe(true);
@@ -179,7 +188,7 @@ describe("UpgradeMinigameScreenController", () => {
 });
 
 describe("UpgradeMinigameScreenView", () => {
-    const handlers = { onChoose: vi.fn(), onStart: vi.fn(), onSubmit: vi.fn(), onNext: vi.fn(), onBack: vi.fn(), onLeave: vi.fn() };
+    const handlers = { onStart: vi.fn(), onSubmit: vi.fn(), onNext: vi.fn(), onLeave: vi.fn() };
     let view: UpgradeMinigameScreenView;
 
     beforeEach(() => {
@@ -192,22 +201,22 @@ describe("UpgradeMinigameScreenView", () => {
     });
 
     it("shows the right footer buttons for each phase", () => {
-        view.render(makeState({ phase: "choose" }));
-        expect(findText(view, "Back").isVisible()).toBe(true);
+        view.render(makeState({ phase: "ready" }));
+        expect(view.getGroup().find<Konva.Text>("Text").some((t) => t.text() === "Back")).toBe(false);
         expect(findText(view, "Leave").isVisible()).toBe(true);
         expect(findText(view, "Exit").isVisible()).toBe(false);
 
-        view.render(makeState({ phase: "solving", upgradeType: "weapon", problemText: "7 × 8 = ?" }));
-        expect(findText(view, "Back").isVisible()).toBe(false);
+        view.render(makeState({ phase: "solving", problemText: "7 × 8 = ?" }));
         expect(findText(view, "Leave").isVisible()).toBe(true);
+        expect(findText(view, "Exit").isVisible()).toBe(false);
 
-        view.render(makeState({ phase: "complete", upgradeType: "weapon" }));
+        view.render(makeState({ phase: "complete" }));
         expect(findText(view, "Leave").isVisible()).toBe(false);
         expect(findText(view, "Exit").isVisible()).toBe(true);
     });
 
     it("swaps Submit for Next and shows the correct answer after a wrong answer", () => {
-        const solving = { phase: "solving" as const, upgradeType: "weapon" as const, problemText: "7 × 8 = ?" };
+        const solving = { phase: "solving" as const, problemText: "7 × 8 = ?" };
 
         view.render(makeState(solving));
         expect(findText(view, "Submit").isVisible()).toBe(true);
@@ -217,6 +226,23 @@ describe("UpgradeMinigameScreenView", () => {
         expect(findText(view, "Submit").isVisible()).toBe(false);
         expect(findText(view, "Next").isVisible()).toBe(true);
         expect(findText(view, "Incorrect answer! 7 × 8 = 56").isVisible()).toBe(true);
+    });
+
+    it("shows the weapon, armor, and potion changes once the upgrade is applied", () => {
+        const outcome = {
+            weapon: { statBefore: 5, statAfter: 7 },
+            armor: { statBefore: 0.1, statAfter: 0.25 },
+            potion: { statBefore: 10, statAfter: 12 }
+        };
+
+        view.render(makeState({ phase: "complete", outcomeStatus: "loading" }));
+        expect(findText(view, "Applying upgrades...").isVisible()).toBe(true);
+
+        view.render(makeState({ phase: "complete", outcomeStatus: "ready", outcome }));
+        expect(findText(view, "5 → 7  (+2)").isVisible()).toBe(true);
+        expect(findText(view, "0.10 → 0.25  (+0.15)").isVisible()).toBe(true);
+        expect(findText(view, "10 → 12  (+2)").isVisible()).toBe(true);
+        expect(findText(view, "Your gear has been upgraded!").isVisible()).toBe(true);
     });
 
     it("sizes the HP bar to the player's health", () => {

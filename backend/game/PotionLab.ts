@@ -1,8 +1,17 @@
 // PotionLab: one brewing attempt: pick a difficulty, get a PEMDAS equation, check the answer; a right answer brews exactly one potion. (Sally)
 
 import type { RandomEquation } from "../equations/RandomEquation";
+import { getEquation } from "../equations/EquationFactory";
 import type { Item } from "./Player";
 import type { PotionType, RecipeLevel } from "./Potion";
+
+// Difficulty passed to Oliver's factory: up to 25 gives 2 parts (e.g. 4*4+6*12), 26 to 50 gives 3 parts
+export const RECIPE_DIFFICULTY: Record<RecipeLevel, number> = { basic: 0, advanced: 26 };
+
+// Default equation source: a PEMDAS equation from Oliver's EquationFactory
+export function makePotionEquation(level: RecipeLevel): RandomEquation {
+  return getEquation({ type: "Potion" }, RECIPE_DIFFICULTY[level]);
+}
 
 export class PotionLab {
   private potionType: PotionType | null = null;
@@ -12,7 +21,7 @@ export class PotionLab {
 
   constructor(
     private readonly inventory: Item[], // pass in player.inventory
-    private readonly makeEquation: (level: RecipeLevel) => RandomEquation, // pass in the Equation Generator
+    private readonly makeEquation: (level: RecipeLevel) => RandomEquation = makePotionEquation, // tests can pass a fixed one
   ) {}
 
   isClosed(): boolean {

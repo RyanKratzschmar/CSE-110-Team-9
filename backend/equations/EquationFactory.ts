@@ -2,7 +2,7 @@
 import { RandomEquation } from "./RandomEquation"
 import { MultiplicationEquation } from "./MultiplicationEquation"
 import { DivisionEquation } from "./DivisionEquation"
-import { MultiOperationEquation } from "./MultiOperatorEquation";
+import { MultiOperationEquation } from "./MultiOperationEquation";
 // import multi operator equation
 
 // Types of equations, should import and use these directly instead of passing a string through
