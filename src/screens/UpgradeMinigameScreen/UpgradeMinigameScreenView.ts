@@ -473,6 +473,18 @@ export class UpgradeMinigameScreenView implements View {
         this.completeEmoji.text(info.emoji);
         this.completeSolvedText.text(`You solved ${state.correctCount} of ${state.attemptedCount}!`);
 
+        if (state.resultMessage) {
+            this.statLabel.visible(false);
+            this.statValue.visible(false);
+            this.statStatusText.visible(true);
+            this.statStatusText.text(state.resultMessage);
+            const earned = state.outcomeStatus === "ready";
+            this.messageBox.visible(earned);
+            this.messageText.visible(earned);
+            this.messageText.text("Your gear has been upgraded!");
+            return;
+        }
+
         const ready = state.outcomeStatus === "ready";
         this.statLabel.visible(ready);
         this.statValue.visible(ready);

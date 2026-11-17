@@ -1,4 +1,13 @@
 import type { UpgradeOutcome } from "./UpgradeService";
+import type { UpgradeMinigame } from "../../../backend/game/UpgradeMinigame";
+type LocalSession = ReturnType<UpgradeMinigame["currentQuestion"]> & {
+    correctAnswers: number;
+    remainingTime: number;
+};
+type LocalAnswer = ReturnType<UpgradeMinigame["submitAnswer"]> & {
+    remainingTime: number;
+    currentQuestion: ReturnType<UpgradeMinigame["currentQuestion"]>;
+};
 
 export type UpgradePhase = "choose" | "ready" | "solving" | "complete"; //The four phases of the screen: choose an upgrade, ready to start, solving problems, and upgrade complete
 export type UpgradeType = "weapon" | "armor" | "potion";
@@ -21,6 +30,7 @@ export interface UpgradeMinigameState {
     readonly attemptedCount: number;
     readonly feedback: UpgradeFeedback;
     readonly outcomeStatus: UpgradeOutcomeStatus;
+    readonly resultMessage: string;
     readonly statBefore: number;
     readonly statAfter: number;
     readonly playerHp: number;
@@ -40,6 +50,7 @@ const INITIAL_STATE: UpgradeMinigameState = {
     attemptedCount: 0,
     feedback: null,
     outcomeStatus: "loading",
+    resultMessage: "",
     statBefore: 0,
     statAfter: 0,
     playerHp: 100,
@@ -157,9 +168,58 @@ export class UpgradeMinigameScreenModel {
         this.setState({ outcomeStatus: "error" });
     }
 
+    //Keeps the round result or error on screen until the player exits.
+    setResult(message: string, success: boolean): void {
+        this.setState({
+            phase: "complete",
+            outcomeStatus: success ? "ready" : "error",
+            resultMessage: message,
+            feedback: null,
+            awaitingNext: false,
+        });
+    }
+
     //Updates the player's current and max health shown in the HP bar
     setPlayerHealth(hp: number, maxHp: number): void {
         this.setState({ playerHp: hp, playerMaxHp: maxHp });
+    }
+
+    setRemainingTime(milliseconds: number): void {
+        this.setState({ timeLeft: Math.ceil(Math.max(0, milliseconds) / 1000) });
+    }
+
+    loadSession(data: LocalSession): void {
+        this.setState({
+            phase: "solving",
+            problemText: data.question,
+            correctCount: data.correctAnswers,
+            timeLeft: Math.ceil(data.remainingTime / 1000),
+            feedback: null,
+            revealedAnswer: "",
+            awaitingNext: false,
+        });
+    }
+
+    applyAnswerResponse(data: LocalAnswer): void {
+        this.setState({
+            problemText: data.currentQuestion.question,
+            correctCount: data.correctAnswers,
+            attemptedCount: this.state.attemptedCount + 1,
+            timeLeft: Math.ceil(data.remainingTime / 1000),
+            feedback: data.correct ? "correct" : "incorrect",
+            revealedAnswer: data.correct
+                ? ""
+                : `Correct answer: ${data.correctAnswer}`,
+            awaitingNext: !data.correct,
+        });
+    }
+
+    retryCurrentQuestion(): void {
+        this.setState({
+            feedback: null,
+            revealedAnswer: "",
+            awaitingNext: false,
+        });
     }
 
     //Makes a random 1-12 times-table problem, saves its answer, and returns the text to show

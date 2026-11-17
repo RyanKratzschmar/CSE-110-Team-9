@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import "vitest-canvas-mock";
+import { GameSession } from "../src/GameSession";
+import { finishCombat } from "../backend/game/GameManager";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Konva from "konva";
 import { UpgradeMinigameScreenModel } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenModel";
 import type { UpgradeMinigameState } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenModel";
 import { UpgradeMinigameScreenView } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenView";
 import { UpgradeMinigameScreenController } from "../src/screens/UpgradeMinigameScreen/UpgradeMinigameScreenController";
-import type { UpgradeService } from "../src/screens/UpgradeMinigameScreen/UpgradeService";
 import { CombatMainScreenModel } from "../src/screens/CombatMainScreen/CombatMainScreenModel";
 
 //Reads "a × b = ?" and returns a * b
@@ -81,17 +82,21 @@ describe("UpgradeMinigameScreenModel", () => {
 
 describe("UpgradeMinigameScreenController", () => {
     const switchToScreen = vi.fn();
-    const applyUpgrade = vi.fn();
     let controller: UpgradeMinigameScreenController;
+    let session: GameSession;
 
     beforeEach(() => {
         vi.useFakeTimers();
         vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+        vi.spyOn(window, "alert").mockImplementation(() => {});
         switchToScreen.mockReset();
-        applyUpgrade.mockReset();
-        const service: UpgradeService = { applyUpgrade };
-        controller = new UpgradeMinigameScreenController({ switchToScreen }, new CombatMainScreenModel(), service);
+        session = new GameSession();
+        for (let i = 0; i < 3; i++) finishCombat(session.state, "win");
+        controller = new UpgradeMinigameScreenController({ switchToScreen }, new CombatMainScreenModel(), session);
         controller.startUpgradeMinigame();
+        vi.spyOn(Math, "random").mockReturnValue(0.1);
+        controller["handleChoose"]("weapon");
+        controller["handleStart"]();
     });
 
     afterEach(() => {
@@ -100,44 +105,76 @@ describe("UpgradeMinigameScreenController", () => {
         vi.restoreAllMocks();
     });
 
-    it("ends the round after 60 seconds and shows the upgrade result", async () => {
-        applyUpgrade.mockResolvedValue({ statBefore: 5, statAfter: 7 });
+    it("loads the question from the shared local challenge", () => {
+        expect(session.state.upgradeMinigame).not.toBeNull();
+        expect(controller["model"].getState()).toMatchObject({ phase: "solving", problemText: "1*1= ?", timeLeft: 60 });
+    });
+
+    it("checks answers locally and retries the same question after a mistake", () => {
+        controller["handleSubmit"]("2");
+        expect(controller["model"].getState()).toMatchObject({ feedback: "incorrect", awaitingNext: true, correctCount: 0 });
+        controller["handleNext"]();
+        controller["handleSubmit"]("1");
+        expect(session.state.upgradeMinigame!.getCorrectAnswers()).toBe(1);
+        expect(controller["questionId"]).toBe(2);
+        expect(controller["model"].getState()).toMatchObject({ feedback: "correct", correctCount: 1, attemptedCount: 2 });
+    });
+
+    it("rejects invalid input without consuming the question", () => {
+        controller["handleSubmit"]("");
+        expect(controller["model"].getState().feedback).toBe("invalid");
+        expect(session.state.upgradeMinigame!.currentQuestion().questionId).toBe(1);
+    });
+
+    it("does not grant a reward below ten correct answers", () => {
+        for (let i = 0; i < 9; i++) controller["handleSubmit"]("1");
+        vi.advanceTimersByTime(60_000);
+        expect(session.state.player.attack).toBe(10);
+        expect(session.state.upgradeClaimedLevel).toBeNull();
+        expect(switchToScreen).not.toHaveBeenCalled();
+        expect(findText(controller.getView(), "You need 10 correct answers within 60 seconds to earn an upgrade.").isVisible()).toBe(true);
+        expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    it("grants the reward once using the shared player and preserves HP", () => {
+        session.state.player.takeDamage(20);
+        const hp = session.state.player.hp;
+        for (let i = 0; i < 10; i++) controller["handleSubmit"]("1");
+        vi.advanceTimersByTime(60_000);
+        controller["finishRound"]();
+        expect(session.state.player.attack).toBe(12);
+        expect(session.state.player.defense).toBeCloseTo(0.11);
+        expect(session.state.player.hp).toBe(hp);
+        expect(session.state.upgradeClaimedLevel).toBe(1);
+        expect(controller["combatModel"].getPlayerHealth()).toBe(hp);
+        expect(findText(controller.getView(), "Attack: 10 → 12\nDefense: 10.0% → 11.0%\nPotion bonus: 0 → 10 percentage points").isVisible()).toBe(true);
+        expect(findText(controller.getView(), "Your gear has been upgraded!").isVisible()).toBe(true);
+        expect(switchToScreen).not.toHaveBeenCalled();
+        expect(window.alert).not.toHaveBeenCalled();
+        controller["handleLeave"]();
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
+    });
+
+    it("reopening resumes the same deadline and score", () => {
+        controller["handleSubmit"]("1");
+        const game = session.state.upgradeMinigame;
+        controller.hide();
+        vi.advanceTimersByTime(5_000);
+        controller.startUpgradeMinigame();
         controller["handleChoose"]("weapon");
         controller["handleStart"]();
-
-        await vi.advanceTimersByTimeAsync(60_000);
-
-        expect(applyUpgrade).toHaveBeenCalledWith({ upgradeType: "weapon", correctCount: 0, attemptedCount: 0 });
-        const state = controller["model"].getState();
-        expect(state.phase).toBe("complete");
-        expect(state.outcomeStatus).toBe("ready");
-        expect(state.statBefore).toBe(5);
-        expect(state.statAfter).toBe(7);
+        expect(session.state.upgradeMinigame).toBe(game);
+        expect(controller["model"].getState()).toMatchObject({ correctCount: 1, timeLeft: 55 });
     });
 
-    it("shows an error when the upgrade service fails", async () => {
-        applyUpgrade.mockRejectedValue(new Error("server down"));
-        vi.spyOn(console, "error").mockImplementation(() => {});
-        controller["handleChoose"]("armor");
+    it("refuses upgrades outside a rest stop", () => {
+        session.newGame();
+        controller.startUpgradeMinigame();
+        controller["handleChoose"]("weapon");
         controller["handleStart"]();
-
-        await vi.advanceTimersByTimeAsync(60_000);
-
-        expect(controller["model"].getState().outcomeStatus).toBe("error");
-    });
-
-    it("Leave goes to the map and stops the timer", async () => {
-        controller["handleChoose"]("potion");
-        controller["handleStart"]();
-        await vi.advanceTimersByTimeAsync(5_000);
-
-        controller["handleLeave"]();
-        const timeLeft = controller["model"].getState().timeLeft;
-        await vi.advanceTimersByTimeAsync(10_000);
-
-        expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
-        expect(controller["model"].getState().timeLeft).toBe(timeLeft);
-        expect(applyUpgrade).not.toHaveBeenCalled();
+        expect(session.state.upgradeMinigame).toBeNull();
+        expect(findText(controller.getView(), "The current stop is not a rest stop").isVisible()).toBe(true);
+        expect(window.alert).not.toHaveBeenCalled();
     });
 });
 
