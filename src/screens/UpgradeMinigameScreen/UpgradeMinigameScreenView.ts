@@ -407,6 +407,15 @@ export class UpgradeMinigameScreenView implements View {
     private renderComplete(state: UpgradeMinigameState): void {
         this.completeSolvedText.text(`You solved ${state.correctCount} of ${state.attemptedCount}!`);
 
+        if (state.resultMessage) {
+            this.statRows.visible(false);
+            this.messageBox.visible(false);
+            this.messageText.visible(false);
+            this.statStatusText.visible(true);
+            this.statStatusText.text(state.resultMessage);
+            return;
+        }
+
         const outcome = state.outcome;
         const ready = state.outcomeStatus === "ready" && outcome !== null;
         this.statRows.visible(ready);
