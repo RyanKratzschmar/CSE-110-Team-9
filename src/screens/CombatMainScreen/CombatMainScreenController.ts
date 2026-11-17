@@ -36,7 +36,8 @@ export class CombatMainScreenController extends ScreenController {
             () => this.handleHintXClick(),
             () => this.handleAttackClick(),
             () => this.handleSubmitClick(),
-            () => this.handleExplanationClick()
+            () => this.handleExplanationClick(),
+            () => this.handlePotionClick()
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -121,6 +122,14 @@ export class CombatMainScreenController extends ScreenController {
             }, 500);
     }
 
+    // Switches to potion pop up
+    handlePotionClick(): void {
+        this.clickSound.currentTime = 0;
+        this.clickSound.play();
+
+    }
+
+
     // Ends the fight
     endFight(win: boolean): void {
         this.view.endGameText(win);
@@ -137,7 +146,12 @@ export class CombatMainScreenController extends ScreenController {
         this.view.show();
         this.model.resetEnemy();
         this.view.updateEnemyHealthBar(this.model.getEnemyHealth(), this.model.getEnemyMaxHealth());
+        this.view.setPlayerHealthBar(this.model.getPlayerHealth(), this.model.getPlayerMaxHealth());
         this.view.resetFight();
+    }
+
+    getModel(): CombatMainScreenModel {
+        return this.model;
     }
 
     getView(): CombatMainScreenView {

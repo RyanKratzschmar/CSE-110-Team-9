@@ -1,21 +1,22 @@
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { LevelMapScreenView } from "./LevelMapScreenView.ts";
+import { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import type { GameSession } from "../../GameSession.ts";
-import { RestStop } from "../../../backend/game/RestStop.ts";
 import { finishRest } from "../../../backend/game/GameManager.ts";
 
 export class LevelMapScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
-    private gameSession: GameSession;
     private view: LevelMapScreenView;
-    private restStop = new RestStop();
+    private combatModel: CombatMainScreenModel;
+    private gameSession: GameSession;
 
     private clickSound: HTMLAudioElement;
 
-    constructor(screenSwitcher: ScreenSwitcher, gameSession: GameSession){
+    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, gameSession: GameSession){
         super();
         this.screenSwitcher = screenSwitcher;
+        this.combatModel = combatModel;
         this.gameSession = gameSession;
 
         this.view = new LevelMapScreenView(
@@ -26,8 +27,7 @@ export class LevelMapScreenController extends ScreenController {
 
     }
 
-    // GO! enters the current stop from the backend Level:
-    // a fight opens combat, the rest stop heals and starts the next floor
+    // Enters the current stop: combat for a fight, the rest screen for the rest stop
     handleGoClick(): void {
 
         this.clickSound.currentTime = 0;
@@ -42,20 +42,14 @@ export class LevelMapScreenController extends ScreenController {
             return;
         }
 
-        // Rest stop: heal to full (RestStop), then move on to the next floor (GameManager).
-        // TODO: replace with the rest screen once it's built.
-        this.restStop.rest(state);
         finishRest(state);
-        this.restStop.leave(state);
-        this.startMapScreen();
-        this.view.showMessage(`You rested and recovered all your HP! Welcome to Floor ${state.level.number}.`);
+        this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 
-    // Draws the map from the backend Level: floor number, cleared stops, current stop, and HP
     startMapScreen(): void {
-        const { player, level } = this.gameSession.state;
-        this.view.showProgress(level.number, level.currentIndex, player.hp, player.maxHp);
-        this.view.showMessage("");
+        const { level } = this.gameSession.state;
+        this.view.showProgress(level.number, level.currentIndex);
+        this.view.setPlayerHealthBar(this.combatModel.getPlayerHealth(), this.combatModel.getPlayerMaxHealth());
         this.view.show();
     }
 
