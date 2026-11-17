@@ -1,22 +1,18 @@
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { LevelMapScreenView } from "./LevelMapScreenView.ts";
-import { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import type { GameSession } from "../../GameSession.ts";
-import { finishRest } from "../../../backend/game/GameManager.ts";
 
 export class LevelMapScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
-    private view: LevelMapScreenView;
-    private combatModel: CombatMainScreenModel;
     private gameSession: GameSession;
+    private view: LevelMapScreenView;
 
     private clickSound: HTMLAudioElement;
 
-    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, gameSession: GameSession){
+    constructor(screenSwitcher: ScreenSwitcher, gameSession: GameSession){
         super();
         this.screenSwitcher = screenSwitcher;
-        this.combatModel = combatModel;
         this.gameSession = gameSession;
 
         this.view = new LevelMapScreenView(
@@ -27,7 +23,8 @@ export class LevelMapScreenController extends ScreenController {
 
     }
 
-    // Enters the current stop: combat for a fight, the rest screen for the rest stop
+    // GO! enters the current stop from the backend Level:
+    // a fight opens combat; leaving Rest starts the next floor.
     handleGoClick(): void {
 
         this.clickSound.currentTime = 0;
@@ -42,14 +39,14 @@ export class LevelMapScreenController extends ScreenController {
             return;
         }
 
-        finishRest(state);
         this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 
+    // Draws the map from the backend Level: floor number, cleared stops, current stop, and HP
     startMapScreen(): void {
-        const { level } = this.gameSession.state;
+        const { player, level } = this.gameSession.state;
         this.view.showProgress(level.number, level.currentIndex);
-        this.view.setPlayerHealthBar(this.combatModel.getPlayerHealth(), this.combatModel.getPlayerMaxHealth());
+        this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.view.show();
     }
 
