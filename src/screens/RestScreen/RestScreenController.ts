@@ -1,3 +1,6 @@
+import type { GameSession } from "../../GameSession";
+import { RestStop } from "../../../backend/game/RestStop";
+import { finishRest } from "../../../backend/game/GameManager";
 // PotionLabScreenController: picks the difficulty, checks the answer, and puts the brewed potion in the inventory. (Sally)
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
@@ -9,9 +12,10 @@ export class RestScreenController extends ScreenController {
     private view: RestScreenView;
     private combatModel: CombatMainScreenModel;
 
+    private restStop = new RestStop();
     private clickSound: HTMLAudioElement;
 
-    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel){
+    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, private readonly gameSession: GameSession){
         super();
         this.screenSwitcher = screenSwitcher;
         this.combatModel = combatModel;
@@ -20,6 +24,11 @@ export class RestScreenController extends ScreenController {
             () => this.handleContinueClick(),
             () => this.handlePotionClick(),
             () => this.handleUpgradeClick(),
+            () => {
+                finishRest(this.gameSession.state);
+                this.restStop.leave(this.gameSession.state);
+                this.screenSwitcher.switchToScreen({ type: "map" });
+            },
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -51,8 +60,11 @@ export class RestScreenController extends ScreenController {
     }
 
     startRestScreen(): void {
-        this.view.setPlayerHealthBar(this.combatModel.getPlayerMaxHealth(), this.combatModel.getPlayerMaxHealth());
-        this.combatModel.setPlayerHealth(this.combatModel.getPlayerMaxHealth());
+        this.restStop.rest(this.gameSession.state);
+        const player = this.gameSession.state.player;
+        this.combatModel.setPlayerHealth(player.hp);
+        this.combatModel.setPlayerMaxHealth(player.maxHp);
+        this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.view.show()
     }
 

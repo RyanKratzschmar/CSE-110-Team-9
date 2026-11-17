@@ -3,28 +3,33 @@ import type { ScreenSwitcher } from "../../types";
 import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import { UpgradeMinigameScreenModel } from "./UpgradeMinigameScreenModel.ts";
 import { UpgradeMinigameScreenView } from "./UpgradeMinigameScreenView.ts";
-import { PlaceholderUpgradeService } from "./UpgradeService.ts";
-import type { UpgradeService } from "./UpgradeService.ts";
+import type { GameSession } from "../../GameSession";
+import { startUpgradeMinigame, claimUpgrade } from "../../../backend/game/UpgradeManager";
+import { requireCurrentStop } from "../../../backend/game/GameManager";
+import type { UpgradeMinigame } from "../../../backend/game/UpgradeMinigame";
 
-const TIME_LIMIT_SECONDS = 60;
 
 //Connects the upgrade minigame model and view, runs the timer, and handles button clicks
 export class UpgradeMinigameScreenController extends ScreenController {
     private readonly screenSwitcher: ScreenSwitcher;
     private readonly combatModel: CombatMainScreenModel;
-    private readonly upgradeService: UpgradeService;
     private readonly model = new UpgradeMinigameScreenModel();
     private readonly view: UpgradeMinigameScreenView;
     private readonly clickSound = new Audio("/click.mp3");
     private timerId: number | null = null;
     private roundId = 0;
+    private game: UpgradeMinigame | null = null;
+    private questionId: number | null = null;
 
-    //Creates the view with its button handlers and redraws it whenever the model changes; the upgrade service defaults to a placeholder
-    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, upgradeService: UpgradeService = new PlaceholderUpgradeService()) {
+    //Creates the view and redraws it whenever the model changes
+    constructor(
+        screenSwitcher: ScreenSwitcher,
+        combatModel: CombatMainScreenModel,
+        private readonly gameSession: GameSession
+    ) {
         super();
         this.screenSwitcher = screenSwitcher;
         this.combatModel = combatModel;
-        this.upgradeService = upgradeService;
         this.view = new UpgradeMinigameScreenView({
             onStart: () => this.handleStart(),
             onSubmit: (answer) => this.handleSubmit(answer),
@@ -37,6 +42,9 @@ export class UpgradeMinigameScreenController extends ScreenController {
 
     //Resets to the ready phase and shows the screen
     startUpgradeMinigame(): void {
+        this.game = null;
+        this.questionId = null;
+
         this.roundId++;
         this.stopTimer();
         this.model.reset();
@@ -46,6 +54,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
 
     //Stops the timer so it doesn't keep running in the background, then hides the screen
     hide(): void {
+        this.roundId++;
         this.stopTimer();
         super.hide();
     }
@@ -60,29 +69,50 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.model.setPlayerHealth(hp, maxHp);
     }
 
-    //Plays the click sound and starts the one-minute round
+    // Start or resume the challenge belonging to the shared local game.
     private handleStart(): void {
-        this.playClick();
-        this.beginRound();
+        if (this.model.getState().phase !== "ready") return;
+        try {
+            const game = startUpgradeMinigame(this.gameSession.state);
+            this.game = game;
+            this.questionId = game.currentQuestion().questionId;
+            this.model.loadSession({
+                ...game.currentQuestion(),
+                correctAnswers: game.getCorrectAnswers(),
+                remainingTime: game.getRemainingTime(),
+            });
+            this.startTimer();
+        } catch (error) {
+            this.model.setResult(error instanceof Error ? error.message : "Could not start minigame", false);
+        }
     }
 
-    //Checks that the typed answer is a whole number, then sends it to the model
+    // The shared challenge owns correctness, score, and the time limit.
     private handleSubmit(rawAnswer: string): void {
         const state = this.model.getState();
-        
-        if (state.phase !== "solving" || state.timeLeft <= 0 || state.awaitingNext) {
-            return;
-        }
-        
-        const trimmed = rawAnswer.trim();
-        const answer = Number(trimmed);
-
-        if (trimmed === "" || !Number.isInteger(answer)) {
+        if (state.phase !== "solving" || state.awaitingNext || this.game === null || this.questionId === null) return;
+        const answer = Number(rawAnswer.trim());
+        if (rawAnswer.trim() === "" || !Number.isSafeInteger(answer)) {
             this.model.setFeedback("invalid");
             return;
         }
-
-        this.model.submitAnswer(answer);
+        try {
+            requireCurrentStop(this.gameSession.state, "rest");
+            if (this.game !== this.gameSession.state.upgradeMinigame) throw new Error("Start a new challenge first");
+            const result = this.game.submitAnswer(answer, this.questionId);
+            this.questionId = this.game.currentQuestion().questionId;
+            this.model.applyAnswerResponse({
+                ...result,
+                remainingTime: this.game.getRemainingTime(),
+                currentQuestion: this.game.currentQuestion(),
+            });
+        } catch (error) {
+            if (this.game.isFinished()) this.finishRound();
+            else {
+                this.stopTimer();
+                this.model.setResult(error instanceof Error ? error.message : "Could not check answer", false);
+            }
+        }
     }
 
     //Plays the click sound and moves to the next problem after a wrong answer
@@ -94,7 +124,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         }
         
         this.playClick();
-        this.model.nextQuestion();
+        this.model.retryCurrentQuestion();
     }
 
     //Plays the click sound and returns to the map (used by both Leave and Exit)
@@ -103,22 +133,14 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.leaveScreen();
     }
 
-    //Starts a new round in the model and starts the countdown
-    private beginRound(): void {
-        this.model.startRound(TIME_LIMIT_SECONDS);
-        this.startTimer();
-    }
-
-    //Counts down once per second and ends the round when time runs out
+    // Render remaining time from the challenge deadline, including after tab suspension.
     private startTimer(): void {
         this.stopTimer();
         this.timerId = window.setInterval(() => {
-            this.model.tick();
-            if (this.model.getState().timeLeft <= 0) {
-                this.stopTimer();
-                void this.finishRound();
-            }
-        }, 1000);
+            if (this.game === null) return;
+            this.model.setRemainingTime(this.game.getRemainingTime());
+            if (this.game.isFinished()) this.finishRound();
+        }, 250);
     }
 
     //Stops the countdown if it is running
@@ -129,27 +151,30 @@ export class UpgradeMinigameScreenController extends ScreenController {
         }
     }
 
-    //Ends the round, asks the upgrade service for the result, and ignores replies that arrive after the player has left
-    private async finishRound(): Promise<void> {
-        const id = ++this.roundId;
-        const state = this.model.getState();
-        
-        if (state.phase !== "solving") {
+    // The shared GameState enforces ten correct answers and one claim per level.
+    private finishRound(): void {
+        if (this.model.getState().phase !== "solving" || this.game === null) return;
+        this.stopTimer();
+        this.model.finishRound();
+        if (!this.game.hasEarnedUpgrade()) {
+            this.model.setResult("You need 10 correct answers within 60 seconds to earn an upgrade.", false);
             return;
         }
-
-        this.model.finishRound();
-
         try {
-            const outcome = await this.upgradeService.applyUpgrade({ correctCount: state.correctCount, attemptedCount: state.attemptedCount });
-            if (id === this.roundId) {
-                this.model.setUpgradeOutcome(outcome);
-            }
-        } catch (err) {
-            console.error("Failed to apply upgrade", err);
-            if (id === this.roundId) {
-                this.model.setUpgradeError();
-            }
+            const player = this.gameSession.state.player;
+            const attackBefore = player.attack;
+            const defenseBefore = player.defense;
+            const potionBonusBefore = player.potionHealingBonus;
+            claimUpgrade(this.gameSession.state);
+            this.combatModel.setPlayerHealth(player.hp);
+            this.combatModel.setPlayerMaxHealth(player.maxHp);
+            this.model.setUpgradeOutcome({
+                weapon: { statBefore: attackBefore, statAfter: player.attack },
+                armor: { statBefore: defenseBefore, statAfter: player.defense },
+                potion: { statBefore: potionBonusBefore, statAfter: player.potionHealingBonus },
+            });
+        } catch (error) {
+            this.model.setResult(error instanceof Error ? error.message : "Could not claim upgrade", false);
         }
     }
 

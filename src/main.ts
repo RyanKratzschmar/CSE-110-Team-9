@@ -9,9 +9,8 @@ import { HintPopUpController } from "../frontend/src/hintPopUp/controller/HintPo
 import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabScreenController.ts";
 import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
-
-import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 import { GameSession } from "./GameSession.ts";
+import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
  *
@@ -33,7 +32,8 @@ class App implements ScreenSwitcher {
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 	private leaderBoardScreenController: LeaderBoardScreenController;
-	private gameSession: GameSession;
+
+	private readonly gameSession = new GameSession();
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -52,14 +52,12 @@ class App implements ScreenSwitcher {
 		// Initialize all screen controllers
 		// Each controller manages a Model, View, and handles user interactions
 
-		this.gameSession = new GameSession();
-
 		this.titleScreenController = new TitleScreenController(this, this.gameSession);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp, this.gameSession);
-		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel(), this.gameSession); //
+		this.levelMapScreenController = new LevelMapScreenController(this, this.gameSession); //
 		this.potionLabScreenController = new PotionLabScreenController(this, this.combatMainScreenController.getModel());
-		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel());
-		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel());
+		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
+		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
 
 		window.addEventListener("resize", () => {
@@ -95,6 +93,9 @@ class App implements ScreenSwitcher {
 
     
 	switchToScreen(screen: Screen): void {
+        const player = this.gameSession.state.player;
+        this.combatMainScreenController.getModel().setPlayerHealth(player.hp);
+        this.combatMainScreenController.getModel().setPlayerMaxHealth(player.maxHp);
 		// Hide all screens first by setting their Groups to invisible
 		this.titleScreenController.hide();
 		this.combatMainScreenController.hide(); // TODO
@@ -131,7 +132,7 @@ class App implements ScreenSwitcher {
 			case "upgrade":
 				this.upgradeMinigameScreenController.startUpgradeMinigame();
 				break;
-			
+
 			case "leaderboard":
 				//Show leaderboard
 				this.leaderBoardScreenController.startLeaderboard();

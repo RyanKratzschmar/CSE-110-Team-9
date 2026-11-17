@@ -66,6 +66,10 @@ export class Combat {
         return this.enemy.hp;
     }
 
+    getEnemyMaxHp(): number {
+        return this.enemy.maxHp;
+    }
+
     currentQuestion() : CurrentQuestion {
         return {
             questionId: this.questionId,
