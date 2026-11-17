@@ -115,7 +115,7 @@ export class Combat {
             return;
         }
 
-        const nextEquation = getEquation({type: "Combat"}, this.difficulty);
+        const nextEquation = this.generateEquation();
 
         this.currentEquation = nextEquation;
         this.questionId += 1;
