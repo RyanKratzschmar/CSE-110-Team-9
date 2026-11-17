@@ -1,4 +1,10 @@
 // PotionLabScreenModel: the brewing attempt in progress and the chosen difficulty. (Sally)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// This file was merged too early by mistake, the entire file should be included in the PR. - Ryan //
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 export class PotionLabScreenModel {
     private stepIndex: number = 1;
     private difficulty: number = 0;

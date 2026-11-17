@@ -1,4 +1,10 @@
 // PotionLabScreenView: difficulty choice, the PEMDAS equation, answer field, and the potion-brewed message. (Sally, Oliver; UI: Ryan)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// This file was merged too early by mistake, the entire file should be included in the PR. - Ryan //
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
