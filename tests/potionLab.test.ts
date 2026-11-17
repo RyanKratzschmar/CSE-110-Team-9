@@ -22,7 +22,7 @@ describe("PotionLab", () => {
     const eq = fixedEquations();
     const lab = new PotionLab(new Player().inventory, eq.make);
     lab.chooseType("poison");
-    expect(lab.chooseRecipe("advanced")).toBe("2 * 6 + 18 / 3 - 4 = ?");
+    expect(lab.chooseRecipe("advanced")).toBe("2*6+18/3-4= ?");
     expect(eq.askedFor).toEqual(["advanced"]);
   });
 
