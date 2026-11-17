@@ -1,18 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { RestMenu, InvalidRestOptionError } from "../backend/game/RestMenu";
 import { RestStop } from "../backend/game/RestStop";
-import { Level } from "../backend/game/Level";
-import type { GameState } from "../backend/game/GameState";
+import { GameState } from "../backend/game/GameState";
+import { GameFlowError } from "../backend/game/GameManager";
 
-// Make a simple game already at its Rest node.
+// Make a real game and move it to the Rest node.
 function makeRestGame() {
-  const state = {
-    level: new Level(1),
-    gameOver: false,
-    player: { healFull: vi.fn() },
-  } as unknown as GameState;
+  const state = new GameState();
 
-  // Finish the three combat nodes before Rest.
+  // Complete the three combat nodes before Rest.
   state.level.completeCurrent();
   state.level.completeCurrent();
   state.level.completeCurrent();
@@ -42,7 +38,7 @@ describe("Rest Menu", () => {
 
   it("leaves Rest and starts the next level", () => {
     const { state, menu } = makeRestGame();
-    expect(menu.selectOption(state, "leave")).toBe("game");
+    expect(menu.selectOption(state, "leave")).toBe("map");
     expect(state.level.number).toBe(2);
     expect(state.level.currentIndex).toBe(0);
   });
@@ -50,5 +46,29 @@ describe("Rest Menu", () => {
   it("rejects invalid menu options", () => {
     const { state, menu } = makeRestGame();
     expect(() => menu.selectOption(state, "invalid")).toThrow(InvalidRestOptionError);
+  });
+
+  it("rejects menu use before entering Rest", () => {
+    const state = new GameState();
+    state.level.completeCurrent();
+    state.level.completeCurrent();
+    state.level.completeCurrent();
+
+    // At Rest, but the player has not entered it yet.
+    const menu = new RestMenu(new RestStop());
+    expect(() => menu.getOptions(state)).toThrow(GameFlowError);
+  });
+
+  it("rejects menu use at a combat node", () => {
+    const state = new GameState();
+    const menu = new RestMenu(new RestStop());
+    expect(() => menu.getOptions(state)).toThrow(GameFlowError);
+  });
+
+  it("does not allow Leave Rest twice", () => {
+    const { state, menu } = makeRestGame();
+    expect(menu.selectOption(state, "leave")).toBe("map");
+    expect(() => menu.selectOption(state, "leave")).toThrow(GameFlowError);
+    expect(state.level.number).toBe(2);
   });
 });

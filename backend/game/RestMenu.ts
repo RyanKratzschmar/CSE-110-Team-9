@@ -47,12 +47,12 @@ export class RestMenu {
   }
 
   // Handle one of the three menu choices.
-  selectOption(state: GameState, option: unknown): "upgrade" | "potions" | "game" {
+  selectOption(state: GameState, option: unknown): "upgrade" | "potions" | "map" {
     if (option === "upgrade") return this.selectUpgrade(state);
     if (option === "potions") return this.selectPotion(state);
     if (option === "leave") {
       this.leaveRest(state);
-      return "game";
+      return "map";
     }
     throw new InvalidRestOptionError("Invalid Rest menu option");
   }
