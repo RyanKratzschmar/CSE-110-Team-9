@@ -2,17 +2,20 @@
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { TitleScreenView } from "./TitleScreenView.ts";
+import type { GameSession } from "../../GameSession.ts";
 import Konva from "konva";
 
 export class TitleScreenController extends ScreenController{
 	private view: TitleScreenView;
 	private screenSwitcher: ScreenSwitcher;
+	private gameSession: GameSession;
     private clickSound: HTMLAudioElement;
 
-	constructor(screenSwitcher: ScreenSwitcher) {
+	constructor(screenSwitcher: ScreenSwitcher, gameSession: GameSession) {
         super()
 
 		this.screenSwitcher = screenSwitcher;
+		this.gameSession = gameSession;
 		this.view = new TitleScreenView(
 			() => this.handleNewGameClick(),
 			() => this.handleLeaderBoardClick(),
@@ -27,10 +30,11 @@ export class TitleScreenController extends ScreenController{
 	 * Handle button clicks
 	 */
     private handleNewGameClick(): void {
-        // TODO: Add the action for starting a new game.
 		this.clickSound.currentTime = 0;
 		this.clickSound.play();
 
+		// Fresh player at full HP, floor 1, first fight
+		this.gameSession.newGame();
         this.screenSwitcher.switchToScreen({type : "map"});
     }
 
