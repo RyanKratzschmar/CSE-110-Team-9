@@ -2,7 +2,6 @@ import { ScreenController } from "../../types";
 import type { ScreenSwitcher } from "../../types";
 import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 import { UpgradeMinigameScreenModel } from "./UpgradeMinigameScreenModel.ts";
-import type { UpgradeType } from "./UpgradeMinigameScreenModel.ts";
 import { UpgradeMinigameScreenView } from "./UpgradeMinigameScreenView.ts";
 import { PlaceholderUpgradeService } from "./UpgradeService.ts";
 import type { UpgradeService } from "./UpgradeService.ts";
@@ -21,20 +20,14 @@ export class UpgradeMinigameScreenController extends ScreenController {
     private roundId = 0;
 
     //Creates the view with its button handlers and redraws it whenever the model changes; the upgrade service defaults to a placeholder
-    constructor(
-        screenSwitcher: ScreenSwitcher,
-        combatModel: CombatMainScreenModel,
-        upgradeService: UpgradeService = new PlaceholderUpgradeService()
-    ) {
+    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, upgradeService: UpgradeService = new PlaceholderUpgradeService()) {
         super();
         this.screenSwitcher = screenSwitcher;
         this.combatModel = combatModel;
         this.upgradeService = upgradeService;
         this.view = new UpgradeMinigameScreenView({
-            onChoose: (type) => this.handleChoose(type),
             onStart: () => this.handleStart(),
             onSubmit: (answer) => this.handleSubmit(answer),
-            onBack: () => this.handleBack(),
             onLeave: () => this.handleLeave(),
             onNext: () => this.handleNext(),
         });
@@ -42,7 +35,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.view.render(this.model.getState());
     }
 
-    //Resets to the "choose an upgrade" phase and shows the screen
+    //Resets to the ready phase and shows the screen
     startUpgradeMinigame(): void {
         this.roundId++;
         this.stopTimer();
@@ -65,12 +58,6 @@ export class UpgradeMinigameScreenController extends ScreenController {
     //Updates the HP bar with the player's current and max health
     setPlayerHealth(hp: number, maxHp: number): void {
         this.model.setPlayerHealth(hp, maxHp);
-    }
-
-    //Plays the click sound and saves the chosen upgrade
-    private handleChoose(type: UpgradeType): void {
-        this.playClick();
-        this.model.chooseUpgrade(type);
     }
 
     //Plays the click sound and starts the one-minute round
@@ -110,18 +97,6 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.model.nextQuestion();
     }
 
-    //Back from the ready phase returns to the upgrade choices; Back from the choose phase leaves the screen
-    private handleBack(): void {
-        this.playClick();
-        const phase = this.model.getState().phase;
-
-        if (phase === "ready") {
-            this.model.backToChoose();
-        } else if (phase === "choose") {
-            this.leaveScreen();
-        }
-    }
-
     //Plays the click sound and returns to the map (used by both Leave and Exit)
     private handleLeave(): void {
         this.playClick();
@@ -159,18 +134,14 @@ export class UpgradeMinigameScreenController extends ScreenController {
         const id = ++this.roundId;
         const state = this.model.getState();
         
-        if (state.upgradeType === null) {
+        if (state.phase !== "solving") {
             return;
         }
 
         this.model.finishRound();
 
         try {
-            const outcome = await this.upgradeService.applyUpgrade({
-                upgradeType: state.upgradeType,
-                correctCount: state.correctCount,
-                attemptedCount: state.attemptedCount
-            });
+            const outcome = await this.upgradeService.applyUpgrade({ correctCount: state.correctCount, attemptedCount: state.attemptedCount });
             if (id === this.roundId) {
                 this.model.setUpgradeOutcome(outcome);
             }

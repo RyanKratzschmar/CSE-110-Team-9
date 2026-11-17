@@ -11,6 +11,7 @@ import { RestScreenController } from "./screens/RestScreen/RestScreenController.
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
 
 import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
+import { GameSession } from "./GameSession.ts";
 /**
  * Main Application - Coordinates all screens
  *
@@ -32,6 +33,7 @@ class App implements ScreenSwitcher {
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 	private leaderBoardScreenController: LeaderBoardScreenController;
+	private gameSession: GameSession;
 
 	constructor(container: string) {
 		// Initialize Konva stage (the main canvas)
@@ -50,13 +52,14 @@ class App implements ScreenSwitcher {
 		// Initialize all screen controllers
 		// Each controller manages a Model, View, and handles user interactions
 
-		this.titleScreenController = new TitleScreenController(this);
-		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp);
-		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
+		this.gameSession = new GameSession();
+
+		this.titleScreenController = new TitleScreenController(this, this.gameSession);
+		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp, this.gameSession);
+		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel(), this.gameSession); //
 		this.potionLabScreenController = new PotionLabScreenController(this, this.combatMainScreenController.getModel());
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel());
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel());
-		this.levelMapScreenController = new LevelMapScreenController(this, this.combatMainScreenController.getModel()); //
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
 
 		window.addEventListener("resize", () => {
