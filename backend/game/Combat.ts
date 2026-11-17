@@ -66,6 +66,10 @@ export class Combat {
         return this.enemy.hp;
     }
 
+    getEnemyMaxHp(): number {
+        return this.enemy.maxHp;
+    }
+
     currentQuestion() : CurrentQuestion {
         return {
             questionId: this.questionId,
@@ -125,7 +129,7 @@ export class Combat {
             return;
         }
 
-        const nextEquation = getEquation({type: "Combat"}, this.difficulty);
+        const nextEquation = this.generateEquation();
 
         this.currentEquation = nextEquation;
         this.questionId += 1;

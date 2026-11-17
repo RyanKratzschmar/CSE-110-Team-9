@@ -50,7 +50,7 @@ export class CombatMainScreenModel {
 
     // Set player's current health
     setPlayerHealth(amount: number): void {
-        this.playerCurrentHealth += amount;
+        this.playerCurrentHealth = amount;
     }
 
     // Set enemy's current health
