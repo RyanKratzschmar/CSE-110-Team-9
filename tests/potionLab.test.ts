@@ -4,7 +4,7 @@ import { PotionLab } from "../backend/game/PotionLab";
 import { Player } from "../backend/game/Player";
 import type { RecipeLevel } from "../backend/game/Potion";
 import { HEAL_PERCENT } from "../backend/game/Potion";
-import { MultiOperationEquation } from "../backend/equations/MultiOperatorEquation";
+import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
 
 // Always gives the mockup's equation (answer 14) and remembers which level was asked for.
 // Fixed mode: (difficulty, equation, answer); the printed text is built from the equation.
@@ -12,7 +12,7 @@ function fixedEquations() {
   const askedFor: RecipeLevel[] = [];
   const make = (level: RecipeLevel) => {
     askedFor.push(level);
-    return new MultiOperationEquation(0, [2, "*", 6, "+", 18, "/", 3, "-", 4], 14);
+    return new MultiOperationEquation(1, [2, "*", 6, "+", 18, "/", 3, "-", 4], 14);
   };
   return { askedFor, make };
 }

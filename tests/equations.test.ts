@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { MultiplicationEquation } from "../backend/equations/MultiplicationEquation";
 import { DivisionEquation } from "../backend/equations/DivisionEquation";
-import { MultiOperationEquation } from "../backend/equations/MultiOperatorEquation";
+import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
 
 // Each test should account for the answer, equation, print, and type
 
