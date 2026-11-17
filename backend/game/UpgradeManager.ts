@@ -16,7 +16,7 @@ export function startUpgradeMinigame(
     const existing = state.upgradeMinigame;
 
     if (
-        existing !== null && 
+        existing !== null &&
         state.upgradeMinigameLevel === level
     ) {
         return existing;
