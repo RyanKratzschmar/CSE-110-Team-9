@@ -11,14 +11,14 @@ describe("Cobmat", () => {
     function createCombat() {
         const player = new Player(100, 20, 0);
         const enemy = new Monster(50, 15);
-        const combat = new Combat(player, enemy, fixedEquation);
-         
+        const combat = new Combat(player, enemy, 1, fixedEquation);
+          
         return { player, enemy, combat };
     }
 
     function fixedEquation() {
         return new MultiplicationEquation(
-            true, "10 * 20 = ", 200, [10, "*", 20]
+            1, [10, "*", 20], 200
         );
     }
 
@@ -95,7 +95,7 @@ describe("Cobmat", () => {
         (attack) => {
             const player = new Player(100, attack, 0);
             const enemy = new Monster(50, 15);
-            const combat = new Combat(player, enemy, fixedEquation);
+            const combat = new Combat(player, enemy, 1, fixedEquation);
             const { questionId } = combat.currentQuestion();
 
             const result = combat.resolveAnswer(200, questionId)
@@ -112,7 +112,7 @@ describe("Cobmat", () => {
         (attack) => {
             const player = new Player(100, 20, 0);
             const enemy = new Monster(50, attack);
-            const combat = new Combat(player, enemy, fixedEquation);
+            const combat = new Combat(player, enemy, 1, fixedEquation);
             const { questionId } = combat.currentQuestion();
 
             const result = combat.resolveAnswer(201, questionId);
@@ -127,7 +127,7 @@ describe("Cobmat", () => {
     it("cannot restart or apply more damage after winning", () => {
         const player = new Player(100, 50, 0);
         const enemy = new Monster(50, 15);
-        const combat = new Combat(player, enemy, fixedEquation);
+        const combat = new Combat(player, enemy, 1, fixedEquation);
         const { questionId } = combat.currentQuestion();
 
         combat.resolveAnswer(200, questionId);
@@ -143,7 +143,7 @@ describe("Cobmat", () => {
     it("cannot restart or apply more damage after losing", () => {
         const player = new Player(100, 20, 0);
         const enemy = new Monster(50, 100);
-        const combat = new Combat(player, enemy, fixedEquation);
+        const combat = new Combat(player, enemy, 1, fixedEquation);
         const { questionId } = combat.currentQuestion();
          
         combat.resolveAnswer(201, questionId);
@@ -160,7 +160,7 @@ describe("Cobmat", () => {
         const player = new Player(100, 20, 0);
         player.takeDamage(100);
         const enemy = new Monster(50, 15);
-        const combat = new Combat(player, enemy, fixedEquation);
+        const combat = new Combat(player, enemy, 1, fixedEquation);
         const { questionId } = combat.currentQuestion();
          
         expect(combat.getGameStatus()).toBe("lost");
@@ -172,7 +172,7 @@ describe("Cobmat", () => {
         const player = new Player(100, 20, 0);
         const enemy = new Monster(50, 15);
         enemy.takeDamage(50);
-        const combat = new Combat(player, enemy, fixedEquation);
+        const combat = new Combat(player, enemy, 1, fixedEquation);
         const { questionId } = combat.currentQuestion();
 
         expect(combat.getGameStatus()).toBe("won");
