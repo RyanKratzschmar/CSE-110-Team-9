@@ -43,7 +43,7 @@ export class TitleScreenController extends ScreenController{
 		this.clickSound.currentTime = 0;
 		this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({type : "map"});
+        this.screenSwitcher.switchToScreen({type : "potion"});
     }
 
 	private handleLeaderBoardClick(): void {
