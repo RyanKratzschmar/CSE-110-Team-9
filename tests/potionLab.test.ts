@@ -7,7 +7,7 @@ import { HEAL_PERCENT } from "../backend/game/Potion";
 import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
 
 // Always gives the mockup's equation (answer 14) and remembers which level was asked for.
-// MultiplicationEquation is only used because it can hold any fixed equation and answer.
+// Fixed mode: (difficulty, equation, answer); the printed text is built from the equation.
 function fixedEquations() {
   const askedFor: RecipeLevel[] = [];
   const make = (level: RecipeLevel) => {
@@ -24,6 +24,19 @@ describe("PotionLab", () => {
     lab.chooseType("poison");
     expect(lab.chooseRecipe("advanced")).toBe("2*6+18/3-4= ?");
     expect(eq.askedFor).toEqual(["advanced"]);
+  });
+
+  it("uses Oliver's PEMDAS equations by default; advanced has more parts than basic", () => {
+    const basic = new PotionLab(new Player().inventory);
+    basic.chooseType("healing");
+    basic.chooseRecipe("basic");
+    expect(basic.getEquation()?.getType()).toBe("Pemdas");
+    expect(basic.getEquation()?.getEquation()).toHaveLength(7); // e.g. 4*4+6*12
+
+    const advanced = new PotionLab(new Player().inventory);
+    advanced.chooseType("healing");
+    advanced.chooseRecipe("advanced");
+    expect(advanced.getEquation()?.getEquation()).toHaveLength(11); // e.g. 4*4+6*12-9/3
   });
 
   it("a right answer adds exactly one potion to the player's inventory", () => {
