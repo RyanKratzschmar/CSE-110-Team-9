@@ -5,6 +5,8 @@ import { Player } from "../backend/game/Player";
 import type { RecipeLevel } from "../backend/game/Potion";
 import { HEAL_PERCENT } from "../backend/game/Potion";
 import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
+import { GameState } from "../backend/game/GameState";
+import { Level } from "../backend/game/Level";
 
 // Always gives the mockup's equation (answer 14) and remembers which level was asked for.
 // Fixed mode: (difficulty, equation, answer); the printed text is built from the equation.
@@ -93,5 +95,33 @@ describe("PotionLab", () => {
 describe("Potion effects", () => {
   it("an advanced healing potion heals more than a basic one", () => {
     expect(HEAL_PERCENT.advanced).toBeGreaterThan(HEAL_PERCENT.basic);
+  });
+});
+
+describe("GameState potion lab", () => {
+  it("gives the same lab all level and a fresh one on the next level", () => {
+    const state = new GameState();
+    const lab = state.potionLabForLevel();
+    expect(state.potionLabForLevel()).toBe(lab);
+    state.level = new Level(2);
+    expect(state.potionLabForLevel()).not.toBe(lab);
+  });
+
+  it("a used lab stays closed when you come back on the same level", () => {
+    const state = new GameState();
+    const lab = state.potionLabForLevel();
+    lab.chooseType("healing");
+    lab.chooseRecipe("basic");
+    lab.leave();
+    expect(state.potionLabForLevel().isClosed()).toBe(true);
+  });
+
+  it("brews into the shared player's inventory", () => {
+    const state = new GameState();
+    const lab = state.potionLabForLevel();
+    lab.chooseType("poison");
+    lab.chooseRecipe("basic");
+    lab.submit(lab.getEquation()!.getAnswer());
+    expect(state.player.inventory).toEqual([{ type: "poison", level: "basic" }]);
   });
 });
