@@ -4,6 +4,7 @@ import type { NodeType } from "./LevelNode";
 import { Player } from "./Player";
 import type { UpgradeMinigame } from "./UpgradeMinigame";
 import type { Combat } from "./Combat";
+import { PotionLab } from "./PotionLab";
 
 // What the frontend receives (see the API table in the README)
 export interface GameStateJSON {
@@ -23,6 +24,18 @@ export class GameState {
   upgradeClaimedLevel: number | null = null;
   // Preserve the fight when switching screens.
   combat: Combat | null = null;
+  // The potion lab for one level, so leaving and coming back can't give a second attempt.
+  potionLab: PotionLab | null = null;
+  potionLabLevel: number | null = null;
+
+  // Same PotionLab every time on one level, a fresh one on the next level.
+  potionLabForLevel(): PotionLab {
+    if (this.potionLab === null || this.potionLabLevel !== this.level.number) {
+      this.potionLab = new PotionLab(this.player.inventory);
+      this.potionLabLevel = this.level.number;
+    }
+    return this.potionLab;
+  }
 
   toJSON(): GameStateJSON {
     return {
