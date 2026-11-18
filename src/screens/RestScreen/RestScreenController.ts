@@ -1,6 +1,7 @@
 import type { GameSession } from "../../GameSession";
 import { RestStop } from "../../../backend/game/RestStop";
-import { finishRest } from "../../../backend/game/GameManager";
+import { RestMenu } from "../../../backend/game/RestMenu";
+import type { RestOption } from "../../../backend/game/RestMenu";
 // PotionLabScreenController: picks the difficulty, checks the answer, and puts the brewed potion in the inventory. (Sally)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10,14 +11,16 @@ import { finishRest } from "../../../backend/game/GameManager";
 import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { RestScreenView } from "./RestScreenView.ts";
-import { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
+import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
 
 export class RestScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
     private view: RestScreenView;
     private combatModel: CombatMainScreenModel;
 
-    private restStop = new RestStop();
+    // Share the same RestStop between healing and menu actions.
+    private readonly restStop = new RestStop();
+    private readonly restMenu = new RestMenu(this.restStop);
     private clickSound: HTMLAudioElement;
 
     constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, private readonly gameSession: GameSession){
@@ -29,11 +32,7 @@ export class RestScreenController extends ScreenController {
             () => this.handleContinueClick(),
             () => this.handlePotionClick(),
             () => this.handleUpgradeClick(),
-            () => {
-                finishRest(this.gameSession.state);
-                this.restStop.leave(this.gameSession.state);
-                this.screenSwitcher.switchToScreen({ type: "map" });
-            },
+            () => this.handleMenuSelection("leave"),
         );
 
         this.clickSound = new Audio("/click.mp3");
@@ -45,6 +44,7 @@ export class RestScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
+        this.restMenu.getOptions(this.gameSession.state);
         this.view.minigamePopUp();
     }
 
@@ -53,7 +53,7 @@ export class RestScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({ type: "potion" });
+        this.handleMenuSelection("potion");
     }
     
     // Handles click on upgrade button
@@ -61,7 +61,13 @@ export class RestScreenController extends ScreenController {
         this.clickSound.currentTime = 0;
         this.clickSound.play();
 
-        this.screenSwitcher.switchToScreen({ type: "upgrade" });
+        this.handleMenuSelection("upgrade");
+    }
+
+    // Let RestMenu validate the choice and return the next screen.
+    private handleMenuSelection(option: RestOption): void {
+        const screen = this.restMenu.selectOption(this.gameSession.state, option);
+        this.screenSwitcher.switchToScreen({ type: screen });
     }
 
     startRestScreen(): void {
