@@ -361,7 +361,7 @@ export class CombatMainScreenView implements View {
 
         // Create Explanation Button
         this.explanationButton = new Konva.Rect({
-            x: 1050,
+            x: 1300,
             y: 787.5,
             width: 200,
             height: 75,
@@ -374,10 +374,12 @@ export class CombatMainScreenView implements View {
 
         this.explanationButton.on("mouseenter", () => {
             document.body.style.cursor = "pointer";
+            this.explanationButton.fill("#B678D0");
         });
 
         this.explanationButton.on("mouseleave", () => {
             document.body.style.cursor = "default";
+            this.explanationButton.fill("#FF9E42");
         });
 
         this.explanationButton.on("click tap", () => {
@@ -387,7 +389,7 @@ export class CombatMainScreenView implements View {
 
         // Text that says "Explain"
         this.explanationText = new Konva.Text({
-            x: 1050,
+            x: 1300,
             y: 802.5,
             width: 200,
             align: "center",
@@ -671,8 +673,6 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(true);
         this.submitText.visible(true);
         this.responseText.visible(true);
-        this.explanationButton.visible(true);
-        this.explanationText.visible(true);
     }
 
 
@@ -694,6 +694,14 @@ export class CombatMainScreenView implements View {
         this.explanationText.visible(false);
     }
 
+    // Swaps the Get Hint button for the Explain button (used after a wrong answer)
+    showExplanationButton(): void {
+        this.hintButton.visible(false);
+        this.hintText.visible(false);
+        this.explanationButton.visible(true);
+        this.explanationText.visible(true);
+        this.group.getLayer()?.batchDraw();
+    }
 
     /**
 	 * Show the screen

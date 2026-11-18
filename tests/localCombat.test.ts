@@ -8,9 +8,33 @@ import { MultiplicationEquation } from "../backend/equations/MultiplicationEquat
 import { CombatMainScreenController } from "../src/screens/CombatMainScreen/CombatMainScreenController";
 import { CombatMainScreenView } from "../src/screens/CombatMainScreen/CombatMainScreenView";
 
+// Simulates pressing a key by sending a keydown event to the window
 function key(value: string, repeat = false) {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: value, repeat, cancelable: true }));
 }
+
+// Returns true if the button with the given label ("Get Hint" or "Explain") is currently shown
+function buttonVisible(c: CombatMainScreenController, label: string): boolean {
+    const node = c.getView().getGroup().find("Text").find(n => n.getAttr("text") === label);
+    return node !== undefined && node.visible();
+}
+
+// Hides every controller after each test so leftover keyboard listeners don't leak into the next test
+const controllers: CombatMainScreenController[] = [];
+afterEach(() => { for (const c of controllers.splice(0)) c.hide(); });
+
+// Creates a fresh 2 * 3 fight against a test monster and returns its controller, session and screen-switch mock
+function fixture(hp = 50, attack = 15) {
+    const session = new GameSession();
+    session.state.combat = new Combat(session.state.player, new Monster(hp, attack), 1, () => new MultiplicationEquation(0, [2, "*", 3], 6));
+    const popup = { isOpen: () => false, close: vi.fn(), showLongMultiplicationHint: vi.fn(), showLongDivisionHint: vi.fn() };
+    const switchToScreen = vi.fn();
+    const c = new CombatMainScreenController({ switchToScreen }, popup as never, popup as never, session);
+    controllers.push(c);
+    c.startGame();
+    return { c, session, switchToScreen };
+}
+
 beforeEach(() => {
     vi.spyOn(window, "alert").mockImplementation(() => {});
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
@@ -119,5 +143,38 @@ describe("Shared local combat", () => {
         c.hide(); c.startGame();
         expect(session.state.combat).toBe(game);
         expect(c.getModel().getPlayerHealth()).toBe(82);
+    });
+});
+
+describe("Get Hint / Explain button swap", () => {
+    it("shows Get Hint, not Explain, while answering", () => {
+        const { c } = fixture();
+        c.handleAttackClick();
+        expect(buttonVisible(c, "Get Hint")).toBe(true);
+        expect(buttonVisible(c, "Explain")).toBe(false);
+    });
+
+    it("keeps Get Hint and hides Explain after a correct answer", () => {
+        const { c } = fixture();
+        c.handleAttackClick(); key("6"); key("Enter");
+        expect(buttonVisible(c, "Get Hint")).toBe(true);
+        expect(buttonVisible(c, "Explain")).toBe(false);
+    });
+
+    it("swaps Get Hint for Explain after a wrong answer, then restores Get Hint on the next question", () => {
+        const { c } = fixture();
+        c.handleAttackClick(); key("7"); key("Enter");
+        expect(buttonVisible(c, "Explain")).toBe(true);
+        expect(buttonVisible(c, "Get Hint")).toBe(false);
+        key("Enter");
+        c.handleAttackClick();
+        expect(buttonVisible(c, "Get Hint")).toBe(true);
+        expect(buttonVisible(c, "Explain")).toBe(false);
+    });
+
+    it("does not show Explain when a wrong answer ends the game", () => {
+        const { c } = fixture(50, 200);
+        c.handleAttackClick(); key("7"); key("Enter");
+        expect(buttonVisible(c, "Explain")).toBe(false);
     });
 });
