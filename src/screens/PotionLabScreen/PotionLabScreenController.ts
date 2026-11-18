@@ -12,21 +12,24 @@ import type { ScreenSwitcher } from "../../types.ts";
 import { PotionLabScreenView } from "./PotionLabScreenView.ts";
 import { PotionLabScreenModel } from "./PotionLabScreenModel.ts"
 import { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
+import type { GameSession } from "../../GameSession.ts";
 
 export class PotionLabScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
     private model: PotionLabScreenModel;
     private view: PotionLabScreenView;
     private combatModel: CombatMainScreenModel;
+    private gameSession?: GameSession;
 
     private clickSound: HTMLAudioElement;
 
-    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel){
+    constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, gameSession?: GameSession){
         super();
         this.screenSwitcher = screenSwitcher;
         this.model = new PotionLabScreenModel();
 
         this.combatModel = combatModel;
+        this.gameSession = gameSession;
 
         this.view = new PotionLabScreenView(
             () => this.handleLeaveClick(),
@@ -84,12 +87,14 @@ export class PotionLabScreenController extends ScreenController {
                     this.view.hidePotion(this.model.getStepIndex());
                 } else {
                     this.view.winScreen();
+                    this.gameSession?.state.player.inventory.push({ type: "healing", level: "advanced" });
                 }
             } else {
                 if(this.model.getStepIndex() != 4){
                     this.view.hidePotion(this.model.getStepIndex());
                 } else {
                     this.view.winScreen();
+                    this.gameSession?.state.player.inventory.push({ type: "healing", level: "basic" });
                 }
             }
         }, 3000);
