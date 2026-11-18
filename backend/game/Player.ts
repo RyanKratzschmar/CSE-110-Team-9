@@ -1,10 +1,15 @@
 // Player: the player's Health, attack, and defense stats. (Sally)
 import { Health } from "./Health";
+import type {Potion} from "./Potion";
+
+export type Item = Potion;
 
 export class Player {
   private health: Health;
   private attackPower: number; // attackPower per auto attack
   private defenseRate: number; // defense multiplier from 0 to 1: percent incoming damage blocked
+  private potionHealingBonusPoints = 0; // added percentage points of max HP healed
+  readonly inventory: Item[] = []; // shared by the potion lab (adds) and combat (uses)
 
   constructor(maxHp = 100, attack = 10, defense = 0.1) {
     if (!Number.isInteger(attack) || attack < 0) {
@@ -34,6 +39,17 @@ export class Player {
     return this.defenseRate;
   }
 
+  get potionHealingBonus(): number {
+    return this.potionHealingBonusPoints;
+  }
+
+  // Need to test the scaling numbers
+  applyUpgrade(): void {
+    this.attackPower += 2;
+    this.potionHealingBonusPoints += 10;
+    this.defenseRate = Math.min(0.99, this.defenseRate * 1.1);
+  }
+
   // amount is the attacker's raw damage; defense reduces it, but any hit does at least 1
   takeDamage(amount: number): void {
     if (!Number.isFinite(amount) || amount < 0) {
@@ -46,6 +62,11 @@ export class Player {
 
   healFull(): void {
     this.health.healFull();
+  }
+
+  heal(amount: number): void {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    this.health.updateHealth(Math.round(amount));
   }
 
   isDead(): boolean {

@@ -11,7 +11,7 @@ UI for every new screen: Ryan. One branch per story, following the README git wo
 
 Rules: 60-second timer; times tables (1 to 12) x (1 to 12); answer as many as you can; check each answer and show the correct one (no explanation); one upgrade per level; the upgrade raises all stats.
 
-Files: `backend/equations/TimesTableEquation.ts`, `backend/game/UpgradeMinigame.ts`, `src/screens/UpgradeMinigameScreen/*`, `tests/upgrade.test.ts`
+Files: `backend/equations/EquationFactory.ts` (Oliver’s upgrade generator), `backend/game/UpgradeMinigame.ts`, `src/screens/UpgradeMinigameScreen/*`, `tests/upgrade.test.ts`
 
 - [ ] Build the minigame screen with instructions, a math problem, and an answer field (1 h)
 - [ ] Display problems and check submitted answers (2 h)

@@ -1,13 +1,14 @@
 import type { GameState } from "./GameState";
 import { finishRest, GameFlowError, requireCurrentStop } from "./GameManager";
-import { RestStop } from "./RestStop";
+import type { RestStop } from "./RestStop";
 
-export type RestOption = "upgrade" | "potions" | "leave";
+export type RestOption = "upgrade" | "potion" | "leave";
 
 export class InvalidRestOptionError extends Error {}
 
 export class RestMenu {
-  constructor(private restStop: RestStop) {}
+  // Use the same RestStop as the Rest screen.
+  constructor(private readonly restStop: RestStop) {}
 
   // The player must enter Rest before using its menu.
   private checkRest(state: GameState): void {
@@ -17,29 +18,29 @@ export class RestMenu {
     }
   }
 
-  // Give the frontend the three buttons it should display.
+  // Return the three choices in the Rest menu.
   getOptions(state: GameState) {
     this.checkRest(state);
     return [
       { id: "upgrade", label: "Upgrade Mini Game" },
-      { id: "potions", label: "Potions Mini Game" },
+      { id: "potion", label: "Potion Mini Game" },
       { id: "leave", label: "Leave Rest" },
     ];
   }
 
-  // For now, return the screen name; David's game will connect later.
+  // Return the Upgrade screen name.
   selectUpgrade(state: GameState): "upgrade" {
     this.checkRest(state);
     return "upgrade";
   }
 
-  // For now, return the screen name; the potion game will connect later.
-  selectPotion(state: GameState): "potions" {
+  // // Return the potion screen name.
+  selectPotion(state: GameState): "potion" {
     this.checkRest(state);
-    return "potions";
+    return "potion";
   }
 
-  // Use our existing game flow to continue to the next level.
+  // Finish Rest once and clear the entry flag.
   leaveRest(state: GameState): void {
     this.checkRest(state);
     finishRest(state);
@@ -47,9 +48,9 @@ export class RestMenu {
   }
 
   // Handle one of the three menu choices.
-  selectOption(state: GameState, option: unknown): "upgrade" | "potions" | "map" {
+  selectOption(state: GameState, option: unknown): "upgrade" | "potion" | "map" {
     if (option === "upgrade") return this.selectUpgrade(state);
-    if (option === "potions") return this.selectPotion(state);
+    if (option === "potion") return this.selectPotion(state);
     if (option === "leave") {
       this.leaveRest(state);
       return "map";

@@ -3,9 +3,9 @@
 */
 export class CombatMainScreenModel {
     private score = 0;
-    private playerMaxHealth = 0;
+    private playerMaxHealth = 100;
     private enemyMaxHealth = 50;
-    private playerCurrentHealth = 0;
+    private playerCurrentHealth = 100;
     private enemyCurrentHealth = 50;
 
     // reset game score
@@ -50,7 +50,7 @@ export class CombatMainScreenModel {
 
     // Set player's current health
     setPlayerHealth(amount: number): void {
-        this.playerCurrentHealth += amount;
+        this.playerCurrentHealth = amount;
     }
 
     // Set enemy's current health

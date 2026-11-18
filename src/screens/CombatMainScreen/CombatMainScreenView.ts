@@ -20,7 +20,7 @@ export class CombatMainScreenView implements View {
     private enemy: Konva.Rect;
     private player: Konva.Rect;
     private enemyHealthBarBG: Konva.Rect;
-    private equationOverlay: Konva.Rect;
+    private popUpOverlay: Konva.Rect;
     private equationTextBox: Konva.Rect;
     private hintButton: Konva.Rect;
     private hintText: Konva.Text;
@@ -29,13 +29,23 @@ export class CombatMainScreenView implements View {
     private submitAnswerButton: Konva.Rect;
     private submitText: Konva.Text;
     private responseText: Konva.Text;
+    private healthBar: Konva.Rect;
+    private answerBuffer = "";
+    private answerValue!: Konva.Text;
+    private solving = false;
+    private awaitingContinue = false;
+    private feedbackText!: Konva.Text;
+    private explanationButton: Konva.Rect;
+    private explanationText: Konva.Text;
 
     constructor(
         onHintClick : () => void,
         onHintXClick : () => void,
         onAttackClick : () => void,
-        onSubmitClick: () => void,
-        onExplanationClick: () => void
+        private readonly onSubmitClick: (answer: number | null) => void,
+        onExplanationClick: () => void,
+        onPotionClick: () => void,
+        private readonly canInput: () => boolean = () => true
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -83,7 +93,7 @@ export class CombatMainScreenView implements View {
         this.group.add(healthBarBG);
 
         //Player Health Bar
-        const healthBar = new Konva.Rect({
+        this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
             width: 300,
@@ -91,7 +101,7 @@ export class CombatMainScreenView implements View {
             fill: "#0bba14",
             stroke: "#42a847",        
         });  
-        this.group.add(healthBar);
+        this.group.add(this.healthBar);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -137,6 +147,20 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.potionButton);
 
+                // Handle Hint Click
+        this.potionButton.on("mouseenter", () => {
+			document.body.style.cursor = "pointer";
+		});
+
+		this.potionButton.on("mouseleave", () => {
+			document.body.style.cursor = "default";
+         
+		});
+
+        this.potionButton.on("click tap", () => {
+			onPotionClick();
+        });
+
         //Text that says "Potion"
         this.potionButtonText = new Konva.Text({
             text: "Potion",
@@ -146,6 +170,7 @@ export class CombatMainScreenView implements View {
             fontFamily: "Arial",
 			fontSize: 30,
             fill: "#ffff",
+            listening: false,
         })
         this.group.add(this.potionButtonText);
 
@@ -335,7 +360,7 @@ export class CombatMainScreenView implements View {
         this.group.add(this.defeatText);
 
         // Create Explanation Button
-        const explanationButton = new Konva.Rect({
+        this.explanationButton = new Konva.Rect({
             x: 1050,
             y: 787.5,
             width: 200,
@@ -343,24 +368,25 @@ export class CombatMainScreenView implements View {
             fill: "#FF9E42",
             stroke: "#cc721d",
             cornerRadius: 10,
+            visible: false,
         });
-        this.group.add(explanationButton);
+        this.group.add(this.explanationButton);
 
-        explanationButton.on("mouseenter", () => {
+        this.explanationButton.on("mouseenter", () => {
             document.body.style.cursor = "pointer";
         });
 
-        explanationButton.on("mouseleave", () => {
+        this.explanationButton.on("mouseleave", () => {
             document.body.style.cursor = "default";
         });
 
-        explanationButton.on("click tap", () => {
+        this.explanationButton.on("click tap", () => {
             document.body.style.cursor = "default";
             onExplanationClick();
         });
 
         // Text that says "Explain"
-        const explanationText = new Konva.Text({
+        this.explanationText = new Konva.Text({
             x: 1050,
             y: 802.5,
             width: 200,
@@ -371,11 +397,12 @@ export class CombatMainScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
             listening: false,
+            visible: false,
         });
-        this.group.add(explanationText);
+        this.group.add(this.explanationText);
 
         // Create overlay when equation is being solved
-        this.equationOverlay = new Konva.Rect({
+        this.popUpOverlay = new Konva.Rect({
             x: 0,
             y: 150,
             width: STAGE_WIDTH,
@@ -383,7 +410,7 @@ export class CombatMainScreenView implements View {
             fill: "#433550",
             visible: false,
         });
-        this.group.add(this.equationOverlay);
+        this.group.add(this.popUpOverlay);
 
         // Create Text Box for Equation
         this.equationTextBox = new Konva.Rect({
@@ -422,6 +449,18 @@ export class CombatMainScreenView implements View {
             strokeWidth: 10,
         });
         this.group.add(this.answerBox);
+        this.answerValue = new Konva.Text({
+            x: 865, y: 415, width: 270, height: 50,
+            text: "_", fontSize: 40, fill: "black", visible: false,
+            listening: false,
+        });
+        this.group.add(this.answerValue);
+        this.feedbackText = new Konva.Text({
+            x: 400, y: 510, width: 800, height: 75,
+            text: "", fontSize: 30, align: "center", visible: false,
+            listening: false,
+        });
+        this.group.add(this.feedbackText);
 
         // Button to submit answer
         this.submitAnswerButton = new Konva.Rect({
@@ -474,7 +513,7 @@ export class CombatMainScreenView implements View {
 		});
 
         this.submitAnswerButton.on("click tap", () => {
-			onSubmitClick();
+            this.submitAnswer();
         });
 
         /////////////////////////////////////////////////
@@ -576,6 +615,21 @@ export class CombatMainScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
+    // Updates Player Health Bar
+    setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
+        if (maxHealth <= 0) {
+            this.healthBar.width(0);
+            this.group.getLayer()?.batchDraw();
+            return;
+        }
+
+        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
+
+        this.healthBar.width(400 * percentage);
+
+        this.group.getLayer()?.batchDraw();
+    }
+
     // Resets victory or defeat text, and shows attack and potion buttons
     resetFight(): void {
         this.victoryText.visible(false);
@@ -605,7 +659,10 @@ export class CombatMainScreenView implements View {
 
     // Pop Up Equation Solving
     solveEquation(): void{
-        this.equationOverlay.visible(true);
+        this.solving = true;
+        this.feedbackText.visible(true);
+        this.answerValue.visible(true);
+        this.popUpOverlay.visible(true);
         this.equationTextBox.visible(true);
         this.hintButton.visible(true);
         this.hintText.visible(true);
@@ -614,12 +671,17 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(true);
         this.submitText.visible(true);
         this.responseText.visible(true);
+        this.explanationButton.visible(true);
+        this.explanationText.visible(true);
     }
 
 
     // Goes from equation back to combat screen
     returnToCombat(): void {
-        this.equationOverlay.visible(false);
+        this.solving = false;
+        this.feedbackText.visible(false);
+        this.answerValue.visible(false);
+        this.popUpOverlay.visible(false);
         this.equationTextBox.visible(false);
         this.hintButton.visible(false);
         this.hintText.visible(false);
@@ -628,6 +690,8 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(false);
         this.submitText.visible(false); 
         this.responseText.visible(false);
+        this.explanationButton.visible(false);
+        this.explanationText.visible(false);
     }
 
 
@@ -635,6 +699,7 @@ export class CombatMainScreenView implements View {
 	 * Show the screen
 	 */
 	show(): void {
+        window.addEventListener("keydown", this.handleKeyDown);
 		this.group.visible(true);
 		this.group.getLayer()?.draw();
 	}
@@ -643,9 +708,50 @@ export class CombatMainScreenView implements View {
 	 * Hide the screen
 	 */
 	hide(): void {
+        window.removeEventListener("keydown", this.handleKeyDown);
+        this.returnToCombat();
 		this.group.visible(false);
 		this.group.getLayer()?.draw();
 	}
+
+    setQuestion(question: string): void {
+        this.equationText.text(question);
+        this.answerBuffer = "";
+        this.answerValue.text("_");
+        this.setFeedback("");
+        this.group.getLayer()?.batchDraw();
+    }
+
+    setFeedback(message: string, correct: boolean | null = null, awaitingContinue = false): void {
+        this.awaitingContinue = awaitingContinue;
+        this.feedbackText.text(message);
+        this.feedbackText.fill(correct === true ? "#5FD068" : correct === false ? "#FF9E42" : "white");
+        this.submitText.text(awaitingContinue ? "CONTINUE" : "SUBMIT");
+        this.submitText.fontSize(awaitingContinue ? 26 : 40);
+        this.group.getLayer()?.batchDraw();
+    }
+
+    private submitAnswer(): void {
+        if (!this.solving || !this.group.visible() || !this.canInput()) return;
+        const answer = this.answerBuffer === "" ? null : Number(this.answerBuffer);
+        this.onSubmitClick(answer);
+    }
+
+    private readonly handleKeyDown = (event: KeyboardEvent): void => {
+        if (!this.solving || !this.group.visible() || !this.canInput()) return;
+        if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+        if (this.awaitingContinue && event.key !== "Enter") return;
+        if (/^[0-9]$/.test(event.key)) {
+            if (this.answerBuffer.length < 12) this.answerBuffer += event.key;
+        } else if (event.key === "Backspace") {
+            this.answerBuffer = this.answerBuffer.slice(0, -1);
+        } else if (event.key === "Enter") {
+            this.submitAnswer();
+        } else return;
+        event.preventDefault();
+        this.answerValue.text(this.answerBuffer || "_");
+        this.group.getLayer()?.batchDraw();
+    };
 
 	getGroup(): Konva.Group {
 		return this.group;

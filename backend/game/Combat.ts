@@ -3,8 +3,8 @@
 import {Player} from "./Player";
 import {Monster} from "./Monster";
 import type { RandomEquation } from "../equations/RandomEquation";
-import { MultiplicationEquation } from "../equations/MultiplicationEquation";
-import { DivisionEquation } from "../equations/DivisionEquation";
+import { getEquation } from "../equations/EquationFactory"; 
+import { HEAL_PERCENT, type Potion } from "./Potion";
 
 type BattleStatus = "active" | "won" | "lost";
 
@@ -24,6 +24,15 @@ type AnswerResult = {
     result: "win" | "lose" | "ongoing";
 };
 
+export type PotionResult = {
+    potion: Potion;
+    healed: number;
+    damageTaken: number;
+    playerHp: number;
+    enemyHp: number;
+    result: "win" | "lose" | "ongoing";
+};
+
 export class Combat {
 
     private player: Player;
@@ -32,15 +41,15 @@ export class Combat {
     private currentEquation: RandomEquation;
     private questionId = 1;
     private questionResolved = false;
+    private difficulty: number;
 
-    constructor(player: Player, enemy: Monster,
+    constructor(player: Player, enemy: Monster, difficulty: number,
         private readonly generateEquation: () => RandomEquation = () =>
-            Math.random() < 0.5
-                ? new MultiplicationEquation(false)
-                : new DivisionEquation(false)
+            getEquation({type: "Combat"}, this.difficulty)
     ) {
         this.player = player;
         this.enemy = enemy;
+        this.difficulty = difficulty;
         this.currentEquation = this.generateEquation();
         this.checkBattleStatus();
     }
@@ -55,6 +64,10 @@ export class Combat {
 
     getEnemyHp(): number {
         return this.enemy.hp;
+    }
+
+    getEnemyMaxHp(): number {
+        return this.enemy.maxHp;
     }
 
     currentQuestion() : CurrentQuestion {
@@ -121,6 +134,47 @@ export class Combat {
         this.currentEquation = nextEquation;
         this.questionId += 1;
         this.questionResolved = false;
+    }
+
+    usePotion(index = 0): PotionResult | undefined {
+        if (this.gameStatus !== "active") {
+            return undefined;
+        }
+        if (index < 0 || index >= this.player.inventory.length) {
+            return undefined;
+        }
+
+        const potion = this.player.inventory[index];
+        this.player.inventory.splice(index, 1);
+
+        const prevHp = this.player.hp;
+        const healPercent = (HEAL_PERCENT[potion.level] ?? 20) + this.player.potionHealingBonus;
+        const healAmount = Math.max(1, Math.round((this.player.maxHp * healPercent) / 100));
+        this.player.heal(healAmount);
+        const healed = this.player.hp - prevHp;
+
+        // Enemy counter-attacks
+        const hpBeforeEnemy = this.player.hp;
+        this.player.takeDamage(this.enemy.attack);
+        const damageTaken = hpBeforeEnemy - this.player.hp;
+
+        this.checkBattleStatus();
+
+        const status = this.getGameStatus();
+
+        return {
+            potion,
+            healed,
+            damageTaken,
+            playerHp: this.player.hp,
+            enemyHp: this.enemy.hp,
+            result:
+                status === "won"
+                    ? "win"
+                    : status === "lost"
+                        ? "lose"
+                        : "ongoing",
+        };
     }
 
 
