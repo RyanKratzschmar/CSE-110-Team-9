@@ -163,11 +163,30 @@ export class CombatMainScreenController extends ScreenController {
         this.view.setPlayerHealthBar(state.player.hp, state.player.maxHp);
     }
 
-    // Switches to potion pop up
+    // Uses a potion from player inventory during combat
     handlePotionClick(): void {
         this.clickSound.currentTime = 0;
         void this.clickSound.play().catch(() => {});
 
+        const state = this.gameSession.state;
+        const combat = state.combat;
+        if (!combat || this.pendingResult !== null) return;
+
+        const result = combat.usePotion(0);
+        if (!result) return;
+
+        this.syncCombat();
+
+        if (result.result === "lose") {
+            finishCombat(state, "lose");
+            state.combat = null;
+            this.questionId = null;
+            this.endFight(false);
+            setTimeout(() => {
+                this.hide();
+                this.screenSwitcher.switchToScreen({ type: "menu" });
+            }, 3000);
+        }
     }
 
 
