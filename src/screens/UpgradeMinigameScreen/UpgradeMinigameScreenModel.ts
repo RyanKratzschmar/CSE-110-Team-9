@@ -1,6 +1,16 @@
 import type { UpgradeOutcome } from "./UpgradeService";
 
-export type UpgradePhase = "choose" | "ready" | "solving" | "complete"; //The four phases of the screen: choose an upgrade, ready to start, solving problems, and upgrade complete
+import type { UpgradeMinigame } from "../../../backend/game/UpgradeMinigame";
+type LocalSession = ReturnType<UpgradeMinigame["currentQuestion"]> & {
+    correctAnswers: number;
+    remainingTime: number;
+};
+type LocalAnswer = ReturnType<UpgradeMinigame["submitAnswer"]> & {
+    remainingTime: number;
+    currentQuestion: ReturnType<UpgradeMinigame["currentQuestion"]>;
+};
+
+export type UpgradePhase = "ready" | "solving" | "complete"; //The three phases of the screen: ready to start, solving problems, and upgrade complete
 export type UpgradeType = "weapon" | "armor" | "potion";
 export type UpgradeFeedback = "correct" | "incorrect" | "invalid" | null;
 export type UpgradeOutcomeStatus = "loading" | "ready" | "error";
@@ -14,15 +24,14 @@ export const UPGRADE_INFO = {
 //Everything the view needs to draw the upgrade minigame
 export interface UpgradeMinigameState {
     readonly phase: UpgradePhase;
-    readonly upgradeType: UpgradeType | null;
     readonly problemText: string;
     readonly timeLeft: number;
     readonly correctCount: number;
     readonly attemptedCount: number;
     readonly feedback: UpgradeFeedback;
     readonly outcomeStatus: UpgradeOutcomeStatus;
-    readonly statBefore: number;
-    readonly statAfter: number;
+    readonly resultMessage: string;
+    readonly outcome: UpgradeOutcome | null;
     readonly playerHp: number;
     readonly playerMaxHp: number;
     readonly revealedAnswer: string;
@@ -32,23 +41,22 @@ export interface UpgradeMinigameState {
 export type UpgradeMinigameListener = (state: UpgradeMinigameState) => void;
 
 const INITIAL_STATE: UpgradeMinigameState = {
-    phase: "choose",
-    upgradeType: null,
+    phase: "ready",
     problemText: "",
     timeLeft: 0,
     correctCount: 0,
     attemptedCount: 0,
     feedback: null,
     outcomeStatus: "loading",
-    statBefore: 0,
-    statAfter: 0,
+    resultMessage: "",
+    outcome: null,
     playerHp: 100,
     playerMaxHp: 100,
     revealedAnswer: "",
     awaitingNext: false
 };
 
-//Holds the upgrade minigame state (phase, chosen upgrade, problem, timer, score, and result) and notifies listeners when it changes
+//Holds the upgrade minigame state (phase, problem, timer, score, and result) and notifies listeners when it changes
 export class UpgradeMinigameScreenModel {
     private state: UpgradeMinigameState = INITIAL_STATE;
     private readonly listeners = new Set<UpgradeMinigameListener>();
@@ -67,20 +75,10 @@ export class UpgradeMinigameScreenModel {
         };
     }
 
-    //Goes back to the "choose an upgrade" phase, keeping the player's current health
+    //Goes back to the ready phase, keeping the player's current health
     reset(): void {
         this.currentAnswer = 0;
         this.setState({ ...INITIAL_STATE, playerHp: this.state.playerHp, playerMaxHp: this.state.playerMaxHp });
-    }
-
-    //Saves the chosen upgrade and moves to the ready phase
-    chooseUpgrade(type: UpgradeType): void {
-        this.setState({ phase: "ready", upgradeType: type });
-    }
-
-    //Clears the chosen upgrade and returns to the choose phase
-    backToChoose(): void {
-        this.setState({ phase: "choose", upgradeType: null});
     }
 
     //Starts a new round: resets the score, sets the timer, and loads the first problem
@@ -143,13 +141,9 @@ export class UpgradeMinigameScreenModel {
         this.setState({ phase: "complete", feedback: null, outcomeStatus: "loading", awaitingNext: false });
     }
 
-    //Saves the stat change sent back by the upgrade service
+    //Saves the stat changes sent back by the upgrade service
     setUpgradeOutcome(outcome: UpgradeOutcome): void {
-        this.setState({
-            outcomeStatus: "ready",
-            statBefore: outcome.statBefore,
-            statAfter: outcome.statAfter
-        });
+        this.setState({ outcomeStatus: "ready", outcome, resultMessage: "" });
     }
 
     //Marks that the upgrade could not be applied
@@ -157,9 +151,58 @@ export class UpgradeMinigameScreenModel {
         this.setState({ outcomeStatus: "error" });
     }
 
+    //Keeps the round result or error on screen until the player exits.
+    setResult(message: string, success: boolean): void {
+        this.setState({
+            phase: "complete",
+            outcomeStatus: success ? "ready" : "error",
+            resultMessage: message,
+            feedback: null,
+            awaitingNext: false,
+        });
+    }
+
     //Updates the player's current and max health shown in the HP bar
     setPlayerHealth(hp: number, maxHp: number): void {
         this.setState({ playerHp: hp, playerMaxHp: maxHp });
+    }
+
+    setRemainingTime(milliseconds: number): void {
+        this.setState({ timeLeft: Math.ceil(Math.max(0, milliseconds) / 1000) });
+    }
+
+    loadSession(data: LocalSession): void {
+        this.setState({
+            phase: "solving",
+            problemText: data.question,
+            correctCount: data.correctAnswers,
+            timeLeft: Math.ceil(data.remainingTime / 1000),
+            feedback: null,
+            revealedAnswer: "",
+            awaitingNext: false,
+        });
+    }
+
+    applyAnswerResponse(data: LocalAnswer): void {
+        this.setState({
+            problemText: data.currentQuestion.question,
+            correctCount: data.correctAnswers,
+            attemptedCount: this.state.attemptedCount + 1,
+            timeLeft: Math.ceil(data.remainingTime / 1000),
+            feedback: data.correct ? "correct" : "incorrect",
+            revealedAnswer: data.correct
+                ? ""
+                : `Correct answer: ${data.correctAnswer}`,
+            awaitingNext: !data.correct,
+        });
+    }
+
+    retryCurrentQuestion(): void {
+        this.setState({
+            feedback: null,
+            revealedAnswer: "",
+            awaitingNext: false,
+        });
     }
 
     //Makes a random 1-12 times-table problem, saves its answer, and returns the text to show

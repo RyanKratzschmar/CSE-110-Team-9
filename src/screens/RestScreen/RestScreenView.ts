@@ -1,4 +1,10 @@
 // PotionLabScreenView: difficulty choice, the PEMDAS equation, answer field, and the potion-brewed message. (Sally, Oliver; UI: Ryan)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// This file was merged too early by mistake, the entire file should be included in the PR. - Ryan //
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
@@ -28,6 +34,7 @@ export class RestScreenView implements View {
         onContinueClick: () => void,
         onPotionClick: () => void,
         onUpgradeClick: () => void,
+        onLeaveRest: () => void,
     ){
 
     this.group = new Konva.Group({ visible: false });
@@ -393,6 +400,11 @@ export class RestScreenView implements View {
 			onUpgradeClick();
         });
 
+        const leave = new Konva.Group({ x: 60, y: 800 });
+        leave.add(new Konva.Rect({ width: 240, height: 70, fill: "#FF9E42", cornerRadius: 10 }));
+        leave.add(new Konva.Text({ text: "Leave Rest", width: 240, height: 70, align: "center", verticalAlign: "middle", fontSize: 30 }));
+        leave.on("click tap", onLeaveRest);
+        this.group.add(leave);
     }
 
     // set the player's health bar

@@ -66,6 +66,10 @@ export class Combat {
         return this.enemy.hp;
     }
 
+    getEnemyMaxHp(): number {
+        return this.enemy.maxHp;
+    }
+
     currentQuestion() : CurrentQuestion {
         return {
             questionId: this.questionId,
@@ -125,7 +129,7 @@ export class Combat {
             return;
         }
 
-        const nextEquation = getEquation({type: "Combat"}, this.difficulty);
+        const nextEquation = this.generateEquation();
 
         this.currentEquation = nextEquation;
         this.questionId += 1;
@@ -144,7 +148,7 @@ export class Combat {
         this.player.inventory.splice(index, 1);
 
         const prevHp = this.player.hp;
-        const healPercent = HEAL_PERCENT[potion.level] ?? 20;
+        const healPercent = (HEAL_PERCENT[potion.level] ?? 20) + this.player.potionHealingBonus;
         const healAmount = Math.max(1, Math.round((this.player.maxHp * healPercent) / 100));
         this.player.heal(healAmount);
         const healed = this.player.hp - prevHp;

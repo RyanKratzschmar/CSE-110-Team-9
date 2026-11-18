@@ -30,6 +30,11 @@ export class CombatMainScreenView implements View {
     private submitText: Konva.Text;
     private responseText: Konva.Text;
     private healthBar: Konva.Rect;
+    private answerBuffer = "";
+    private answerValue!: Konva.Text;
+    private solving = false;
+    private awaitingContinue = false;
+    private feedbackText!: Konva.Text;
     private explanationButton: Konva.Rect;
     private explanationText: Konva.Text;
 
@@ -37,9 +42,10 @@ export class CombatMainScreenView implements View {
         onHintClick : () => void,
         onHintXClick : () => void,
         onAttackClick : () => void,
-        onSubmitClick: () => void,
+        private readonly onSubmitClick: (answer: number | null) => void,
         onExplanationClick: () => void,
-        onPotionClick: () => void
+        onPotionClick: () => void,
+        private readonly canInput: () => boolean = () => true
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -443,6 +449,18 @@ export class CombatMainScreenView implements View {
             strokeWidth: 10,
         });
         this.group.add(this.answerBox);
+        this.answerValue = new Konva.Text({
+            x: 865, y: 415, width: 270, height: 50,
+            text: "_", fontSize: 40, fill: "black", visible: false,
+            listening: false,
+        });
+        this.group.add(this.answerValue);
+        this.feedbackText = new Konva.Text({
+            x: 400, y: 510, width: 800, height: 75,
+            text: "", fontSize: 30, align: "center", visible: false,
+            listening: false,
+        });
+        this.group.add(this.feedbackText);
 
         // Button to submit answer
         this.submitAnswerButton = new Konva.Rect({
@@ -495,7 +513,7 @@ export class CombatMainScreenView implements View {
 		});
 
         this.submitAnswerButton.on("click tap", () => {
-			onSubmitClick();
+            this.submitAnswer();
         });
 
         /////////////////////////////////////////////////
@@ -641,6 +659,9 @@ export class CombatMainScreenView implements View {
 
     // Pop Up Equation Solving
     solveEquation(): void{
+        this.solving = true;
+        this.feedbackText.visible(true);
+        this.answerValue.visible(true);
         this.popUpOverlay.visible(true);
         this.equationTextBox.visible(true);
         this.hintButton.visible(true);
@@ -657,6 +678,9 @@ export class CombatMainScreenView implements View {
 
     // Goes from equation back to combat screen
     returnToCombat(): void {
+        this.solving = false;
+        this.feedbackText.visible(false);
+        this.answerValue.visible(false);
         this.popUpOverlay.visible(false);
         this.equationTextBox.visible(false);
         this.hintButton.visible(false);
@@ -675,6 +699,7 @@ export class CombatMainScreenView implements View {
 	 * Show the screen
 	 */
 	show(): void {
+        window.addEventListener("keydown", this.handleKeyDown);
 		this.group.visible(true);
 		this.group.getLayer()?.draw();
 	}
@@ -683,9 +708,50 @@ export class CombatMainScreenView implements View {
 	 * Hide the screen
 	 */
 	hide(): void {
+        window.removeEventListener("keydown", this.handleKeyDown);
+        this.returnToCombat();
 		this.group.visible(false);
 		this.group.getLayer()?.draw();
 	}
+
+    setQuestion(question: string): void {
+        this.equationText.text(question);
+        this.answerBuffer = "";
+        this.answerValue.text("_");
+        this.setFeedback("");
+        this.group.getLayer()?.batchDraw();
+    }
+
+    setFeedback(message: string, correct: boolean | null = null, awaitingContinue = false): void {
+        this.awaitingContinue = awaitingContinue;
+        this.feedbackText.text(message);
+        this.feedbackText.fill(correct === true ? "#5FD068" : correct === false ? "#FF9E42" : "white");
+        this.submitText.text(awaitingContinue ? "CONTINUE" : "SUBMIT");
+        this.submitText.fontSize(awaitingContinue ? 26 : 40);
+        this.group.getLayer()?.batchDraw();
+    }
+
+    private submitAnswer(): void {
+        if (!this.solving || !this.group.visible() || !this.canInput()) return;
+        const answer = this.answerBuffer === "" ? null : Number(this.answerBuffer);
+        this.onSubmitClick(answer);
+    }
+
+    private readonly handleKeyDown = (event: KeyboardEvent): void => {
+        if (!this.solving || !this.group.visible() || !this.canInput()) return;
+        if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+        if (this.awaitingContinue && event.key !== "Enter") return;
+        if (/^[0-9]$/.test(event.key)) {
+            if (this.answerBuffer.length < 12) this.answerBuffer += event.key;
+        } else if (event.key === "Backspace") {
+            this.answerBuffer = this.answerBuffer.slice(0, -1);
+        } else if (event.key === "Enter") {
+            this.submitAnswer();
+        } else return;
+        event.preventDefault();
+        this.answerValue.text(this.answerBuffer || "_");
+        this.group.getLayer()?.batchDraw();
+    };
 
 	getGroup(): Konva.Group {
 		return this.group;

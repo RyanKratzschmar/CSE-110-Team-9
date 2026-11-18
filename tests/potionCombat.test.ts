@@ -85,6 +85,31 @@ describe("Potion Combat", () => {
         expect(player.inventory.length).toBe(0);
     });
 
+    it.each([
+        ["basic", 1, 30],
+        ["advanced", 1, 40],
+        ["basic", 2, 40],
+        ["advanced", 2, 50],
+    ] as const)("%s potion heals %i upgrades later for %i HP", (level, upgrades, expectedHeal) => {
+        const { player, combat } = createCombatWithPotions([{ type: "healing", level }]);
+        for (let i = 0; i < upgrades; i++) player.applyUpgrade();
+        player.takeDamage(80);
+        const question = combat.currentQuestion();
+
+        const result = combat.usePotion(0);
+
+        expect(result?.healed).toBe(expectedHeal);
+        expect(player.inventory).toHaveLength(0);
+        expect(combat.currentQuestion().questionId).toBe(question.questionId);
+    });
+
+    it("caps upgraded potion healing at the player's missing HP", () => {
+        const { player, combat } = createCombatWithPotions();
+        player.applyUpgrade();
+        player.takeDamage(10);
+        expect(combat.usePotion(0)?.healed).toBe(10);
+    });
+
     it("caps healing at max HP", () => {
         const { player, combat } = createCombatWithPotions([
             { type: "healing", level: "advanced" }, // heals 30 HP
