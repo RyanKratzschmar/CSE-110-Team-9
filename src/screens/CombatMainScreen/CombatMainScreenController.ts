@@ -160,6 +160,9 @@ export class CombatMainScreenController extends ScreenController {
             result.correct,
             true
         );
+        if (!result.correct && result.result === "ongoing") {
+            this.view.showExplanationButton();
+        }
         if (result.result !== "ongoing") {
             finishCombat(state, result.result);
             state.combat = null;
