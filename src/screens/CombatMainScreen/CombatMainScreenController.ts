@@ -9,6 +9,7 @@ import { finishCombat, requireCurrentStop } from "../../../backend/game/GameMana
 
 import { Combat } from "../../../backend/game/Combat";
 import { BasicMonster } from "../../../backend/game/BasicMonster";
+import { PotionPopUpView } from "./PotionPopUpView.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -19,6 +20,7 @@ export class CombatMainScreenController extends ScreenController {
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
+    private potionPopUp: PotionPopUpView;
     private gameSession: GameSession;
     private questionId: number | null = null;
     private answering = false;
@@ -44,8 +46,15 @@ export class CombatMainScreenController extends ScreenController {
             (answer) => this.handleSubmitClick(answer),
             () => this.handleExplanationClick(),
             () => this.handlePotionClick(),
-            () => !this.hintPopUp.isOpen() && !this.explanationPopUp.isOpen()
+            () => !this.hintPopUp.isOpen() && !this.explanationPopUp.isOpen(),
+            () => this.handleCancelAttack()
         );
+
+        this.potionPopUp = new PotionPopUpView(
+            (index) => this.handleDrinkPotion(index),
+            () => this.handlePotionBackClick()
+        );
+        this.view.getGroup().add(this.potionPopUp.getGroup());
 
         this.clickSound = new Audio("/click.mp3");
     }
@@ -102,7 +111,18 @@ export class CombatMainScreenController extends ScreenController {
         if (this.explanationPopUp?.isOpen()) {
             this.explanationPopUp.close();
         }
+        if (this.potionPopUp?.isOpen()) {
+            this.potionPopUp.hide();
+        }
         super.hide();
+    }
+
+    handleCancelAttack(): void {
+        this.clickSound.currentTime = 0;
+        void this.clickSound.play().catch(() => {});
+
+        this.answering = false;
+        this.view.returnToCombat();
     }
 
     // Resolve the entered number against the fight in the shared browser game.
@@ -166,7 +186,7 @@ export class CombatMainScreenController extends ScreenController {
         this.view.setPlayerHealthBar(state.player.hp, state.player.maxHp);
     }
 
-    // Uses a potion from player inventory during combat
+    // Opens the potion popup to view and use potions
     handlePotionClick(): void {
         this.clickSound.currentTime = 0;
         void this.clickSound.play().catch(() => {});
@@ -175,9 +195,29 @@ export class CombatMainScreenController extends ScreenController {
         const combat = state.combat;
         if (!combat || this.pendingResult !== null) return;
 
-        const result = combat.usePotion(0);
+        this.potionPopUp.updatePotions(state.player.inventory, state.player.hp, state.player.maxHp);
+        this.potionPopUp.show();
+    }
+
+    handlePotionBackClick(): void {
+        this.clickSound.currentTime = 0;
+        void this.clickSound.play().catch(() => {});
+
+        this.potionPopUp.hide();
+    }
+
+    handleDrinkPotion(index: number): void {
+        this.clickSound.currentTime = 0;
+        void this.clickSound.play().catch(() => {});
+
+        const state = this.gameSession.state;
+        const combat = state.combat;
+        if (!combat || this.pendingResult !== null) return;
+
+        const result = combat.usePotion(index);
         if (!result) return;
 
+        this.potionPopUp.hide();
         this.syncCombat();
 
         if (result.result === "lose") {
@@ -190,6 +230,10 @@ export class CombatMainScreenController extends ScreenController {
                 this.screenSwitcher.switchToScreen({ type: "menu" });
             }, 3000);
         }
+    }
+
+    getPotionPopUp(): PotionPopUpView {
+        return this.potionPopUp;
     }
 
 

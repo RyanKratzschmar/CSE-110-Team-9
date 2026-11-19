@@ -37,6 +37,8 @@ export class CombatMainScreenView implements View {
     private feedbackText!: Konva.Text;
     private explanationButton: Konva.Rect;
     private explanationText: Konva.Text;
+    private cancelAttackButton: Konva.Rect;
+    private cancelAttackText: Konva.Text;
 
     constructor(
         onHintClick : () => void,
@@ -45,7 +47,8 @@ export class CombatMainScreenView implements View {
         private readonly onSubmitClick: (answer: number | null) => void,
         onExplanationClick: () => void,
         onPotionClick: () => void,
-        private readonly canInput: () => boolean = () => true
+        private readonly canInput: () => boolean = () => true,
+        onCancelAttack?: () => void
     ) {
         this.group = new Konva.Group({ visible: false });
 
@@ -518,6 +521,50 @@ export class CombatMainScreenView implements View {
             this.submitAnswer();
         });
 
+        // Button to cancel attack and return to action select
+        this.cancelAttackButton = new Konva.Rect({
+            width: 200,
+            height: 100,
+            fill: "#e53e3e",
+            stroke: "#c53030",
+            x: 450,
+            y: 600,
+            visible: false,
+            cornerRadius: 10,
+        });
+        this.group.add(this.cancelAttackButton);
+
+        this.cancelAttackText = new Konva.Text({
+            text: "BACK",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            x: 450,
+            y: 630,
+            width: 200,
+            align: "center",
+            fill: "white",
+            visible: false,
+            listening: false,
+        });
+        this.group.add(this.cancelAttackText);
+
+        this.cancelAttackButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+            this.cancelAttackButton.fill("#f56565");
+        });
+
+        this.cancelAttackButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+            this.cancelAttackButton.fill("#e53e3e");
+        });
+
+        this.cancelAttackButton.on("click tap", () => {
+            document.body.style.cursor = "default";
+            this.returnToCombat();
+            onCancelAttack?.();
+        });
+
         /////////////////////////////////////////////////
         // POP UPS //////////////////////////////////////
         // MUST BE AT BOTTOM ////////////////////////////
@@ -655,6 +702,8 @@ export class CombatMainScreenView implements View {
         this.attackButtonText.visible(false);
         this.potionButton.visible(false);
         this.potionButtonText.visible(false);
+        this.cancelAttackButton.visible(false);
+        this.cancelAttackText.visible(false);
 
         this.group.getLayer()?.batchDraw();
     }
@@ -673,6 +722,8 @@ export class CombatMainScreenView implements View {
         this.submitAnswerButton.visible(true);
         this.submitText.visible(true);
         this.responseText.visible(true);
+        this.cancelAttackButton.visible(true);
+        this.cancelAttackText.visible(true);
     }
 
 
@@ -692,6 +743,8 @@ export class CombatMainScreenView implements View {
         this.responseText.visible(false);
         this.explanationButton.visible(false);
         this.explanationText.visible(false);
+        this.cancelAttackButton.visible(false);
+        this.cancelAttackText.visible(false);
     }
 
     // Swaps the Get Hint button for the Explain button (used after a wrong answer)
