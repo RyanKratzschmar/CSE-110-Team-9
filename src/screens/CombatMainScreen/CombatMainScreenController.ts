@@ -17,6 +17,8 @@ export class CombatMainScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
 
     private clickSound: HTMLAudioElement;
+    private battleIntro: HTMLAudioElement;
+    private battleMusic: HTMLAudioElement;
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
@@ -57,6 +59,42 @@ export class CombatMainScreenController extends ScreenController {
         this.view.getGroup().add(this.potionPopUp.getGroup());
 
         this.clickSound = new Audio("/click.mp3");
+
+        // Battle music: the full track plays once as an intro, then the loop
+        // version repeats for as long as the combat screen is showing
+        this.battleIntro = new Audio("/battle_bgm_intro.mp3");
+        this.battleIntro.volume = 0.4;
+        this.battleMusic = new Audio("/battle_bgm.ogg");
+        this.battleMusic.loop = true;
+        this.battleMusic.volume = 0.4;
+        this.battleIntro.addEventListener("ended", () => this.playSound(this.battleMusic));
+    }
+
+    // Plays a sound from the beginning, ignoring errors (e.g. autoplay blocked or no audio in tests)
+    private playSound(sound: HTMLAudioElement): void {
+        sound.currentTime = 0;
+        try {
+            const promise = sound.play();
+            if (promise && typeof promise.catch === "function") {
+                promise.catch(() => {});
+            }
+        } catch {
+            // Audio not supported in environment
+        }
+    }
+
+    // Starts the battle music with the intro
+    private playBattleMusic(): void {
+        this.playSound(this.battleIntro);
+    }
+
+    // Stops the battle music (intro or loop) when leaving the combat screen
+    private stopBattleMusic(): void {
+        for (const sound of [this.battleIntro, this.battleMusic]) {
+            if (sound.paused) continue;
+            sound.pause();
+            sound.currentTime = 0;
+        }
     }
 
     handleAttackClick(): void {
@@ -114,6 +152,7 @@ export class CombatMainScreenController extends ScreenController {
         if (this.potionPopUp?.isOpen()) {
             this.potionPopUp.hide();
         }
+        this.stopBattleMusic();
         super.hide();
     }
 
@@ -263,6 +302,7 @@ export class CombatMainScreenController extends ScreenController {
         this.view.returnToCombat();
         this.view.resetFight();
         this.view.show();
+        this.playBattleMusic();
     }
 
     getModel(): CombatMainScreenModel {
