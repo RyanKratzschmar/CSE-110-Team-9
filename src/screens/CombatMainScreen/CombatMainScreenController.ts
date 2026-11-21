@@ -10,6 +10,7 @@ import { finishCombat, requireCurrentStop } from "../../../backend/game/GameMana
 import { Combat } from "../../../backend/game/Combat";
 import { BasicMonster } from "../../../backend/game/BasicMonster";
 import { PotionPopUpView } from "./PotionPopUpView.ts";
+import { BackgroundMusic } from "../../BackgroundMusic.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -17,8 +18,7 @@ export class CombatMainScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
 
     private clickSound: HTMLAudioElement;
-    private battleIntro: HTMLAudioElement;
-    private battleMusic: HTMLAudioElement;
+    private battleMusic: BackgroundMusic;
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
@@ -62,39 +62,7 @@ export class CombatMainScreenController extends ScreenController {
 
         // Battle music: the full track plays once as an intro, then the loop
         // version repeats for as long as the combat screen is showing
-        this.battleIntro = new Audio("/battle_bgm_intro.mp3");
-        this.battleIntro.volume = 0.4;
-        this.battleMusic = new Audio("/battle_bgm.ogg");
-        this.battleMusic.loop = true;
-        this.battleMusic.volume = 0.4;
-        this.battleIntro.addEventListener("ended", () => this.playSound(this.battleMusic));
-    }
-
-    // Plays a sound from the beginning, ignoring errors (e.g. autoplay blocked or no audio in tests)
-    private playSound(sound: HTMLAudioElement): void {
-        sound.currentTime = 0;
-        try {
-            const promise = sound.play();
-            if (promise && typeof promise.catch === "function") {
-                promise.catch(() => {});
-            }
-        } catch {
-            // Audio not supported in environment
-        }
-    }
-
-    // Starts the battle music with the intro
-    private playBattleMusic(): void {
-        this.playSound(this.battleIntro);
-    }
-
-    // Stops the battle music (intro or loop) when leaving the combat screen
-    private stopBattleMusic(): void {
-        for (const sound of [this.battleIntro, this.battleMusic]) {
-            if (sound.paused) continue;
-            sound.pause();
-            sound.currentTime = 0;
-        }
+        this.battleMusic = new BackgroundMusic("/battle_bgm_intro.mp3", "/battle_bgm.ogg");
     }
 
     handleAttackClick(): void {
@@ -152,7 +120,7 @@ export class CombatMainScreenController extends ScreenController {
         if (this.potionPopUp?.isOpen()) {
             this.potionPopUp.hide();
         }
-        this.stopBattleMusic();
+        this.battleMusic.stop();
         super.hide();
     }
 
@@ -302,7 +270,7 @@ export class CombatMainScreenController extends ScreenController {
         this.view.returnToCombat();
         this.view.resetFight();
         this.view.show();
-        this.playBattleMusic();
+        this.battleMusic.play();
     }
 
     getModel(): CombatMainScreenModel {
