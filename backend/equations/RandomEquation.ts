@@ -3,16 +3,16 @@
 export abstract class RandomEquation {
 
     // The print will store the string representation of the equation, mainly for display purposes
-    print!: string;
+    protected print!: string;
     // The type will store the type of equation it is, mainly used as reference for which wrong answer explanation to call
-    type!: string;
+    protected type!: string;
     // The answer will store the answer to the equation, used to check submitted answers
-    answer!: number;
+    protected answer!: number;
     // The equation will store the equation in an array to be analyzed by testing [num, operator, num, operator, num, etc.]
     // Important to note that this will follow strict format rules
-    equation!: Array<any>;
+    protected equation!: Array<any>;
     // Difficulty per term stores scaling value for difficulties
-    difficultyPerTerm: number;
+    protected difficultyPerTerm: number;
 
     // Constructor has two paths:
     // If fixed, then constructs an equation from given parameters (assumes that inputted values are correct for testing purposes)

@@ -101,7 +101,7 @@ export class MultiOperationEquation extends RandomEquation{
         // Get the print from the full array
         let written = "";
         for (let i = 0; i < this.equation.length; i++) {
-            written = written + String(this.equation[i]);
+            written = written + String(this.equation[i]) + " ";
         }
         written = written + "= ?";
         this.print = written;
@@ -125,7 +125,7 @@ export class MultiOperationEquation extends RandomEquation{
         // Get the print from the full array
         let written = "";
         for (let i = 0; i < this.equation.length; i++) {
-            written = written + String(this.equation[i]);
+            written = written + String(this.equation[i]) + " ";
         }
         written = written + "= ?";
         this.print = written;

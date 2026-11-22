@@ -52,7 +52,7 @@ export class MultiplicationEquation extends RandomEquation{
             // Print holds the string version of the equation
             let written = "";
             for (let i = 0; i < this.equation.length; i++) {
-                written = written + String(this.equation[i]);
+                written = written + String(this.equation[i]) + " ";
             }
             written = written + "= ?";
             this.print = written;
@@ -71,7 +71,7 @@ export class MultiplicationEquation extends RandomEquation{
             this.equation = [factorOne, "*", factorTwo];
 
             // print equation
-            this.print = String(factorOne) + "*" + String(factorTwo) + "= ?";
+            this.print = String(factorOne) + " * " + String(factorTwo) + " = ?";
         }
     }
 }
