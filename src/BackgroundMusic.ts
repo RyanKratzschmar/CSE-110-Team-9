@@ -1,10 +1,12 @@
-// Background music for a screen: plays an intro track once, then repeats a loop track
-// until stop() is called.
+// Background music for a screen: after a short pause, plays an intro track once,
+// then repeats a loop track until stop() is called.
 export class BackgroundMusic {
     private intro: HTMLAudioElement;
     private loop: HTMLAudioElement;
+    private startTimer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(introSrc: string, loopSrc: string, volume = 0.4) {
+    // startDelayMs: silence after the screen opens before the music begins, for a smoother transition
+    constructor(introSrc: string, loopSrc: string, volume = 0.4, private readonly startDelayMs = 1000) {
         this.intro = new Audio(introSrc);
         this.intro.volume = volume;
         this.loop = new Audio(loopSrc);
@@ -13,18 +15,30 @@ export class BackgroundMusic {
         this.intro.addEventListener("ended", () => playFromStart(this.loop));
     }
 
-    // Starts the music from the beginning of the intro
+    // Starts the music from the beginning of the intro, after the start delay
     play(): void {
-        playFromStart(this.intro);
+        this.cancelStart();
+        this.startTimer = setTimeout(() => {
+            this.startTimer = null;
+            playFromStart(this.intro);
+        }, this.startDelayMs);
     }
 
-    // Stops the intro or loop, whichever is playing, and rewinds both
+    // Stops the intro or loop, whichever is playing, rewinds both,
+    // and cancels a start that is still waiting on the delay
     stop(): void {
+        this.cancelStart();
         for (const sound of [this.intro, this.loop]) {
             if (sound.paused) continue;
             sound.pause();
             sound.currentTime = 0;
         }
+    }
+
+    private cancelStart(): void {
+        if (this.startTimer === null) return;
+        clearTimeout(this.startTimer);
+        this.startTimer = null;
     }
 }
 

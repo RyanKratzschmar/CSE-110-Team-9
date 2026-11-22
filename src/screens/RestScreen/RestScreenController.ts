@@ -12,6 +12,7 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { RestScreenView } from "./RestScreenView.ts";
 import type { CombatMainScreenModel } from "../CombatMainScreen/CombatMainScreenModel.ts";
+import { BackgroundMusic } from "../../BackgroundMusic.ts";
 
 export class RestScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
@@ -22,6 +23,7 @@ export class RestScreenController extends ScreenController {
     private readonly restStop = new RestStop();
     private readonly restMenu = new RestMenu(this.restStop);
     private clickSound: HTMLAudioElement;
+    private restMusic: BackgroundMusic;
 
     constructor(screenSwitcher: ScreenSwitcher, combatModel: CombatMainScreenModel, private readonly gameSession: GameSession){
         super();
@@ -37,6 +39,13 @@ export class RestScreenController extends ScreenController {
 
         this.clickSound = new Audio("/click.mp3");
 
+        // Rest music: a short intro plays once, then the loop repeats while the rest screen is showing
+        this.restMusic = new BackgroundMusic("/rest_bgm_intro.ogg", "/rest_bgm.ogg");
+    }
+
+    override hide(): void {
+        this.restMusic.stop();
+        super.hide();
     }
 
     // Handles click on continue button
@@ -77,6 +86,7 @@ export class RestScreenController extends ScreenController {
         this.combatModel.setPlayerMaxHealth(player.maxHp);
         this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.view.show()
+        this.restMusic.play();
     }
 
     getView(): RestScreenView {
