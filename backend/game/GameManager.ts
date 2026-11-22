@@ -32,4 +32,5 @@ export function finishRest(state: GameState): void {
   requireCurrentStop(state, "rest");
   state.level.completeCurrent();
   state.level = new Level(state.level.number + 1);
+  state.floorLog.recordFloor(state.level.number);
 }

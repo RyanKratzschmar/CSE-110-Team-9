@@ -10,5 +10,6 @@ export class GameSession {
 
 	newGame(): void {
 		this.current = new GameState();
+		this.current.floorLog.recordFloor(1);
 	}
 }

@@ -3,6 +3,7 @@ import type { ScreenSwitcher } from '../../types';
 import type { LeaderboardEntry } from '../../../backend/game/Leaderboard/Leaderboard';
 import { LeaderboardScreenView } from './LeaderboardScreenView';
 import { LeaderboardScreenModel } from './LeaderboardScreenModel';
+import { GameSession } from '../../GameSession';
 
 const LINE_SCROLL = 60;
 
@@ -12,12 +13,13 @@ export class LeaderBoardScreenController extends ScreenController {
     private readonly model = new LeaderboardScreenModel();
     private readonly view: LeaderboardScreenView;
     private readonly clickSound = new Audio("/click.mp3");
-    private loadId = 0;
+    private readonly gameSession: GameSession;
 
     //Creates the view with its scroll and leave handlers, and redraws the view whenever the model changes
-    constructor(screenSwitcher: ScreenSwitcher) {
+    constructor(screenSwitcher: ScreenSwitcher, gameSession: GameSession) {
         super();
         this.screenSwitcher = screenSwitcher;
+        this.gameSession = gameSession;
         this.view = new LeaderboardScreenView({
             onScrollBy: (dy) => this.model.scrollBy(dy, this.view.getMaxScroll()),
             onScrollTo: (y) => this.model.scrollTo(y, this.view.getMaxScroll()),
@@ -28,10 +30,9 @@ export class LeaderBoardScreenController extends ScreenController {
     }
 
     //Shows the screen with a loading message, then fetches and displays the leaderboard
-    async startLeaderboard(): Promise<void> {
-        this.model.setLoading();
-        this.show();
-        await this.loadEntries();
+    startLeaderboard(): void {
+        this.model.setEntries(this.gameSession.state.floorLog.getSorted());
+        this.show();    
     }
 
     //Shows the screen and starts listening for keyboard scrolling
@@ -49,26 +50,6 @@ export class LeaderBoardScreenController extends ScreenController {
     //Returns the leaderboard view
     getView(): LeaderboardScreenView {
         return this.view;
-    }
-
-    //Fetches the leaderboard from the server, ignoring results from older requests, and shows an empty list if it fails
-    private async loadEntries(): Promise<void> {
-        const id = ++this.loadId;
-        try {
-            const res = await fetch("/api/leaderboard");
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            const entries = (await res.json()) as LeaderboardEntry[];
-            if (id === this.loadId) {
-                this.model.setEntries(entries);
-            }
-        } catch (err) {
-            console.error("Failed to load leaderboard", err);
-            if (id === this.loadId) {
-                this.model.setEntries([]);
-            }
-        }
     }
 
     //Plays the click sound

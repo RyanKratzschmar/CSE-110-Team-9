@@ -1,7 +1,7 @@
 import Konva from "konva";
 import type { View } from "../../types";
 import type { LeaderboardScreenState } from "./LeaderboardScreenModel";
-import type { LeaderboardEntry } from "../../../backend/game/Leaderboard/Leaderboard";
+import type { FloorEntry } from "../../../backend/game/Leaderboard/FloorLeaderboard";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants";
 
 export interface LeaderboardViewHandlers {
@@ -21,7 +21,7 @@ const MIN_THUMB_HEIGHT = 40;
 
 const RANK_W = 105;
 const DATE_W = 630;
-const SCORE_W = LIST_WIDTH - RANK_W - DATE_W;
+const FLOOR_W = LIST_WIDTH - RANK_W - DATE_W;
 
 const GOLD = "#D4AF37";
 const SILVER = "#C0C0C0";
@@ -30,14 +30,14 @@ const ROW_A = "#5A4A78";
 const ROW_B = "#4F4268";
 const DIVIDER = "#3A2E4A";
 
-//Draws the leaderboard screen with Konva: the title, the scrollable list of scores, the scrollbar, and the Leave button
+//Draws the leaderboard screen: the title, the scrollable list of floors, the scrollbar, and the Leave button
 export class LeaderboardScreenView implements View {
     private readonly group: Konva.Group;
     private readonly listGroup: Konva.Group;
     private readonly scrollTrack: Konva.Rect;
     private readonly scrollThumb: Konva.Rect;
     private contentHeight = 0;
-    private renderedEntries: readonly LeaderboardEntry[] | null = null;
+    private renderedEntries: readonly FloorEntry[] | null = null;
     private renderedLoading: boolean | null = null;
     private readonly buttonBgs: Konva.Rect[] = [];
 
@@ -161,8 +161,8 @@ export class LeaderboardScreenView implements View {
         this.group.visible(false);
     }
 
-    //Draws one row per entry (rank, date, score) with gold, silver, and bronze for the top 3, or a loading/empty message
-    private buildRows(entries: readonly LeaderboardEntry[], loading: boolean): void {
+    //Draws one row per entry (rank, date, floor) with gold, silver, and bronze for the top 3, or a loading/empty message
+    private buildRows(entries: readonly FloorEntry[], loading: boolean): void {
         this.listGroup.destroyChildren();
 
         if (loading || entries.length === 0) {
@@ -170,7 +170,7 @@ export class LeaderboardScreenView implements View {
                 x: 0,
                 y: LIST_HEIGHT / 2 - 16,
                 width: LIST_WIDTH,
-                text: loading? "Loading..." : "No scores yet",
+                text: loading? "Loading..." : "No floors yet",
                 fontSize: 32,
                 fontFamily: "Arial",
                 fill: "#BBBBBB",
@@ -208,7 +208,7 @@ export class LeaderboardScreenView implements View {
             const cells: [string, number, number][] = [
                 [String(i + 1), 0, RANK_W],
                 [this.formatDate(entry.timestamp), RANK_W, DATE_W],
-                [String(entry.score), RANK_W + DATE_W, SCORE_W]
+                [`Floor ${entry.floor}`, RANK_W + DATE_W, FLOOR_W]
             ];
 
             for (const [text, x, width] of cells) {
