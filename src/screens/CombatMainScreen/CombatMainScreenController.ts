@@ -146,7 +146,7 @@ export class CombatMainScreenController extends ScreenController {
                 this.syncCombat();
             } else {
                 this.hide();
-                this.screenSwitcher.switchToScreen({ type: outcome === "win" ? "map" : "menu" });
+                this.screenSwitcher.switchToScreen({ type: outcome === "win" ? "map" : "gameover" });
             }
             return;
         }
@@ -232,10 +232,8 @@ export class CombatMainScreenController extends ScreenController {
             state.combat = null;
             this.questionId = null;
             this.endFight(false);
-            setTimeout(() => {
-                this.hide();
-                this.screenSwitcher.switchToScreen({ type: "menu" });
-            }, 3000);
+            this.hide();
+            this.screenSwitcher.switchToScreen({ type: "gameover" });
         }
     }
 
