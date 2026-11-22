@@ -4,6 +4,8 @@ import { RandomEquation } from "./RandomEquation";
 
 export class MultiplicationEquation extends RandomEquation{
 
+    private symbol = "\u00D7";
+
     constructor(difficulty: number, equation?: Array<any>, answer?: number) {
         // Start by calling super
         super(difficulty, equation, answer);
@@ -41,7 +43,7 @@ export class MultiplicationEquation extends RandomEquation{
             // Get the rest of the terms, multiplying product and storing in the equation
             for (let i = 0; i < numExtraTerms; i++) {
                 let extraTerm = this.generateNumber(lowerBound, upperBound);
-                this.equation.push("*");
+                this.equation.push(this.symbol);
                 this.equation.push(extraTerm);
                 product = product * extraTerm;
             }
@@ -68,10 +70,10 @@ export class MultiplicationEquation extends RandomEquation{
             this.answer = product;
 
             // store equation
-            this.equation = [factorOne, "*", factorTwo];
+            this.equation = [factorOne, this.symbol, factorTwo];
 
             // print equation
-            this.print = String(factorOne) + " * " + String(factorTwo) + " = ?";
+            this.print = String(factorOne) + " " + this.symbol + " " + String(factorTwo) + " = ?";
         }
     }
 }

@@ -6,8 +6,8 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("Oliver's upgrade equation factory", () => {
     it.each([
-        [0.1, 0, "Multiplication", [0, "*", 0], 0],
-        [0.1, 0.999999, "Multiplication", [12, "*", 12], 144],
+        [0.1, 0, "Multiplication", [0, "\u00D7", 0], 0],
+        [0.1, 0.999999, "Multiplication", [12, "\u00D7", 12], 144],
         [0.9, 0, "Division", [1, "\u00F7", 1], 1],
         [0.9, 0.999999, "Division", [144, "\u00F7", 12], 12],
     ])("generates %s/%s within the upgrade range", (choice, factor, type, equation, answer) => {

@@ -105,7 +105,7 @@ describe("UpgradeMinigameScreenController", () => {
 
     it("loads the question from the shared local challenge", () => {
         expect(session.state.upgradeMinigame).not.toBeNull();
-        expect(controller["model"].getState()).toMatchObject({ phase: "solving", problemText: "1 * 1 = ?", timeLeft: 60 });
+        expect(controller["model"].getState()).toMatchObject({ phase: "solving", problemText: "1 \u00D7 1 = ?", timeLeft: 60 });
     });
 
     it("checks answers locally and retries the same question after a mistake", () => {

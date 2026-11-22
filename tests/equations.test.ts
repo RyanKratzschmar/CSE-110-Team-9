@@ -28,7 +28,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + " * " + String(term2) + " = ?";
+        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " = ?";
         expect(mult.getPrint()).toBe(print);
       });
 
@@ -50,7 +50,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + " * " + String(term2) + " = ?";
+        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " = ?";
         expect(mult.getPrint()).toBe(print);
     });
 
@@ -72,7 +72,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + " * " + String(term2) + " = ?";
+        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " = ?";
         expect(mult.getPrint()).toBe(print);
     });
 
@@ -98,7 +98,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2 * term3);
         // Check print based on terms
-        let print = String(term1) + " * " + String(term2) + " * " + String(term3) + " = ?";
+        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " " + "\u00D7" + " " + String(term3) + " = ?";
         expect(mult.getPrint()).toBe(print);
       });
 
@@ -118,7 +118,7 @@ describe("Multiplication", () => {
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
-        let print = String(term1) + " * " + String(term2) + " = ?";
+        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " = ?";
         expect(mult.getPrint()).toBe(print);
     });
     
@@ -244,13 +244,13 @@ describe("Pemdas", () => {
         let ans1;
         let ans2;
         // Index 1 is mult div for first part
-        if (pemdas.getEquation()[1] === "*") {
+        if (pemdas.getEquation()[1] ===  "\u00D7") {
             ans1 = term1 * term2;
         } else {
             ans1 = term1 / term2;
         }
         // Index 5 is mult div for second part
-        if (pemdas.getEquation()[5] === "*") {
+        if (pemdas.getEquation()[5] === "\u00D7") {
             ans2 = term3 * term4;
         } else {
             ans2 = term3 / term4;
@@ -292,13 +292,13 @@ describe("Pemdas", () => {
         let ans1;
         let ans2;
         // Index 1 is mult div for first part
-        if (pemdas.getEquation()[1] === "*") {
+        if (pemdas.getEquation()[1] === "\u00D7") {
             ans1 = term1 * term2;
         } else {
             ans1 = term1 / term2;
         }
         // Index 5 is mult div for second part
-        if (pemdas.getEquation()[5] === "*") {
+        if (pemdas.getEquation()[5] === "\u00D7") {
             ans2 = term3 * term4;
         } else {
             ans2 = term3 / term4;
@@ -352,19 +352,19 @@ describe("Pemdas", () => {
             let ans2;
             let ans3;
             // Index 1 is mult div for first part
-            if (pemdas.getEquation()[1] === "*") {
+            if (pemdas.getEquation()[1] === "\u00D7") {
                 ans1 = term1 * term2;
             } else {
                 ans1 = term1 / term2;
             }
             // Index 5 is mult div for second part
-            if (pemdas.getEquation()[5] === "*") {
+            if (pemdas.getEquation()[5] === "\u00D7") {
                 ans2 = term3 * term4;
             } else {
                 ans2 = term3 / term4;
             }
             // Index 9 is mult div for third part
-            if (pemdas.getEquation()[9] === "*") {
+            if (pemdas.getEquation()[9] === "\u00D7") {
                 ans3 = term5 * term6;
             } else {
                 ans3 = term5 / term6;
@@ -442,13 +442,13 @@ describe("Pemdas", () => {
                 let ans2;
                 let ans3;
                 // ans2 at 4-5
-                if (pemdas.getEquation()[7] === "*") {
+                if (pemdas.getEquation()[7] === "\u00D7") {
                     ans2 = term4 * term5;
                 } else {
                     ans2 = term4 / term5;
                 }
                 // ans3 at 6-7
-                if (pemdas.getEquation()[11] === "*") {
+                if (pemdas.getEquation()[11] === "\u00D7") {
                     ans3 = term6 * term7;
                 } else {
                     ans3 = term6 / term7;
@@ -475,13 +475,13 @@ describe("Pemdas", () => {
                 let ans2 = term3 * term4 * term5;
                 let ans3;
                 // ans1 at 1-2
-                if (pemdas.getEquation()[1] === "*") {
+                if (pemdas.getEquation()[1] === "\u00D7") {
                     ans1 = term1 * term2;
                 } else {
                     ans1 = term1 / term2;
                 }
                 // ans3 at 6-7
-                if (pemdas.getEquation()[11] === "*") {
+                if (pemdas.getEquation()[11] === "\u00D7") {
                     ans3 = term6 * term7;
                 } else {
                     ans3 = term6 / term7;
@@ -508,13 +508,13 @@ describe("Pemdas", () => {
                 let ans2;
                 let ans3 = term5 * term6 * term7;
                 // ans1 at 1-2
-                if (pemdas.getEquation()[1] === "*") {
+                if (pemdas.getEquation()[1] === "\u00D7") {
                     ans1 = term1 * term2;
                 } else {
                     ans1 = term1 / term2;
                 }
                 // ans2 at 3-4
-                if (pemdas.getEquation()[5] === "*") {
+                if (pemdas.getEquation()[5] === "\u00D7") {
                     ans2 = term3 * term4;
                 } else {
                     ans2 = term3 / term4;
@@ -597,7 +597,7 @@ describe("Pemdas", () => {
                 let ans1 = term1 * term2 * term3;
                 let ans2 = term4 * term5 * term6;
                 let ans3;
-                if (pemdas.getEquation()[13] === "*") {
+                if (pemdas.getEquation()[13] === "\u00D7") {
                     ans3 = term7 * term8;
                 } else {
                     ans3 = term7 / term8;
@@ -623,7 +623,7 @@ describe("Pemdas", () => {
                 let ans1 = term1 * term2 * term3;
                 let ans2;
                 let ans3 = term6 * term7 * term8;
-                if (pemdas.getEquation()[7] === "*") {
+                if (pemdas.getEquation()[7] === "\u00D7") {
                     ans2 = term4 * term5;
                 } else {
                     ans2 = term4 / term5;
@@ -649,7 +649,7 @@ describe("Pemdas", () => {
                 let ans1;
                 let ans2 = term3 * term4 * term5;
                 let ans3 = term6 * term7 * term8;
-                if (pemdas.getEquation()[1] === "*") {
+                if (pemdas.getEquation()[1] === "\u00D7") {
                     ans1 = term1 * term2;
                 } else {
                     ans1 = term1 / term2;
