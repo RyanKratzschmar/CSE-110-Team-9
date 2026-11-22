@@ -10,6 +10,7 @@ import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabSc
 import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
 import { GameSession } from "./GameSession.ts";
+import { GameOverScreenController } from "./screens/GameOverScreen/GameOverScreenController.ts";
 import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
@@ -32,6 +33,7 @@ class App implements ScreenSwitcher {
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 	private leaderBoardScreenController: LeaderBoardScreenController;
+	private gameOverScreenController: GameOverScreenController;
 
 	private readonly gameSession = new GameSession();
 
@@ -59,6 +61,7 @@ class App implements ScreenSwitcher {
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
+		this.gameOverScreenController = new GameOverScreenController(this, this.gameSession);
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -73,6 +76,7 @@ class App implements ScreenSwitcher {
 		this.layer.add(this.restScreenController.getView().getGroup());
 		this.layer.add(this.upgradeMinigameScreenController.getView().getGroup());
 		this.layer.add(this.leaderBoardScreenController.getView().getGroup());
+		this.layer.add(this.gameOverScreenController.getView().getGroup());
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -111,9 +115,14 @@ class App implements ScreenSwitcher {
 		this.restScreenController.hide();
 		this.upgradeMinigameScreenController.hide();
 		this.leaderBoardScreenController.hide();
+		this.gameOverScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
+			case "gameover":
+				this.gameOverScreenController.show();
+				break;
+
 			case "menu":
 				this.titleScreenController.show();
 				break;
