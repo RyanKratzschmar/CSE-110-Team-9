@@ -55,7 +55,7 @@ class App implements ScreenSwitcher {
 		this.titleScreenController = new TitleScreenController(this, this.gameSession);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp, this.gameSession);
 		this.levelMapScreenController = new LevelMapScreenController(this, this.gameSession); //
-		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession);
+		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession, explanationPopUp);
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
