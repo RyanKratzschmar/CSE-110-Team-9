@@ -15,7 +15,7 @@ npm run typecheck      # TypeScript errors across the whole project
 | Area | Owner | Files |
 |---|---|---|
 | Equations | Oliver | `backend/equations/*`, `tests/equations.test.ts` |
-| Combat | David | `backend/game/Combat.ts`, `Monster.ts`, `BasicMonster.ts`, `backend/routes/combat.ts`, `frontend/src/CombatUI.ts`, `src/screens/GameOverScreen/`, `tests/combat.test.ts` |
+| Combat | David | `backend/game/Combat.ts`, `Monster.ts`, `BasicMonster.ts`, `backend/routes/combat.ts`, `frontend/src/CombatUI.ts`, `GameOverUI.ts`, `tests/combat.test.ts` |
 | Level map + player | Sally | `backend/game/Level.ts`, `LevelNode.ts`, `GameManager.ts`, `Player.ts`, `backend/routes/runs.ts`, `frontend/src/LevelMapUI.ts`, `tests/level.test.ts`, `tests/player.test.ts` |
 | Rest | Lianshi | `backend/game/RestStop.ts`, `backend/routes/rest.ts`, `frontend/src/RestUI.ts`, `tests/rest.test.ts` |
 | Wrong-answer popup | Arushi | `frontend/src/wrongAnswerExplanationPopUp.ts`, `tests/wrongAnswer.test.ts` |
@@ -110,24 +110,3 @@ A level is `[⚔, ⚔, ⚔, 🏕]`. Combat and rest never change the level direc
 4. **Combat** → `equation.checkAnswer(42)`. If wrong, the player takes damage and the response includes `getAnswer()` and `getExplanation()`.
 5. If the enemy's HP reaches 0, the route calls `finishCombat(state, "win")`, which marks the stop cleared and moves to the next one.
 6. The JSON comes back → **CombatUI** updates the HP bars. If the answer was wrong, it opens the **wrong-answer popup**. If `result` is `"win"` or `"lose"`, it tells **main.ts**, which shows the map or the game-over screen.
-
-## Game Over screen
-
-The local app opens Game Over after a combat loss. A teammate implementing Quit
-can end the current run through the same navigation entry point:
-
-```ts
-screenSwitcher.switchToScreen({ type: "gameover" });
-```
-
-Navigation hides the other screens and stops their input, timers, music, and
-popups through their existing `hide()` methods. The Game Over controller marks
-`gameSession.state.gameOver` and clears the active combat. Play Again calls
-`GameSession.newGame()` and opens the floor 1 map; Main Menu returns to the title
-without resetting the ended run. This change does not add the Quit button.
-
-Run the screen and combat-exit tests with:
-
-```sh
-npm test -- tests/gameOverScreen.test.ts tests/localCombat.test.ts
-```
