@@ -2,6 +2,7 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import { LevelMapScreenView } from "./LevelMapScreenView.ts";
 import type { GameSession } from "../../GameSession.ts";
+import { BackgroundMusic } from "../../BackgroundMusic.ts";
 
 export class LevelMapScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
@@ -9,6 +10,7 @@ export class LevelMapScreenController extends ScreenController {
     private view: LevelMapScreenView;
 
     private clickSound: HTMLAudioElement;
+    private mapMusic: BackgroundMusic;
 
     constructor(screenSwitcher: ScreenSwitcher, gameSession: GameSession){
         super();
@@ -21,6 +23,13 @@ export class LevelMapScreenController extends ScreenController {
 
         this.clickSound = new Audio("/click.mp3");
 
+        // Map music: a short intro plays once, then the loop repeats while the map is showing
+        this.mapMusic = new BackgroundMusic("/map_bgm_intro.ogg", "/map_bgm.ogg");
+    }
+
+    override hide(): void {
+        this.mapMusic.stop();
+        super.hide();
     }
 
     // GO! enters the current stop from the backend Level:
@@ -48,6 +57,7 @@ export class LevelMapScreenController extends ScreenController {
         this.view.showProgress(level.number, level.currentIndex);
         this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.view.show();
+        this.mapMusic.play();
     }
 
     getView(): LevelMapScreenView {

@@ -10,6 +10,7 @@ import { finishCombat, requireCurrentStop } from "../../../backend/game/GameMana
 import { Combat } from "../../../backend/game/Combat";
 import { BasicMonster } from "../../../backend/game/BasicMonster";
 import { PotionPopUpView } from "./PotionPopUpView.ts";
+import { BackgroundMusic } from "../../BackgroundMusic.ts";
 
 export class CombatMainScreenController extends ScreenController {
     private model: CombatMainScreenModel;
@@ -17,6 +18,7 @@ export class CombatMainScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
 
     private clickSound: HTMLAudioElement;
+    private battleMusic: BackgroundMusic;
 
     private explanationPopUp: WrongAnswerPopUpController;
     private hintPopUp: HintPopUpController;
@@ -57,6 +59,10 @@ export class CombatMainScreenController extends ScreenController {
         this.view.getGroup().add(this.potionPopUp.getGroup());
 
         this.clickSound = new Audio("/click.mp3");
+
+        // Battle music: the full track plays once as an intro, then the loop
+        // version repeats for as long as the combat screen is showing
+        this.battleMusic = new BackgroundMusic("/battle_bgm_intro.mp3", "/battle_bgm.ogg");
     }
 
     handleAttackClick(): void {
@@ -114,6 +120,7 @@ export class CombatMainScreenController extends ScreenController {
         if (this.potionPopUp?.isOpen()) {
             this.potionPopUp.hide();
         }
+        this.battleMusic.stop();
         super.hide();
     }
 
@@ -263,6 +270,7 @@ export class CombatMainScreenController extends ScreenController {
         this.view.returnToCombat();
         this.view.resetFight();
         this.view.show();
+        this.battleMusic.play();
     }
 
     getModel(): CombatMainScreenModel {
