@@ -2,8 +2,8 @@
 import { describe, expect, it } from "vitest";
 import { PotionLab } from "../backend/game/PotionLab";
 import { Player } from "../backend/game/Player";
-import type { RecipeLevel } from "../backend/game/Potion";
-import { HEAL_PERCENT } from "../backend/game/Potion";
+import type { Potion, RecipeLevel } from "../backend/game/Potion";
+import { HEAL_PERCENT, describePotion, groupPotions, potionName } from "../backend/game/Potion";
 import { MultiOperationEquation } from "../backend/equations/MultiOperationEquation";
 import { GameState } from "../backend/game/GameState";
 import { Level } from "../backend/game/Level";
@@ -123,5 +123,66 @@ describe("GameState potion lab", () => {
     lab.chooseRecipe("basic");
     lab.submit(lab.getEquation()!.getAnswer());
     expect(state.player.inventory).toEqual([{ type: "poison", level: "basic" }]);
+  });
+});
+
+describe("Inventory across floors", () => {
+  it("potions from different floors stack up in brewing order", () => {
+    const player = new Player();
+    for (const type of ["healing", "poison", "healing"] as const) {
+      const lab = new PotionLab(player.inventory, fixedEquations().make); // a fresh lab each floor
+      lab.chooseType(type);
+      lab.chooseRecipe("basic");
+      expect(lab.submit(14)).toBe(true);
+    }
+    expect(player.inventory.map((p) => p.type)).toEqual(["healing", "poison", "healing"]);
+  });
+});
+
+describe("Potion names and descriptions", () => {
+  it("names a potion by its level and type", () => {
+    expect(potionName({ type: "healing", level: "basic" })).toBe("Basic Healing Potion");
+    expect(potionName({ type: "strength", level: "advanced" })).toBe("Advanced Strength Potion");
+    expect(potionName({ type: "poison", level: "basic" })).toBe("Basic Poison Potion");
+  });
+
+  it("describes what each potion does", () => {
+    expect(describePotion({ type: "healing", level: "advanced" })).toBe("Heals 30% max HP");
+    expect(describePotion({ type: "healing", level: "basic" }, 10)).toBe("Heals 30% max HP"); // with an upgrade bonus
+    expect(describePotion({ type: "strength", level: "basic" })).toBe("Doubles your attack damage for 1 round");
+    expect(describePotion({ type: "poison", level: "advanced" })).toBe(
+      "Poisons the enemy for 10% of its max HP each round for 2 rounds",
+    );
+  });
+});
+
+describe("groupPotions", () => {
+  it("returns nothing for an empty inventory", () => {
+    expect(groupPotions([])).toEqual([]);
+  });
+
+  it("groups by type and level, counts them, and points at the first one", () => {
+    const potions: Potion[] = [
+      { type: "poison", level: "basic" },
+      { type: "healing", level: "basic" },
+      { type: "poison", level: "basic" },
+      { type: "poison", level: "advanced" },
+      { type: "healing", level: "basic" },
+    ];
+    expect(groupPotions(potions)).toEqual([
+      { potion: { type: "poison", level: "basic" }, count: 2, firstIndex: 0 },
+      { potion: { type: "healing", level: "basic" }, count: 2, firstIndex: 1 },
+      { potion: { type: "poison", level: "advanced" }, count: 1, firstIndex: 3 },
+    ]);
+  });
+
+  it("never has more than 6 groups (3 types x 2 levels)", () => {
+    const potions: Potion[] = [];
+    for (const type of ["healing", "strength", "poison"] as const) {
+      for (const level of ["basic", "advanced"] as const) {
+        potions.push({ type, level }, { type, level });
+      }
+    }
+    expect(groupPotions(potions)).toHaveLength(6);
   });
 });
