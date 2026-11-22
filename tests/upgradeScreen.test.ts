@@ -155,15 +155,27 @@ describe("UpgradeMinigameScreenController", () => {
         expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
     });
 
-    it("reopening resumes the same deadline and score", () => {
+    it("leaving midway and reopening starts a fresh round", () => {
         controller["handleSubmit"]("1");
         const game = session.state.upgradeMinigame;
         controller.hide();
+        expect(session.state.upgradeMinigame).toBeNull();
         vi.advanceTimersByTime(5_000);
         controller.startUpgradeMinigame();
         controller["handleStart"]();
-        expect(session.state.upgradeMinigame).toBe(game);
-        expect(controller["model"].getState()).toMatchObject({ correctCount: 1, timeLeft: 55 });
+        expect(session.state.upgradeMinigame).not.toBe(game);
+        expect(controller["model"].getState()).toMatchObject({ correctCount: 0, attemptedCount: 0, timeLeft: 60 });
+    });
+
+    it("leaving before the timer ends resets progress even after ten correct answers", () => {
+        for (let i = 0; i < 10; i++) controller["handleSubmit"]("1");
+        controller["handleLeave"]();
+        expect(session.state.upgradeMinigame).toBeNull();
+        expect(session.state.upgradeClaimedLevel).toBeNull();
+        expect(session.state.player.attack).toBe(10);
+        controller.startUpgradeMinigame();
+        controller["handleStart"]();
+        expect(controller["model"].getState()).toMatchObject({ phase: "solving", correctCount: 0, attemptedCount: 0, timeLeft: 60 });
     });
 
     it("Leave goes to the map and stops the displayed timer", () => {
