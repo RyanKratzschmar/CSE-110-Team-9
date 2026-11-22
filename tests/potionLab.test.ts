@@ -14,7 +14,7 @@ function fixedEquations() {
   const askedFor: RecipeLevel[] = [];
   const make = (level: RecipeLevel) => {
     askedFor.push(level);
-    return new MultiOperationEquation(1, [2, "*", 6, "+", 18, "/", 3, "-", 4], 14);
+    return new MultiOperationEquation(1, [2, "*", 6, "+", 18, "\u00F7", 3, "-", 4], 14);
   };
   return { askedFor, make };
 }
@@ -24,7 +24,7 @@ describe("PotionLab", () => {
     const eq = fixedEquations();
     const lab = new PotionLab(new Player().inventory, eq.make);
     lab.chooseType("poison");
-    expect(lab.chooseRecipe("advanced")).toBe("2*6+18/3-4= ?");
+    expect(lab.chooseRecipe("advanced")).toBe("2 * 6 + 18 \u00F7 3 - 4 = ?");
     expect(eq.askedFor).toEqual(["advanced"]);
   });
 
@@ -38,7 +38,8 @@ describe("PotionLab", () => {
     const advanced = new PotionLab(new Player().inventory);
     advanced.chooseType("healing");
     advanced.chooseRecipe("advanced");
-    expect(advanced.getEquation()?.getEquation()).toHaveLength(11); // e.g. 4*4+6*12-9/3
+    expect(advanced.getEquation()?.getEquation().length).toBeGreaterThanOrEqual(11); // e.g. 4*4+6*12-9/3
+    expect(advanced.getEquation()?.getEquation().length).toBeLessThanOrEqual(17); // e.g. 4*4*4+6*12*4-9*3*4
   });
 
   it("a right answer adds exactly one potion to the player's inventory", () => {

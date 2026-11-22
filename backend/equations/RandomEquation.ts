@@ -27,7 +27,7 @@ export abstract class RandomEquation {
             this.equation = equation;
             let written = "";
             for (let i = 0; i < equation.length; i++) {
-                written = written + String(equation[i]);
+                written = written + String(equation[i]) + " ";
             }
             written = written + "= ?";
             this.print = written;
