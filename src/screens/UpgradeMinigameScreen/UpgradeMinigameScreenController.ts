@@ -145,7 +145,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.model.retryCurrentQuestion();
     }
 
-    //Plays the click sound and returns to the map (used by both Leave and Exit)
+    //Plays the click sound and returns to the rest stop's minigame choices (used by both Leave and Exit)
     private handleLeave(): void {
         this.playClick();
         this.leaveScreen();
@@ -196,12 +196,12 @@ export class UpgradeMinigameScreenController extends ScreenController {
         }
     }
 
-    //Stops the timer, drops any pending upgrade reply, and returns to the map
+    //Stops the timer, drops any pending upgrade reply, and returns to the rest stop so "Leave Rest" still finishes the level
     private leaveScreen(): void {
         this.roundId++;
         this.stopTimer();
         this.discardUnfinishedRound();
-        this.screenSwitcher.switchToScreen({ type: "map" });
+        this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 
     //Plays the click sound

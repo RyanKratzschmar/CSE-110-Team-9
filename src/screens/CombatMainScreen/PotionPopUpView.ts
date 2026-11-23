@@ -2,8 +2,15 @@
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
-import type { Potion } from "../../../backend/game/Potion.ts";
-import { HEAL_PERCENT } from "../../../backend/game/Potion.ts";
+import type { Potion, PotionType } from "../../../backend/game/Potion.ts";
+import { describePotion, groupPotions, potionName } from "../../../backend/game/Potion.ts";
+
+// Name colors for each potion type: a lighter shade for basic, a stronger one for advanced
+const POTION_COLORS: Record<PotionType, { basic: string; advanced: string }> = {
+    healing: { basic: "#67e8f9", advanced: "#22d3ee" },
+    strength: { basic: "#fdba74", advanced: "#fb923c" },
+    poison: { basic: "#86efac", advanced: "#4ade80" },
+};
 
 export class PotionPopUpView implements View {
     private group: Konva.Group;
@@ -157,7 +164,9 @@ export class PotionPopUpView implements View {
         this.onBack = onBack;
     }
 
-    updatePotions(potions: readonly Potion[], hp?: number, maxHp?: number): void {
+    // Lists the player's potions, one card per kind (e.g. "Basic Strength Potion x2"), so every potion fits on screen.
+    // healingBonus is the upgrade minigame's extra healing, shown in healing descriptions.
+    updatePotions(potions: readonly Potion[], hp?: number, maxHp?: number, healingBonus = 0): void {
         if (hp !== undefined && maxHp !== undefined && maxHp > 0) {
             const width = Math.min(400, Math.max(0, (hp / maxHp) * 400));
             this.healthBar.width(width);
@@ -182,13 +191,13 @@ export class PotionPopUpView implements View {
             return;
         }
 
-        const maxDisplay = Math.min(potions.length, 4);
-        const cardHeight = 100;
-        const cardGap = 20;
+        // At most 6 kinds (3 types x 2 levels), so 6 cards always fit between the header and the Back bar
+        const cardHeight = 80;
+        const cardGap = 10;
 
-        for (let i = 0; i < maxDisplay; i++) {
-            const potion = potions[i];
+        groupPotions(potions).forEach(({ potion, count, firstIndex }, i) => {
             const yOffset = i * (cardHeight + cardGap);
+            const color = POTION_COLORS[potion.type];
 
             const card = new Konva.Rect({
                 x: 0,
@@ -202,25 +211,21 @@ export class PotionPopUpView implements View {
             });
             this.potionListGroup.add(card);
 
-            const isAdv = potion.level === "advanced";
-            const healVal = HEAL_PERCENT[potion.level] ?? (isAdv ? 30 : 20);
-            const potionName = isAdv ? "Advanced Healing Potion" : "Basic Healing Potion";
-
             const nameText = new Konva.Text({
                 x: 30,
-                y: yOffset + 20,
-                text: potionName,
+                y: yOffset + 12,
+                text: count > 1 ? `${potionName(potion)}  x${count}` : potionName(potion),
                 fontSize: 28,
                 fontFamily: "Arial",
                 fontStyle: "bold",
-                fill: isAdv ? "#d8b4fe" : "#67e8f9",
+                fill: potion.level === "advanced" ? color.advanced : color.basic,
             });
             this.potionListGroup.add(nameText);
 
             const descText = new Konva.Text({
                 x: 30,
-                y: yOffset + 60,
-                text: `Heals ${healVal}% max HP`,
+                y: yOffset + 50,
+                text: describePotion(potion, healingBonus),
                 fontSize: 20,
                 fontFamily: "Arial",
                 fill: "#cbd5e1",
@@ -229,7 +234,7 @@ export class PotionPopUpView implements View {
 
             const drinkBtn = new Konva.Rect({
                 x: 800,
-                y: yOffset + 20,
+                y: yOffset + 10,
                 width: 160,
                 height: 60,
                 fill: "#0bba14",
@@ -245,19 +250,20 @@ export class PotionPopUpView implements View {
                 document.body.style.cursor = "default";
                 drinkBtn.fill("#0bba14");
             });
-
-            const index = i;
+            // Drinks the first potion of this kind in the inventory
             drinkBtn.on("click tap", () => {
                 document.body.style.cursor = "default";
-                this.onDrinkPotion(index);
+                this.onDrinkPotion(firstIndex);
             });
             this.potionListGroup.add(drinkBtn);
 
             const drinkText = new Konva.Text({
                 x: 800,
-                y: yOffset + 35,
+                y: yOffset + 10,
                 width: 160,
+                height: 60,
                 align: "center",
+                verticalAlign: "middle",
                 text: "USE",
                 fontSize: 24,
                 fontFamily: "Arial",
@@ -266,7 +272,7 @@ export class PotionPopUpView implements View {
                 listening: false,
             });
             this.potionListGroup.add(drinkText);
-        }
+        });
 
         this.group.getLayer()?.batchDraw();
     }

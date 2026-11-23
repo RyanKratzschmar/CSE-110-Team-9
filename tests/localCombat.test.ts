@@ -134,7 +134,29 @@ describe("Shared local combat", () => {
         expect(session.state.player.hp).toBe(0);
         expect(switchToScreen).not.toHaveBeenCalled();
         key("Enter");
-        expect(switchToScreen).toHaveBeenCalledWith({ type: "menu" });
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "gameover" });
+    });
+    it("opens Game Over when an enemy counterattack after a potion is lethal", () => {
+        vi.useFakeTimers();
+        try {
+            const { c, session, switchToScreen } = fixture(50, 200);
+            session.state.player.inventory.push({ type: "healing", level: "basic" });
+            c.handlePotionClick();
+            c.handleDrinkPotion(0);
+
+            expect(session.state.player.hp).toBe(0);
+            expect(session.state.gameOver).toBe(true);
+            expect(session.state.combat).toBeNull();
+            expect(c.getPotionPopUp().isOpen()).toBe(false);
+            expect(switchToScreen).toHaveBeenCalledWith({ type: "gameover" });
+
+            session.newGame();
+            vi.advanceTimersByTime(4000);
+            expect(session.state.gameOver).toBe(false);
+            expect(switchToScreen).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
     });
     it("reopening a fight preserves HP and its question", () => {
         const { c, session } = fixture();

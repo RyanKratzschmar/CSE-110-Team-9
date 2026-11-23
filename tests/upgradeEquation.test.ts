@@ -6,10 +6,10 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("Oliver's upgrade equation factory", () => {
     it.each([
-        [0.1, 0, "Multiplication", [0, "*", 0], 0],
-        [0.1, 0.999999, "Multiplication", [12, "*", 12], 144],
-        [0.9, 0, "Division", [1, "/", 1], 1],
-        [0.9, 0.999999, "Division", [144, "/", 12], 12],
+        [0.1, 0, "Multiplication", [0, "\u00D7", 0], 0],
+        [0.1, 0.999999, "Multiplication", [12, "\u00D7", 12], 144],
+        [0.9, 0, "Division", [1, "\u00F7", 1], 1],
+        [0.9, 0.999999, "Division", [144, "\u00F7", 12], 12],
     ])("generates %s/%s within the upgrade range", (choice, factor, type, equation, answer) => {
         vi.spyOn(Math, "random").mockReturnValueOnce(choice as number).mockReturnValue(factor as number);
         const question = getEquation({ type: "Upgrade" }, 100);
@@ -24,7 +24,7 @@ describe("Oliver's upgrade equation factory", () => {
         vi.spyOn(Math, "random").mockReturnValue(0.9);
         const game = new UpgradeMinigame();
         const question = game.currentQuestion();
-        expect(question.question).toContain("/");
+        expect(question.question).toContain("\u00F7");
         expect(game.submitAnswer(11, question.questionId)).toMatchObject({ correct: true, correctAnswers: 1 });
         expect(game.currentQuestion().questionId).toBe(2);
     });
