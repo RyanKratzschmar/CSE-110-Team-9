@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import "vitest-canvas-mock";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameSession } from "../src/GameSession";
 import { Combat } from "../backend/game/Combat";
 import { Monster } from "../backend/game/Monster";
 import { finishCombat, finishRest, requireCurrentStop } from "../backend/game/GameManager";
 import { GameOverScreenController } from "../src/screens/GameOverScreen/GameOverScreenController";
 import { GameOverScreenView } from "../src/screens/GameOverScreen/GameOverScreenView";
+import { TitleScreenController } from "../src/screens/TitleScreen/TitleScreenController";
+
+afterEach(() => vi.restoreAllMocks());
 
 function fixture() {
     const session = new GameSession();
@@ -16,7 +19,7 @@ function fixture() {
 }
 
 describe("Game Over screen", () => {
-    it("starts hidden and shows the heading and both actions when opened", () => {
+    it("starts hidden and shows the heading and Play Again when opened", () => {
         const { controller } = fixture();
         const group = controller.getView().getGroup();
         expect(group.visible()).toBe(false);
@@ -24,7 +27,8 @@ describe("Game Over screen", () => {
         controller.show();
         expect(group.visible()).toBe(true);
         expect(group.find("Text").map(node => node.getAttr("text")))
-            .toEqual(expect.arrayContaining(["Game Over", "Play Again", "Main Menu"]));
+            .toEqual(expect.arrayContaining(["Game Over", "Play Again"]));
+        expect(group.findOne(".main-menu")).toBeUndefined();
 
         controller.hide();
         expect(group.visible()).toBe(false);
@@ -41,7 +45,7 @@ describe("Game Over screen", () => {
         expect(() => requireCurrentStop(session.state, "combat")).toThrow("The game is over");
     });
 
-    it("Play Again replaces the ended run and opens a fresh floor 1 map", () => {
+    it("New Game on the title screen resets the run after Play Again", () => {
         const { session, controller, switchToScreen } = fixture();
         for (let i = 0; i < 3; i++) finishCombat(session.state, "win");
         finishRest(session.state);
@@ -53,6 +57,11 @@ describe("Game Over screen", () => {
         controller.show();
 
         controller.getView().getGroup().findOne(".play-again")!.fire("click");
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "menu" });
+        switchToScreen.mockClear();
+        vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+        const title = new TitleScreenController({ switchToScreen }, session);
+        title.getView().getGroup().findOne("RegularPolygon")!.fire("click");
 
         expect(session.state).not.toBe(previous);
         expect(session.state.gameOver).toBe(false);
@@ -67,12 +76,12 @@ describe("Game Over screen", () => {
         expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
     });
 
-    it("Main Menu preserves the ended run and opens the title screen", () => {
+    it("Play Again preserves the ended run and opens the title screen", () => {
         const { session, controller, switchToScreen } = fixture();
         const previous = session.state;
         controller.show();
 
-        controller.getView().getGroup().findOne(".main-menu")!.fire("tap");
+        controller.getView().getGroup().findOne(".play-again")!.fire("tap");
 
         expect(session.state).toBe(previous);
         expect(session.state.gameOver).toBe(true);
@@ -80,14 +89,11 @@ describe("Game Over screen", () => {
         expect(switchToScreen).toHaveBeenCalledWith({ type: "menu" });
     });
 
-    it("the view delegates each button to the matching callback", () => {
-        const restart = vi.fn();
-        const menu = vi.fn();
-        const view = new GameOverScreenView(restart, menu);
+    it("the view delegates Play Again to its callback", () => {
+        const playAgain = vi.fn();
+        const view = new GameOverScreenView(playAgain);
         view.show();
-        view.getGroup().findOne(".play-again")!.fire("tap");
-        view.getGroup().findOne(".main-menu")!.fire("click");
-        expect(restart).toHaveBeenCalledOnce();
-        expect(menu).toHaveBeenCalledOnce();
+        view.getGroup().findOne(".play-again")!.fire("click");
+        expect(playAgain).toHaveBeenCalledOnce();
     });
 });
