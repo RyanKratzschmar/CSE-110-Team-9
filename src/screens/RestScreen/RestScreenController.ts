@@ -80,8 +80,16 @@ export class RestScreenController extends ScreenController {
     }
 
     startRestScreen(): void {
-        this.restStop.rest(this.gameSession.state);
-        const player = this.gameSession.state.player;
+        const state = this.gameSession.state;
+        if (this.restStop.hasEntered(state)) {
+            // Back from the potion lab or upgrade minigame: no second heal, show the choices again
+            this.view.minigamePopUp();
+        } else {
+            // First time here this floor: heal, then show the HP Restored panel
+            this.restStop.rest(state);
+            this.view.hideMinigamePopUp();
+        }
+        const player = state.player;
         this.combatModel.setPlayerHealth(player.hp);
         this.combatModel.setPlayerMaxHealth(player.maxHp);
         this.view.setPlayerHealthBar(player.hp, player.maxHp);
