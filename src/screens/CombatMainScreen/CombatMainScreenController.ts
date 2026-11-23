@@ -10,6 +10,7 @@ import { finishCombat, requireCurrentStop } from "../../../backend/game/GameMana
 import { Combat } from "../../../backend/game/Combat";
 import { BasicMonster } from "../../../backend/game/BasicMonster";
 import { PotionPopUpView } from "./PotionPopUpView.ts";
+import { potionName } from "../../../backend/game/Potion.ts";
 import { BackgroundMusic } from "../../BackgroundMusic.ts";
 
 export class CombatMainScreenController extends ScreenController {
@@ -161,7 +162,9 @@ export class CombatMainScreenController extends ScreenController {
         this.answering = false;
         this.syncCombat();
         this.pendingResult = result.result;
-        const feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
+        let feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
+        if (result.strengthBoosted) feedback += " Your strength potion doubled the damage!";
+        if (result.poisonDamage > 0) feedback += ` Poison did ${result.poisonDamage} damage.`;
         this.view.setFeedback(
             feedback + (result.result === "win" ? " You won!" : result.result === "lose" ? " Game over." : ""),
             result.correct,
@@ -191,6 +194,17 @@ export class CombatMainScreenController extends ScreenController {
         this.view.setQuestion(question.question);
         this.view.updateEnemyHealthBar(game.getEnemyHp(), game.getEnemyMaxHp());
         this.view.setPlayerHealthBar(state.player.hp, state.player.maxHp);
+        this.view.setPotionStatus(this.describeActiveEffects(game));
+    }
+
+    // e.g. "Strength: 1 round left · Poison: 2 rounds left", or "" when no potion effect is active
+    private describeActiveEffects(game: Combat): string {
+        const { strengthRounds, poisonRounds } = game.getActiveEffects();
+        const rounds = (n: number) => `${n} round${n === 1 ? "" : "s"} left`;
+        const parts: string[] = [];
+        if (strengthRounds > 0) parts.push(`Strength: ${rounds(strengthRounds)}`);
+        if (poisonRounds > 0) parts.push(`Poison: ${rounds(poisonRounds)}`);
+        return parts.join("  ·  ");
     }
 
     // Opens the potion popup to view and use potions
@@ -202,7 +216,7 @@ export class CombatMainScreenController extends ScreenController {
         const combat = state.combat;
         if (!combat || this.pendingResult !== null) return;
 
-        this.potionPopUp.updatePotions(state.player.inventory, state.player.hp, state.player.maxHp);
+        this.potionPopUp.updatePotions(state.player.inventory, state.player.hp, state.player.maxHp, state.player.potionHealingBonus);
         this.potionPopUp.show();
     }
 
@@ -226,6 +240,14 @@ export class CombatMainScreenController extends ScreenController {
 
         this.potionPopUp.hide();
         this.syncCombat();
+        const healedText = result.healed > 0 ? ` +${result.healed} HP.` : "";
+        const effects = this.describeActiveEffects(combat);
+        this.view.setPotionStatus(
+            `You drank: ${potionName(result.potion)}.${healedText}
+The enemy hit you for ${result.damageTaken}.` +
+            (effects ? `
+${effects}` : "")
+        );
 
         if (result.result === "lose") {
             finishCombat(state, "lose");

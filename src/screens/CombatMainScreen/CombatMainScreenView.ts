@@ -13,6 +13,7 @@ export class CombatMainScreenView implements View {
     private enemyHealthBar: Konva.Rect;
     private victoryText: Konva.Text;
     private defeatText: Konva.Text;
+    private potionStatusText: Konva.Text;
     private attackButton: Konva.Rect;
     private attackButtonText: Konva.Text;
     private potionButton: Konva.Rect;
@@ -362,6 +363,22 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.defeatText);
 
+        // What the last potion did and which potion effects are still active, between the player and the enemy
+        this.potionStatusText = new Konva.Text({
+            x: 500,
+            y: 400,
+            width: 600,
+            align: "center",
+            lineHeight: 1.3,
+            text: "",
+            fill: "#F5E6C8",
+            fontSize: 30,
+            fontStyle: "bold",
+            fontFamily: "arial",
+            listening: false,
+        });
+        this.group.add(this.potionStatusText);
+
         // Create Explanation Button
         this.explanationButton = new Konva.Rect({
             x: 1300,
@@ -680,7 +697,14 @@ export class CombatMainScreenView implements View {
     }
 
     // Resets victory or defeat text, and shows attack and potion buttons
+    // Shows a line about potions under the header; an empty string clears it
+    setPotionStatus(message: string): void {
+        this.potionStatusText.text(message);
+        this.group.getLayer()?.batchDraw();
+    }
+
     resetFight(): void {
+        this.potionStatusText.text("");
         this.victoryText.visible(false);
         this.defeatText.visible(false);
 
@@ -693,6 +717,7 @@ export class CombatMainScreenView implements View {
 
     // Changes display to account for player winning or losing
     endGameText(win: boolean): void {
+        this.potionStatusText.text("");
         if(win){
             this.victoryText.visible(true);
         } else {
@@ -711,6 +736,7 @@ export class CombatMainScreenView implements View {
     // Pop Up Equation Solving
     solveEquation(): void{
         this.solving = true;
+        this.potionStatusText.visible(false);
         this.feedbackText.visible(true);
         this.answerValue.visible(true);
         this.popUpOverlay.visible(true);
@@ -730,6 +756,7 @@ export class CombatMainScreenView implements View {
     // Goes from equation back to combat screen
     returnToCombat(): void {
         this.solving = false;
+        this.potionStatusText.visible(true);
         this.feedbackText.visible(false);
         this.answerValue.visible(false);
         this.popUpOverlay.visible(false);
