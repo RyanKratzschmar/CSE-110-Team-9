@@ -16,6 +16,7 @@ export interface View {
 export type Screen =
 	| { type: "menu" }
 	| { type: "game" }
+	| { type: "gameover" }
 	| { type: "map"}
 	| { type: "potion" }
 	| { type: "rest" }

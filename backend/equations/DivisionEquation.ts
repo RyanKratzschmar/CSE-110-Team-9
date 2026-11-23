@@ -4,6 +4,8 @@ import { RandomEquation } from "./RandomEquation";
 
 export class DivisionEquation extends RandomEquation{
 
+    private obelus = "\u00F7";
+
     constructor(difficulty: number, equation?: Array<any>, answer?: number) {
         // Start by calling super
         super(difficulty, equation, answer);
@@ -38,10 +40,10 @@ export class DivisionEquation extends RandomEquation{
             this.answer = quotient;
 
             // Equation stores the terms for the question
-            this.equation = [termOne, "/", termTwo];
+            this.equation = [termOne, this.obelus, termTwo];
 
             // Print is the written question
-            this.print = String(termOne) + "/" + String(termTwo) + "= ?";
+            this.print = String(termOne) + " " + this.obelus +  " " + String(termTwo) + " = ?";
         } else {
             // If difficulty less than zero, do a basic times table but with division
             // factorOne = x, factorTwo = y, product = z
@@ -54,10 +56,10 @@ export class DivisionEquation extends RandomEquation{
             this.answer = factorTwo;
 
             // store equation
-            this.equation = [product, "/", factorOne];
+            this.equation = [product, this.obelus, factorOne];
 
             // print equation
-            this.print = String(product) + "/" + String(factorOne) + "= ?";
+            this.print = String(product) + " " + this.obelus +  " " + String(factorOne) + " = ?";
         }
     }
 
