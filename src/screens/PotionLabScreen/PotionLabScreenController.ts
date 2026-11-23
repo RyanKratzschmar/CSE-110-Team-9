@@ -5,23 +5,14 @@ import type { ScreenSwitcher } from "../../types.ts";
 import type { GameSession } from "../../GameSession.ts";
 import { PotionLabScreenView } from "./PotionLabScreenView.ts";
 import type { PotionLab } from "../../../backend/game/PotionLab.ts";
-import {
-    HEAL_PERCENT,
-    POISON_ROUNDS,
-    STRENGTH_ROUNDS,
-    type PotionType,
-    type RecipeLevel,
-} from "../../../backend/game/Potion.ts";
+import { describePotion, type PotionType, type RecipeLevel } from "../../../backend/game/Potion.ts";
 
 const POTION_NAMES: Record<PotionType, string> = { healing: "Healing", strength: "Strength", poison: "Poison" };
 
-// Text for a recipe card, e.g. "Solve a 2-part equation. Restores 20% of your max HP."
+// Text for a recipe card, e.g. "Solve a 2-part equation. Heals 20% max HP."
 function describeRecipe(type: PotionType, level: RecipeLevel): string {
     const solve = level === "basic" ? "Solve a 2-part equation." : "Solve a 3-part equation.";
-    if (type === "healing") return `${solve} Restores ${HEAL_PERCENT[level]}% of your max HP.`;
-    const rounds = type === "strength" ? STRENGTH_ROUNDS[level] : POISON_ROUNDS[level];
-    const effect = type === "strength" ? "Boosts your damage" : "Poisons the enemy";
-    return `${solve} ${effect} for ${rounds} round${rounds === 1 ? "" : "s"}.`;
+    return `${solve} ${describePotion({ type, level })}.`;
 }
 
 export class PotionLabScreenController extends ScreenController {

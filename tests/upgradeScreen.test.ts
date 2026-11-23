@@ -105,7 +105,7 @@ describe("UpgradeMinigameScreenController", () => {
 
     it("loads the question from the shared local challenge", () => {
         expect(session.state.upgradeMinigame).not.toBeNull();
-        expect(controller["model"].getState()).toMatchObject({ phase: "solving", problemText: "1*1= ?", timeLeft: 60 });
+        expect(controller["model"].getState()).toMatchObject({ phase: "solving", problemText: "1 \u00D7 1 = ?", timeLeft: 60 });
     });
 
     it("checks answers locally and retries the same question after a mistake", () => {
@@ -152,7 +152,7 @@ describe("UpgradeMinigameScreenController", () => {
         expect(switchToScreen).not.toHaveBeenCalled();
         expect(window.alert).not.toHaveBeenCalled();
         controller["handleLeave"]();
-        expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "rest" });
     });
 
     it("reopening resumes the same deadline and score", () => {
@@ -166,13 +166,13 @@ describe("UpgradeMinigameScreenController", () => {
         expect(controller["model"].getState()).toMatchObject({ correctCount: 1, timeLeft: 55 });
     });
 
-    it("Leave goes to the map and stops the displayed timer", () => {
+    it("Leave goes back to the rest stop and stops the displayed timer", () => {
         vi.advanceTimersByTime(5_000);
         controller["handleLeave"]();
         const timeLeft = controller["model"].getState().timeLeft;
         vi.advanceTimersByTime(10_000);
 
-        expect(switchToScreen).toHaveBeenCalledWith({ type: "map" });
+        expect(switchToScreen).toHaveBeenCalledWith({ type: "rest" });
         expect(controller["model"].getState().timeLeft).toBe(timeLeft);
         expect(session.state.upgradeClaimedLevel).toBeNull();
     });

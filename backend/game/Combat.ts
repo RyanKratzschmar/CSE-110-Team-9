@@ -4,7 +4,14 @@ import {Player} from "./Player";
 import {Monster} from "./Monster";
 import type { RandomEquation } from "../equations/RandomEquation";
 import { getEquation } from "../equations/EquationFactory"; 
-import { HEAL_PERCENT, type Potion } from "./Potion";
+import {
+    HEAL_PERCENT,
+    POISON_DAMAGE_PERCENT,
+    POISON_ROUNDS,
+    STRENGTH_DAMAGE_MULTIPLIER,
+    STRENGTH_ROUNDS,
+    type Potion,
+} from "./Potion";
 
 type BattleStatus = "active" | "won" | "lost";
 
@@ -22,11 +29,15 @@ type AnswerResult = {
     playerHp: number;
     enemyHp: number;
     result: "win" | "lose" | "ongoing";
+    strengthBoosted: boolean; // a correct answer did boosted damage from a strength potion
+    poisonDamage: number; // damage poison did to the enemy this round
 };
 
 export type PotionResult = {
     potion: Potion;
-    healed: number;
+    healed: number; // HP restored (0 for strength and poison potions)
+    strengthRounds: number; // rounds of boosted damage left after drinking
+    poisonRounds: number; // rounds of poison left on the enemy after drinking
     damageTaken: number;
     playerHp: number;
     enemyHp: number;
@@ -42,6 +53,8 @@ export class Combat {
     private questionId = 1;
     private questionResolved = false;
     private difficulty: number;
+    private strengthRounds = 0; // answered questions left with boosted damage
+    private poisonRounds = 0; // answered questions left with the enemy poisoned
 
     constructor(player: Player, enemy: Monster, difficulty: number,
         private readonly generateEquation: () => RandomEquation = () =>
@@ -68,6 +81,11 @@ export class Combat {
 
     getEnemyMaxHp(): number {
         return this.enemy.maxHp;
+    }
+
+    // Rounds left on potion effects, for the combat screen
+    getActiveEffects(): { strengthRounds: number; poisonRounds: number } {
+        return { strengthRounds: this.strengthRounds, poisonRounds: this.poisonRounds };
     }
 
     currentQuestion() : CurrentQuestion {
@@ -97,13 +115,20 @@ export class Combat {
 
         this.questionResolved = true;
 
+        // A strength potion boosts this round's attack; the round is used up either way
+        const strengthActive = this.strengthRounds > 0;
+        if (strengthActive) this.strengthRounds -= 1;
+
         // damage the monster
         if (correct) {
-            this.enemy.takeDamage(this.player.attack);
+            const multiplier = strengthActive ? STRENGTH_DAMAGE_MULTIPLIER : 1;
+            this.enemy.takeDamage(this.player.attack * multiplier);
         }
         else { // damage the player
             this.player.takeDamage(this.enemy.attack);
         }
+
+        const poisonDamage = this.tickPoison();
 
         this.checkBattleStatus();
 
@@ -121,6 +146,8 @@ export class Combat {
                     : status === "lost"
                         ? "lose"
                         : "ongoing",
+            strengthBoosted: correct && strengthActive,
+            poisonDamage,
         };
     }
 
@@ -148,9 +175,15 @@ export class Combat {
         this.player.inventory.splice(index, 1);
 
         const prevHp = this.player.hp;
-        const healPercent = (HEAL_PERCENT[potion.level] ?? 20) + this.player.potionHealingBonus;
-        const healAmount = Math.max(1, Math.round((this.player.maxHp * healPercent) / 100));
-        this.player.heal(healAmount);
+        if (potion.type === "strength") {
+            this.strengthRounds += STRENGTH_ROUNDS[potion.level];
+        } else if (potion.type === "poison") {
+            this.poisonRounds += POISON_ROUNDS[potion.level];
+        } else {
+            const healPercent = (HEAL_PERCENT[potion.level] ?? 20) + this.player.potionHealingBonus;
+            const healAmount = Math.max(1, Math.round((this.player.maxHp * healPercent) / 100));
+            this.player.heal(healAmount);
+        }
         const healed = this.player.hp - prevHp;
 
         // Enemy counter-attacks
@@ -165,6 +198,8 @@ export class Combat {
         return {
             potion,
             healed,
+            strengthRounds: this.strengthRounds,
+            poisonRounds: this.poisonRounds,
             damageTaken,
             playerHp: this.player.hp,
             enemyHp: this.enemy.hp,
@@ -177,6 +212,15 @@ export class Combat {
         };
     }
 
+
+    // Poison hurts the enemy once per answered question while it lasts; returns the damage done
+    private tickPoison(): number {
+        if (this.poisonRounds <= 0 || this.enemy.isDead()) return 0;
+        this.poisonRounds -= 1;
+        const hpBefore = this.enemy.hp;
+        this.enemy.takeDamage(Math.max(1, Math.round((this.enemy.maxHp * POISON_DAMAGE_PERCENT) / 100)));
+        return hpBefore - this.enemy.hp;
+    }
 
     private checkBattleStatus(): void {
         if (this.player.isDead()) {
