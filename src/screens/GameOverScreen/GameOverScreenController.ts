@@ -9,10 +9,6 @@ export class GameOverScreenController extends ScreenController {
     constructor(screenSwitcher: ScreenSwitcher, private readonly gameSession: GameSession) {
         super();
         this.view = new GameOverScreenView(
-            () => {
-                this.gameSession.newGame();
-                screenSwitcher.switchToScreen({ type: "map" });
-            },
             () => screenSwitcher.switchToScreen({ type: "menu" }),
         );
     }

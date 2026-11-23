@@ -5,7 +5,7 @@ import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 export class GameOverScreenView implements View {
     private readonly group = new Konva.Group({ visible: false });
 
-    constructor(onPlayAgain: () => void, onMainMenu: () => void) {
+    constructor(onPlayAgain: () => void) {
         this.group.add(new Konva.Rect({
             width: STAGE_WIDTH,
             height: STAGE_HEIGHT,
@@ -31,39 +31,33 @@ export class GameOverScreenView implements View {
             fill: "white",
         }));
 
-        const buttons = [
-            { label: "Play Again", name: "play-again", onClick: onPlayAgain },
-            { label: "Main Menu", name: "main-menu", onClick: onMainMenu },
-        ];
-        buttons.forEach(({ label, name, onClick }, index) => {
-            const button = new Konva.Group({
-                name,
-                x: (STAGE_WIDTH - 360) / 2,
-                y: 480 + index * 120,
-            });
-            button.add(new Konva.Rect({
-                width: 360,
-                height: 85,
-                cornerRadius: 12,
-                fill: "#FFC943",
-            }));
-            button.add(new Konva.Text({
-                text: label,
-                width: 360,
-                height: 85,
-                align: "center",
-                verticalAlign: "middle",
-                fontSize: 36,
-                fontFamily: "Arial",
-                fontStyle: "bold",
-                fill: "#180221",
-                listening: false,
-            }));
-            button.on("click tap", onClick);
-            button.on("mouseenter", () => { document.body.style.cursor = "pointer"; });
-            button.on("mouseleave", () => { document.body.style.cursor = "default"; });
-            this.group.add(button);
+        const button = new Konva.Group({
+            name: "play-again",
+            x: (STAGE_WIDTH - 360) / 2,
+            y: 480,
         });
+        button.add(new Konva.Rect({
+            width: 360,
+            height: 85,
+            cornerRadius: 12,
+            fill: "#FFC943",
+        }));
+        button.add(new Konva.Text({
+            text: "Play Again",
+            width: 360,
+            height: 85,
+            align: "center",
+            verticalAlign: "middle",
+            fontSize: 36,
+            fontFamily: "Arial",
+            fontStyle: "bold",
+            fill: "#180221",
+            listening: false,
+        }));
+        button.on("click tap", onPlayAgain);
+        button.on("mouseenter", () => { document.body.style.cursor = "pointer"; });
+        button.on("mouseleave", () => { document.body.style.cursor = "default"; });
+        this.group.add(button);
     }
 
     getGroup(): Konva.Group {
