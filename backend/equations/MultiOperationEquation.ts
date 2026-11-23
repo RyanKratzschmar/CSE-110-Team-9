@@ -38,17 +38,17 @@ export class MultiOperationEquation extends RandomEquation{
 
         // Determine type of first part
         if (coinflip < 0.5) {
-            partOne = new MultiplicationEquation(-1);
+            partOne = new MultiplicationEquation(difficulty);
         } else {
-            partOne = new DivisionEquation(-1);
+            partOne = new DivisionEquation(difficulty);
         }
         
         // Determine type of second part
         coinflip = Math.random();
         if (coinflip < 0.5) {
-            partTwo = new MultiplicationEquation(-1);
+            partTwo = new MultiplicationEquation(difficulty);
         } else {
-            partTwo = new DivisionEquation(-1);
+            partTwo = new DivisionEquation(difficulty);
         }
 
         // Determine to add or subtract the two
@@ -65,9 +65,9 @@ export class MultiOperationEquation extends RandomEquation{
             let eq;
             coinflip = Math.random();
             if (coinflip < 0.5) {
-                eq = new MultiplicationEquation(-1);
+                eq = new MultiplicationEquation(difficulty);
             } else {
-                eq = new DivisionEquation(-1);
+                eq = new DivisionEquation(difficulty);
             }
             
             // Determine to add or subtract
@@ -101,7 +101,7 @@ export class MultiOperationEquation extends RandomEquation{
         // Get the print from the full array
         let written = "";
         for (let i = 0; i < this.equation.length; i++) {
-            written = written + String(this.equation[i]);
+            written = written + String(this.equation[i]) + " ";
         }
         written = written + "= ?";
         this.print = written;
@@ -125,7 +125,7 @@ export class MultiOperationEquation extends RandomEquation{
         // Get the print from the full array
         let written = "";
         for (let i = 0; i < this.equation.length; i++) {
-            written = written + String(this.equation[i]);
+            written = written + String(this.equation[i]) + " ";
         }
         written = written + "= ?";
         this.print = written;
