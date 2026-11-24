@@ -4,6 +4,7 @@ import { WrongAnswerPopUpView } from '../view/WrongAnswerPopUpView';
 import type { WrongAnswerExplainer } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 import { LongDivisionExplanation } from '../../../../backend/equations/wrongAnswerExplanation/LongDivisionExplanation';
 import { LongMultiplicationExplanation } from '../../../../backend/equations/wrongAnswerExplanation/LongMultiplicationExplanation';
+import { PEMDAS_EXPLANATION } from '../../../../backend/equations/wrongAnswerExplanation/PemdasExplanation';
 
 const LINE_SCROLL = 60;
 
@@ -29,6 +30,11 @@ export class WrongAnswerPopUpController {
     //Opens the pop-up with the worked solution for multiplicand × multiplier
     showLongMultiplicationExplanation(multiplicand: number, multiplier: number): void {
         this.show(new LongMultiplicationExplanation(multiplicand, multiplier));
+    }
+
+    //Opens the pop-up with the order of operations (PEMDAS) reminder
+    showPemdasExplanation(): void {
+        this.model.open(PEMDAS_EXPLANATION);
     }
 
     //Opens the pop-up with the worked solution from any explainer

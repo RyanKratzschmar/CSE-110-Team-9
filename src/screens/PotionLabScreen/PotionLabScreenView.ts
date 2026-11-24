@@ -48,6 +48,9 @@ export class PotionLabScreenView implements View {
     private answering = false;
     private readonly potionStartY = 200;
     private readonly onSubmit: () => void;
+    private readonly canType: () => boolean;
+    private pemdasHelpButton: Konva.Rect;
+    private pemdasHelpText: Konva.Text;
 
     constructor(
         onLeaveClick : () => void,
@@ -56,9 +59,12 @@ export class PotionLabScreenView implements View {
         onSubmitClick : () => void,
         onContinueClick : () => void,
         onTypeClick : (type: PotionType) => void,
+        onPemdasHelpClick : () => void = () => {},
+        canType : () => boolean = () => true,
     ){
 
     this.onSubmit = onSubmitClick;
+    this.canType = canType;
 
     this.group = new Konva.Group({ visible: false });
         
@@ -507,6 +513,51 @@ export class PotionLabScreenView implements View {
         });
         this.group.add(this.submitText);
 
+        this.pemdasHelpButton = new Konva.Rect({
+            width: 200,
+            height: 75,
+            cornerRadius: 10,
+            fill: "#FF9E42",
+            stroke: "#cc721d",
+            x: 1075,
+            y: 750,
+            visible: false,
+        });
+        this.group.add(this.pemdasHelpButton);
+
+        this.pemdasHelpText = new Konva.Text({
+            text: "Hint",
+            fontSize: 40,
+            fontFamily: "arial",
+            fontStyle: "bold",
+            fill: "#000000",
+            x: 1075,
+            y: 750,
+            width: 200,
+            height: 75,
+            align: "center",
+            verticalAlign: "middle",
+            visible: false,
+            listening: false,
+        });
+        this.group.add(this.pemdasHelpText);
+
+        this.pemdasHelpButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+            this.pemdasHelpButton.fill("#B678D0");
+        });
+
+        this.pemdasHelpButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+            this.pemdasHelpButton.fill("#FF9E42");
+        });
+
+        this.pemdasHelpButton.on("click tap", () => {
+            document.body.style.cursor = "default";
+            this.pemdasHelpButton.fill("#FF9E42");
+            onPemdasHelpClick();
+        });
+
         // Handle Submit Button Click
         this.submitAnswerButton.on("mouseenter", () => {
             document.body.style.cursor = "pointer";
@@ -699,12 +750,13 @@ export class PotionLabScreenView implements View {
         [
             this.equationTextBox, this.equationText, this.answerBox, this.answerValue,
             this.submitAnswerButton, this.submitText, this.responseText,
+            this.pemdasHelpButton, this.pemdasHelpText,
         ].forEach((node) => node.visible(visible));
     }
 
     // Typing: digits, a minus sign at the start, Backspace, Enter to submit
     private readonly handleKeyDown = (event: KeyboardEvent): void => {
-        if (!this.answering || !this.group.visible()) return;
+        if (!this.answering || !this.group.visible() || !this.canType()) return;
         if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
         if (/^[0-9]$/.test(event.key)) {
             if (this.answerBuffer.length < 12) this.answerBuffer += event.key;

@@ -56,7 +56,25 @@ export class UpgradeMinigameScreenController extends ScreenController {
     hide(): void {
         this.roundId++;
         this.stopTimer();
+        this.discardUnfinishedRound();
         super.hide();
+    }
+
+    //If the player leaves before the timer ends, throw that round away (no matter how many were solved) so reopening the screen starts a fresh one
+    private discardUnfinishedRound(): void {
+        if (this.model.getState().phase !== "solving" || this.game === null) return;
+        if (this.game.isFinished()) {
+            //The timer already ran out, so the round counts as completed rather than abandoned
+            this.finishRound();
+            return;
+        }
+        const state = this.gameSession.state;
+        if (state.upgradeMinigame === this.game) {
+            state.upgradeMinigame = null;
+            state.upgradeMinigameLevel = null;
+        }
+        this.game = null;
+        this.questionId = null;
     }
 
     //Returns the upgrade minigame view
@@ -127,7 +145,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
         this.model.retryCurrentQuestion();
     }
 
-    //Plays the click sound and returns to the map (used by both Leave and Exit)
+    //Plays the click sound and returns to the rest stop's minigame choices (used by both Leave and Exit)
     private handleLeave(): void {
         this.playClick();
         this.leaveScreen();
@@ -178,11 +196,12 @@ export class UpgradeMinigameScreenController extends ScreenController {
         }
     }
 
-    //Stops the timer, drops any pending upgrade reply, and returns to the map
+    //Stops the timer, drops any pending upgrade reply, and returns to the rest stop so "Leave Rest" still finishes the level
     private leaveScreen(): void {
         this.roundId++;
         this.stopTimer();
-        this.screenSwitcher.switchToScreen({ type: "map" });
+        this.discardUnfinishedRound();
+        this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 
     //Plays the click sound

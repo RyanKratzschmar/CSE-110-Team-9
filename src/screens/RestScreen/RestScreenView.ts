@@ -431,6 +431,15 @@ export class RestScreenView implements View {
         this.upgradeButtonText.visible(true);
     }
 
+    // Hides the choose-a-minigame pop up so a new rest stop starts on the HP Restored panel
+    hideMinigamePopUp(): void {
+        this.popUpOverlay.visible(false);
+        this.potionButton.visible(false);
+        this.upgradeButton.visible(false);
+        this.potionButtonText.visible(false);
+        this.upgradeButtonText.visible(false);
+    }
+
     /**
      * Show the screen
      */

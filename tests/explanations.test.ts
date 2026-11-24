@@ -43,6 +43,31 @@ describe('WrongAnswerPopUpController', () => {
         expect(controller.isOpen()).toBe(true);
     });
 
+    it('opens for the PEMDAS explanation and shows its text', () => {
+        controller.showPemdasExplanation();
+        expect(controller.isOpen()).toBe(true);
+        const texts = stage.find('Text').map((node) => (node as Konva.Text).text());
+        expect(texts).toContain('Order of Operations');
+        expect(texts).toContain('Remember The Order Of Operations\nFor This Problem:');
+        for (const [letter, word] of [['P', 'Parentheses'], ['E', 'Exponents'], ['M', 'Multiplication'], ['D', 'Division'], ['A', 'Addition'], ['S', 'Subtraction']]) {
+            expect(texts).toContain(letter);
+            expect(texts).toContain(word);
+        }
+    });
+
+    it('sizes the PEMDAS explanation to fit, with no scrolling', () => {
+        controller.showPemdasExplanation();
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
+        expect(controller.isOpen()).toBe(true);
+        expect(stage.find('Rect').some((node) => node.draggable())).toBe(false);
+    });
+
+    it('closes the PEMDAS explanation with Escape', () => {
+        controller.showPemdasExplanation();
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        expect(controller.isOpen()).toBe(false);
+    });
+
     it('closes when asked to', () => {
         controller.showLongDivisionExplanation(156, 12);
         controller.close();

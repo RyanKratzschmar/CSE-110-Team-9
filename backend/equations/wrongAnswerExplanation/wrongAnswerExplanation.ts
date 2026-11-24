@@ -48,6 +48,20 @@ export interface WorkedSolution {
     readonly layout: WorkLayout;
 }
 
+//A plain-text explanation for PEMDAS
+export interface TextExplanation {
+    readonly kind: 'text';
+    readonly title: string;
+    readonly body: string;
+}
+
+export type PopUpContent = WorkedSolution | TextExplanation;
+
+//Checks if the pop up content is a text explanation
+export function isTextExplanation(content: PopUpContent): content is TextExplanation {
+    return 'kind' in content && content.kind === 'text';
+}
+
 //Anything that can produce a WorkedSolution (both explanation classes implement this)
 export interface WrongAnswerExplainer {
     explain(): WorkedSolution;

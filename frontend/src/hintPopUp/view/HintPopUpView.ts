@@ -39,17 +39,24 @@ const COLORS = {
     ink: '#1e293b',
     muted: '#64748b',
     divider: '#e2e8f0',
-    accent: '#0284c7',
-    accentBg: '#e0f2fe',
+    accent: '#7c3aed',
+    accentBg: '#ede9fe',
+    pillInk: '#6d28d9',
+    headerFrom: '#874FFF',
+    headerTo: '#5B21B6',
+    headerInk: '#ffffff',
+    headerMuted: '#e9d5ff',
     tipBg: '#fffbeb',
-    tipBorder: '#fef08a',
+    tipBorder: '#fde68a',
+    tipStripe: '#f59e0b',
     tipText: '#854d0e',
     tipTitle: '#713f12',
-    closeBg: '#e2e8f0',
-    closeBgHover: '#cbd5e1',
+    closeBg: 'rgba(255, 255, 255, 0.18)',
+    closeBgHover: 'rgba(255, 255, 255, 0.32)',
     track: '#f1f5f9',
-    thumb: '#94a3b8',
+    thumb: '#c4b5fd',
 } as const;
+const PANEL_RADIUS = 20;
 
 function panelSize(available: number, preferredMin: number, max: number): number {
     return Math.min(max, Math.max(available - PANEL_MARGIN * 2, Math.min(preferredMin, available)));
@@ -162,11 +169,11 @@ export class HintPopUpView {
                 width: pw,
                 height: ph,
                 fill: COLORS.panel,
-                cornerRadius: 16,
+                cornerRadius: PANEL_RADIUS,
                 shadowColor: '#000',
-                shadowBlur: 28,
-                shadowOpacity: 0.22,
-                shadowOffsetY: 10,
+                shadowBlur: 32,
+                shadowOpacity: 0.25,
+                shadowOffsetY: 12,
             }),
         );
 
@@ -179,7 +186,7 @@ export class HintPopUpView {
             fontFamily: FONT,
             fontSize: 22,
             fontStyle: 'bold',
-            fill: COLORS.ink,
+            fill: COLORS.headerInk,
         });
 
         const subtitle = new Konva.Text({
@@ -188,19 +195,12 @@ export class HintPopUpView {
             text: 'Step-by-step guidance and strategies to help you solve this!',
             fontFamily: FONT,
             fontSize: 13,
-            fill: COLORS.muted,
+            fill: COLORS.headerMuted,
         });
-        panel.add(title, subtitle);
-        this.drawCloseButton(panel, pw - PAD - 32, PAD - 4);
 
         const headerBottom = subtitle.y() + subtitle.height() + 14;
-        panel.add(
-            new Konva.Line({
-                points: [0, headerBottom, pw, headerBottom],
-                stroke: COLORS.divider,
-                strokeWidth: 1,
-            }),
-        );
+        panel.add(this.headerBand(pw, headerBottom), title, subtitle);
+        this.drawCloseButton(panel, pw - PAD - 32, PAD - 4);
 
         // Viewport Group (clipping bounds)
         const viewport: Box = {
@@ -230,6 +230,7 @@ export class HintPopUpView {
                         points: [0, y, contentWidth, y],
                         stroke: COLORS.divider,
                         strokeWidth: 1,
+                        dash: [6, 6],
                     }),
                 );
                 y += STEP_GAP;
@@ -374,17 +375,25 @@ export class HintPopUpView {
 
         // Badge: e.g. "HINT 1"
         const badge = new Konva.Text({
-            x: 0,
-            y,
+            x: 10,
+            y: y + 4,
             text: `HINT ${index + 1}`,
             fontFamily: FONT,
             fontSize: 12,
             fontStyle: 'bold',
             letterSpacing: 1,
-            fill: COLORS.accent,
+            fill: COLORS.pillInk,
         });
-        parent.add(badge);
-        y += badge.height() + 6;
+        const pill = new Konva.Rect({
+            x: 0,
+            y,
+            width: badge.width() + 20,
+            height: badge.height() + 8,
+            fill: COLORS.accentBg,
+            cornerRadius: (badge.height() + 8) / 2,
+        });
+        parent.add(pill, badge);
+        y += pill.height() + 8;
 
         // Step Title
         const title = new Konva.Text({
@@ -448,10 +457,11 @@ export class HintPopUpView {
         if (step.tip) {
             y += 8;
             const tipInset = 12;
-            const tipTextWidth = width - tipInset * 2;
+            const tipStripeWidth = 5;
+            const tipTextWidth = width - tipInset * 2 - tipStripeWidth;
 
             const tipText = new Konva.Text({
-                x: tipInset,
+                x: tipInset + tipStripeWidth,
                 y: y + tipInset,
                 width: tipTextWidth,
                 text: `💡 Tip: ${step.tip}`,
@@ -471,15 +481,35 @@ export class HintPopUpView {
                 fill: COLORS.tipBg,
                 stroke: COLORS.tipBorder,
                 strokeWidth: 1,
-                cornerRadius: 8,
+                cornerRadius: 10,
+            });
+            const tipStripe = new Konva.Rect({
+                x: 0,
+                y,
+                width: tipStripeWidth,
+                height: tipBoxHeight,
+                fill: COLORS.tipStripe,
+                cornerRadius: [10, 0, 0, 10],
             });
 
             parent.add(tipBox);
+            parent.add(tipStripe);
             parent.add(tipText);
             y += tipBoxHeight;
         }
 
         return y - top;
+    }
+
+    private headerBand(width: number, height: number): Konva.Rect {
+        return new Konva.Rect({
+            width,
+            height,
+            cornerRadius: [PANEL_RADIUS, PANEL_RADIUS, 0, 0],
+            fillLinearGradientStartPoint: { x: 0, y: 0 },
+            fillLinearGradientEndPoint: { x: width, y: height },
+            fillLinearGradientColorStops: [0, COLORS.headerFrom, 1, COLORS.headerTo],
+        });
     }
 
     private drawCloseButton(parent: Konva.Group, x: number, y: number): void {
@@ -499,7 +529,8 @@ export class HintPopUpView {
             text: '✕',
             fontFamily: FONT,
             fontSize: 15,
-            fill: COLORS.ink,
+            fontStyle: 'bold',
+            fill: COLORS.headerInk,
         });
         button.add(circle, cross);
 

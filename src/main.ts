@@ -10,6 +10,8 @@ import { PotionLabScreenController } from "./screens/PotionLabScreen/PotionLabSc
 import { RestScreenController } from "./screens/RestScreen/RestScreenController.ts";
 import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen/UpgradeMinigameScreenController.ts"
 import { GameSession } from "./GameSession.ts";
+import { GameOverScreenController } from "./screens/GameOverScreen/GameOverScreenController.ts";
+import { createEndGameButton } from "./EndGameButton.ts";
 import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
@@ -32,6 +34,8 @@ class App implements ScreenSwitcher {
 	private restScreenController: RestScreenController;
 	private upgradeMinigameScreenController: UpgradeMinigameScreenController;
 	private leaderBoardScreenController: LeaderBoardScreenController;
+	private gameOverScreenController: GameOverScreenController;
+	private endGameButton: Konva.Group;
 
 	private readonly gameSession = new GameSession();
 
@@ -55,10 +59,11 @@ class App implements ScreenSwitcher {
 		this.titleScreenController = new TitleScreenController(this, this.gameSession);
 		this.combatMainScreenController = new CombatMainScreenController(this, explanationPopUp, hintPopUp, this.gameSession);
 		this.levelMapScreenController = new LevelMapScreenController(this, this.gameSession); //
-		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession);
+		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession, explanationPopUp);
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
+		this.gameOverScreenController = new GameOverScreenController(this, this.gameSession);
 
 		window.addEventListener("resize", () => {
 			hintPopUp.handleResize();
@@ -73,6 +78,13 @@ class App implements ScreenSwitcher {
 		this.layer.add(this.restScreenController.getView().getGroup());
 		this.layer.add(this.upgradeMinigameScreenController.getView().getGroup());
 		this.layer.add(this.leaderBoardScreenController.getView().getGroup());
+		this.layer.add(this.gameOverScreenController.getView().getGroup());
+
+		// Share the same End Game control across screens without duplicating their UI.
+		const controlsLayer = new Konva.Layer();
+		this.endGameButton = createEndGameButton(() => this.switchToScreen({ type: "gameover" }));
+		controlsLayer.add(this.endGameButton);
+		this.stage.add(controlsLayer);
 
 		// Draw the layer (render everything to the canvas)
 		this.layer.draw();
@@ -111,9 +123,14 @@ class App implements ScreenSwitcher {
 		this.restScreenController.hide();
 		this.upgradeMinigameScreenController.hide();
 		this.leaderBoardScreenController.hide();
+		this.gameOverScreenController.hide();
 
 		// Show the requested screen based on the screen type
 		switch (screen.type) {
+			case "gameover":
+				this.gameOverScreenController.show();
+				break;
+
 			case "menu":
 				this.titleScreenController.show();
 				break;
@@ -145,8 +162,10 @@ class App implements ScreenSwitcher {
 				this.leaderBoardScreenController.startLeaderboard();
 				break;
 		}
+		this.endGameButton.visible(screen.type !== "menu");
+		this.endGameButton.getLayer()?.batchDraw();
 	}
 }
 
 // Initialize the application
-new App("container");
+export const app = new App("container");

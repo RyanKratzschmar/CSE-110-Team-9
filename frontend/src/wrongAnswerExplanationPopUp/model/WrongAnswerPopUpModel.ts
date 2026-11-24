@@ -1,9 +1,9 @@
-import type { WorkedSolution } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
+import type { PopUpContent } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
 //What the pop-up is showing: whether it is open, which solution, and how far it is scrolled
 export interface WrongAnswerPopUpState {
   readonly isOpen: boolean;
-  readonly solution: WorkedSolution | null;
+  readonly solution: PopUpContent | null;
   readonly scrollY: number;
 }
 
@@ -27,8 +27,8 @@ export class WrongAnswerPopUpModel {
     };
   }
 
-  //Opens the pop-up with the given solution, scrolled to the top
-  open(solution: WorkedSolution): void {
+  //Opens the pop-up with the given solution or text explanation, scrolled to the top
+  open(solution: PopUpContent): void {
     this.setState({ isOpen: true, solution, scrollY: 0 });
   }
 
