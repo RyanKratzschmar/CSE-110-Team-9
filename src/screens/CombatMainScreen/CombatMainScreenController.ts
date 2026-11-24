@@ -154,6 +154,8 @@ export class CombatMainScreenController extends ScreenController {
         this.answering = false;
         this.syncCombat();
         this.pendingResult = result.result;
+
+        this.view.animateAttack(result.correct);
         const feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
         this.view.setFeedback(
             feedback + (result.result === "win" ? " You won!" : result.result === "lose" ? " Game over." : ""),
@@ -216,6 +218,7 @@ export class CombatMainScreenController extends ScreenController {
 
         this.potionPopUp.hide();
         this.syncCombat();
+        this.view.animateAttack(false);
 
         if (result.result === "lose") {
             finishCombat(state, "lose");
