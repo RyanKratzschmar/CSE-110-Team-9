@@ -1,6 +1,6 @@
 import Konva from 'konva';
 import type { WrongAnswerPopUpState } from '../model/WrongAnswerPopUpModel';
-import { isCellVisible, type ExplanationStep, type WorkCell, type WorkLayout, type WorkedSolution } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
+import { isCellVisible, isTextExplanation, type ExplanationStep, type PopUpContent, type TextExplanation, type WorkCell, type WorkLayout } from '../../../../backend/equations/wrongAnswerExplanation/wrongAnswerExplanation';
 
 //Callbacks the view uses to report scrolling and closing back to the controller
 export interface WrongAnswerPopUpViewHandlers {
@@ -21,7 +21,7 @@ type Slot = Omit<Box, 'height'>;
 
 //Everything kept from the last build so the view can scroll without redrawing
 interface Built {
-    solution: WorkedSolution;
+    solution: PopUpContent;
     stageWidth: number;
     stageHeight: number;
     content: Konva.Group;
@@ -39,7 +39,39 @@ const PANEL_MARGIN = 16;
 const SCROLLBAR_GUTTER = 16;
 const STEP_GAP = 18;
 
-const COLORS = { overlay: 'rgba(15, 23, 42, 0.55)', panel: '#ffffff', ink: '#1e293b', muted: '#64748b', divider: '#e2e8f0', paper: '#f8fafc', paperBorder: '#e2e8f0', current: '#2563eb', currentBg: '#dbeafe', carry: '#ea580c', placeholder: '#94a3b8', closeBg: '#e2e8f0', track: '#f1f5f9', thumb: '#cbd5e1'} as const;
+const COLORS = {
+    overlay: 'rgba(15, 23, 42, 0.55)',
+    panel: '#ffffff',
+    ink: '#1e293b',
+    muted: '#64748b',
+    divider: '#e2e8f0',
+    paper: '#f8fafc',
+    paperBorder: '#e2e8f0',
+    current: '#7c3aed',
+    currentBg: '#ede9fe',
+    carry: '#ea580c',
+    placeholder: '#94a3b8',
+    closeBg: 'rgba(255, 255, 255, 0.18)',
+    closeHover: 'rgba(255, 255, 255, 0.32)',
+    headerInk: '#ffffff',
+    headerMuted: '#e9d5ff',
+    pillBg: '#ede9fe',
+    pillInk: '#6d28d9',
+    track: '#f1f5f9',
+    thumb: '#c4b5fd',
+} as const;
+const PANEL_RADIUS = 20;
+
+const TEXT_CARD = {
+    maxWidth: 460,
+    pad: 24,
+    headerHeight: 72,
+    rowHeight: 48,
+    rowGap: 8,
+    headerFrom: '#874FFF',
+    headerTo: '#5B21B6',
+    badgeColors: ['#7c3aed', '#2563eb', '#0891b2', '#059669', '#d97706', '#e11d48'],
+} as const;
 
 //Picks a panel width or height that fills the available space (minus margins) but stays between preferredMin and max
 function panelSize(available: number, preferredMin: number, max: number): number {
@@ -120,8 +152,13 @@ export class WrongAnswerPopUpView {
         this.built = null;
     }
 
-    //Draws the overlay, panel, header, close button, every step and the scrollbar for a solution
-    private build(solution: WorkedSolution): void {
+    //Draws the overlay, panel, header, close button, every step and the scrollbar for a solution (plain-text PEMDAS explanations get their own fixed-size card instead)
+    private build(solution: PopUpContent): void {
+        if (isTextExplanation(solution)) {
+            this.buildTextCard(solution);
+            return;
+        }
+
         this.layer.destroyChildren();
         this.layer.visible(true);
         this.layer.moveToTop();
@@ -143,11 +180,11 @@ export class WrongAnswerPopUpView {
                 width: pw,
                 height: ph,
                 fill: COLORS.panel,
-                cornerRadius: 16,
+                cornerRadius: PANEL_RADIUS,
                 shadowColor: '#000',
-                shadowBlur: 28,
-                shadowOpacity: 0.22,
-                shadowOffsetY: 10,
+                shadowBlur: 32,
+                shadowOpacity: 0.25,
+                shadowOffsetY: 12,
             }),
         );
 
@@ -159,7 +196,7 @@ export class WrongAnswerPopUpView {
             fontFamily: FONT,
             fontSize: 21,
             fontStyle: 'bold',
-            fill: COLORS.ink,
+            fill: COLORS.headerInk,
         });
         const subtitle = new Konva.Text({
             x: PAD,
@@ -167,13 +204,12 @@ export class WrongAnswerPopUpView {
             text: 'Scroll to see every step.',
             fontFamily: FONT,
             fontSize: 13,
-            fill: COLORS.muted,
+            fill: COLORS.headerMuted,
         });
-        panel.add(title, subtitle);
-        this.drawCloseButton(panel, pw - PAD - 32, PAD - 4);
 
         const headerBottom = subtitle.y() + subtitle.height() + 14;
-        panel.add(new Konva.Line({ points: [0, headerBottom, pw, headerBottom], stroke: COLORS.divider, strokeWidth: 1 }));
+        panel.add(this.headerBand(pw, headerBottom), title, subtitle);
+        this.drawCloseButton(panel, pw - PAD - 32, PAD - 4);
 
         const viewport: Box = {
             x: PAD,
@@ -196,7 +232,7 @@ export class WrongAnswerPopUpView {
         solution.steps.forEach((step, i) => {
             if (i > 0) {
                 content.add(
-                    new Konva.Line({ points: [0, y, contentWidth, y], stroke: COLORS.divider, strokeWidth: 1 }),
+                    new Konva.Line({ points: [0, y, contentWidth, y], stroke: COLORS.divider, strokeWidth: 1, dash: [6, 6] }),
                 );
                 y += STEP_GAP;
             }
@@ -225,6 +261,169 @@ export class WrongAnswerPopUpView {
             trackY,
             trackHeight,
         };
+    }
+
+    //Draws a plain-text explanation as a card sized to fit its text (no scrolling).
+    private buildTextCard(explanation: TextExplanation): void {
+        this.layer.destroyChildren();
+        this.layer.visible(true);
+        this.layer.moveToTop();
+        this.setCursor('default');
+
+        const sw = this.stage.width();
+        const sh = this.stage.height();
+
+        const overlay = new Konva.Rect({ x: 0, y: 0, width: sw, height: sh, fill: COLORS.overlay });
+        overlay.on('click tap', () => this.handlers?.onClose());
+        this.layer.add(overlay);
+
+        const cw = Math.min(TEXT_CARD.maxWidth, Math.max(0, sw - PANEL_MARGIN * 2));
+        const pad = TEXT_CARD.pad;
+        const innerWidth = cw - pad * 2;
+        const card = new Konva.Group();
+        this.layer.add(card);
+
+        const title = new Konva.Text({
+            x: pad,
+            y: 0,
+            width: Math.max(0, cw - pad * 2 - 40),
+            height: TEXT_CARD.headerHeight,
+            verticalAlign: 'middle',
+            text: explanation.title,
+            fontFamily: FONT,
+            fontSize: 24,
+            fontStyle: 'bold',
+            fill: '#ffffff',
+        });
+
+        const content = new Konva.Group();
+        let y = TEXT_CARD.headerHeight + pad;
+        let rowIndex = 0;
+        let paragraph: string[] = [];
+        const flushParagraph = (): void => {
+            if (paragraph.length === 0) {
+                return;
+            }
+            const text = new Konva.Text({
+                x: pad,
+                y,
+                width: innerWidth,
+                align: 'center',
+                text: paragraph.join('\n'),
+                fontFamily: FONT,
+                fontSize: 17,
+                lineHeight: 1.35,
+                fontStyle: 'bold',
+                fill: COLORS.muted,
+            });
+            content.add(text);
+            y += text.height() + 10;
+            paragraph = [];
+        };
+        for (const line of explanation.body.split('\n')) {
+            const trimmed = line.trim();
+            if (trimmed === '') {
+                flushParagraph();
+                y += 6;
+                continue;
+            }
+            const match = /^(\S{1,3}):\s*(.+)$/.exec(trimmed);
+            if (match) {
+                flushParagraph();
+                this.drawTextCardRow(content, match[1], match[2], rowIndex, pad, y, innerWidth);
+                y += TEXT_CARD.rowHeight + TEXT_CARD.rowGap;
+                rowIndex++;
+            } else {
+                paragraph.push(trimmed);
+            }
+        }
+        flushParagraph();
+        const ch = y - (rowIndex > 0 ? TEXT_CARD.rowGap : 0) + pad;
+
+        const cardX = Math.round((sw - cw) / 2);
+        const cardY = Math.max(PANEL_MARGIN, Math.round((sh - ch) / 2));
+        card.position({ x: cardX, y: cardY });
+
+        card.add(
+            new Konva.Rect({
+                width: cw,
+                height: ch,
+                fill: COLORS.panel,
+                cornerRadius: PANEL_RADIUS,
+                shadowColor: '#000',
+                shadowBlur: 32,
+                shadowOpacity: 0.25,
+                shadowOffsetY: 12,
+            }),
+            this.headerBand(cw, TEXT_CARD.headerHeight),
+            title,
+            content,
+        );
+        this.drawCloseButton(card, cw - pad - 32, (TEXT_CARD.headerHeight - 32) / 2);
+
+        this.built = {
+            solution: explanation,
+            stageWidth: sw,
+            stageHeight: sh,
+            content,
+            viewportHeight: ch,
+            contentHeight: ch,
+            thumb: null,
+            trackY: 0,
+            trackHeight: 0,
+        };
+    }
+
+    //Draws one "letter: word" row of a text card, with a colored rounded badge for the letter
+    private drawTextCardRow(parent: Konva.Group, letter: string, word: string, index: number, x: number, y: number, width: number): void {
+        const color = TEXT_CARD.badgeColors[index % TEXT_CARD.badgeColors.length];
+        const h = TEXT_CARD.rowHeight;
+        const badge = h - 12;
+
+        parent.add(
+            new Konva.Rect({ 
+                x, 
+                y, 
+                width, 
+                height: h, 
+                fill: COLORS.paper, 
+                stroke: COLORS.paperBorder, 
+                strokeWidth: 1, 
+                cornerRadius: 12 
+            }),
+            new Konva.Rect({ 
+                x: x + 6, 
+                y: y + 6, 
+                width: badge, 
+                height: badge, 
+                fill: color, 
+                cornerRadius: 9 
+            }),
+            new Konva.Text({
+                x: x + 6,
+                y: y + 6,
+                width: badge,
+                height: badge,
+                align: 'center',
+                verticalAlign: 'middle',
+                text: letter,
+                fontFamily: FONT,
+                fontSize: 20,
+                fontStyle: 'bold',
+                fill: '#ffffff',
+            }),
+            new Konva.Text({
+                x: x + 6 + badge + 16,
+                y,
+                width: Math.max(0, width - badge - 28),
+                height: h,
+                verticalAlign: 'middle',
+                text: word,
+                fontFamily: FONT,
+                fontSize: 19,
+                fill: COLORS.ink,
+            }),
+        );
     }
 
     //Draws the scrollbar track and a draggable thumb, and returns the thumb
@@ -444,17 +643,25 @@ export class WrongAnswerPopUpView {
         let y = slot.y;
 
         const label = new Konva.Text({
-            x: slot.x,
-            y,
+            x: slot.x + 10,
+            y: y + 4,
             text: `STEP ${index + 1}`,
             fontFamily: FONT,
             fontSize: 12,
             fontStyle: 'bold',
             letterSpacing: 1,
-            fill: COLORS.current,
+            fill: COLORS.pillInk,
         });
-        parent.add(label);
-        y += label.height() + 6;
+        const pill = new Konva.Rect({
+            x: slot.x,
+            y,
+            width: label.width() + 20,
+            height: label.height() + 8,
+            fill: COLORS.pillBg,
+            cornerRadius: (label.height() + 8) / 2,
+        });
+        parent.add(pill, label);
+        y += pill.height() + 8;
 
         const title = new Konva.Text({
             x: slot.x,
@@ -505,12 +712,25 @@ export class WrongAnswerPopUpView {
         return y - slot.y;
     }
 
-    //Draws the round ✕ button that closes the pop-up
+    //Returns a purple gradient band covering the top of a panel, with rounded top corners
+    private headerBand(width: number, height: number): Konva.Rect {
+        return new Konva.Rect({
+            width,
+            height,
+            cornerRadius: [PANEL_RADIUS, PANEL_RADIUS, 0, 0],
+            fillLinearGradientStartPoint: { x: 0, y: 0 },
+            fillLinearGradientEndPoint: { x: width, y: height },
+            fillLinearGradientColorStops: [0, TEXT_CARD.headerFrom, 1, TEXT_CARD.headerTo],
+        });
+    }
+
+    //Draws the round ✕ button that closes the pop-up (styled for a purple header)
     private drawCloseButton(parent: Konva.Group, x: number, y: number): void {
         const size = 32;
         const button = new Konva.Group({ x, y });
+        const circle = new Konva.Circle({ x: size / 2, y: size / 2, radius: size / 2, fill: COLORS.closeBg });
         button.add(
-            new Konva.Circle({ x: size / 2, y: size / 2, radius: size / 2, fill: COLORS.closeBg }),
+            circle,
             new Konva.Text({
                 width: size,
                 height: size,
@@ -519,15 +739,24 @@ export class WrongAnswerPopUpView {
                 text: '✕',
                 fontFamily: FONT,
                 fontSize: 15,
-                fill: COLORS.ink,
+                fontStyle: 'bold',
+                fill: COLORS.headerInk,
             }),
         );
         button.on('click tap', (event) => {
             event.cancelBubble = true;
             this.handlers?.onClose();
         });
-        button.on('mouseenter', () => this.setCursor('pointer'));
-        button.on('mouseleave', () => this.setCursor('default'));
+        button.on('mouseenter', () => {
+            this.setCursor('pointer');
+            circle.fill(COLORS.closeHover);
+            this.layer.batchDraw();
+        });
+        button.on('mouseleave', () => {
+            this.setCursor('default');
+            circle.fill(COLORS.closeBg);
+            this.layer.batchDraw();
+        });
         parent.add(button);
     }
 

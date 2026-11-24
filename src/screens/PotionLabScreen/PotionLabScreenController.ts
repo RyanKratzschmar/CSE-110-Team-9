@@ -4,6 +4,7 @@ import { ScreenController } from "../../types.ts";
 import type { ScreenSwitcher } from "../../types.ts";
 import type { GameSession } from "../../GameSession.ts";
 import { PotionLabScreenView } from "./PotionLabScreenView.ts";
+import type { WrongAnswerPopUpController } from "../../../frontend/src/wrongAnswerExplanationPopUp/controller/WrongAnswerPopUpController.ts";
 import type { PotionLab } from "../../../backend/game/PotionLab.ts";
 import { describePotion, type PotionType, type RecipeLevel } from "../../../backend/game/Potion.ts";
 
@@ -20,7 +21,11 @@ export class PotionLabScreenController extends ScreenController {
     private clickSound: HTMLAudioElement;
     private selectedType: PotionType | null = null;
 
-    constructor(private readonly screenSwitcher: ScreenSwitcher, private readonly gameSession: GameSession) {
+    constructor(
+        private readonly screenSwitcher: ScreenSwitcher,
+        private readonly gameSession: GameSession,
+        private readonly explanationPopUp?: WrongAnswerPopUpController,
+    ) {
         super();
         this.view = new PotionLabScreenView(
             () => this.handleLeaveClick(),
@@ -29,6 +34,8 @@ export class PotionLabScreenController extends ScreenController {
             () => this.handleSubmitClick(),
             () => this.handleContinueClick(),
             (type) => this.handleTypeClick(type),
+            () => this.handlePemdasHelpClick(),
+            () => !this.explanationPopUp?.isOpen(),
         );
         this.clickSound = new Audio("/click.mp3");
     }
@@ -77,6 +84,12 @@ export class PotionLabScreenController extends ScreenController {
         this.view.showEquation(this.lab.chooseRecipe(level));
     }
 
+    // Opens the PEMDAS (order of operations) reminder pop-up
+    handlePemdasHelpClick(): void {
+        this.playClick();
+        this.explanationPopUp?.showPemdasExplanation();
+    }
+
     // One attempt: right = potion goes in the inventory, wrong = lab closes for this floor
     handleSubmitClick(): void {
         this.playClick();
@@ -110,6 +123,7 @@ export class PotionLabScreenController extends ScreenController {
 
     // Back to the rest stop, so "Leave Rest" still finishes the level
     private backToRest(): void {
+        this.explanationPopUp?.close();
         this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 
