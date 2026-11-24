@@ -56,7 +56,25 @@ export class UpgradeMinigameScreenController extends ScreenController {
     hide(): void {
         this.roundId++;
         this.stopTimer();
+        this.discardUnfinishedRound();
         super.hide();
+    }
+
+    //If the player leaves before the timer ends, throw that round away (no matter how many were solved) so reopening the screen starts a fresh one
+    private discardUnfinishedRound(): void {
+        if (this.model.getState().phase !== "solving" || this.game === null) return;
+        if (this.game.isFinished()) {
+            //The timer already ran out, so the round counts as completed rather than abandoned
+            this.finishRound();
+            return;
+        }
+        const state = this.gameSession.state;
+        if (state.upgradeMinigame === this.game) {
+            state.upgradeMinigame = null;
+            state.upgradeMinigameLevel = null;
+        }
+        this.game = null;
+        this.questionId = null;
     }
 
     //Returns the upgrade minigame view
@@ -182,6 +200,7 @@ export class UpgradeMinigameScreenController extends ScreenController {
     private leaveScreen(): void {
         this.roundId++;
         this.stopTimer();
+        this.discardUnfinishedRound();
         this.screenSwitcher.switchToScreen({ type: "rest" });
     }
 

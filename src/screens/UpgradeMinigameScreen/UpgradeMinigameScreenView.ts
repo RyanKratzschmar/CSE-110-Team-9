@@ -81,6 +81,7 @@ export class UpgradeMinigameScreenView implements View {
     private readonly submitButton: Konva.Group;
     private readonly nextButton: Konva.Group;
 
+    private readonly completeTitleText: Konva.Text;
     private readonly completeSolvedText: Konva.Text;
     private readonly statRows: Konva.Group;
     private readonly statValues = {} as Record<UpgradeType, Konva.Text>;
@@ -251,7 +252,7 @@ export class UpgradeMinigameScreenView implements View {
 
         this.completePanel = new Konva.Group();
         this.completePanel.add(this.createPanelBackground());
-        this.completePanel.add(new Konva.Text({
+        this.completeTitleText = new Konva.Text({
             x: PANEL_X,
             y: PANEL_Y + 30,
             width: PANEL_W,
@@ -261,7 +262,8 @@ export class UpgradeMinigameScreenView implements View {
             fontFamily: FONT,
             fontStyle: "bold",
             fill: DARK
-        }));
+        });
+        this.completePanel.add(this.completeTitleText);
 
         this.completeSolvedText = new Konva.Text({
             x: PANEL_X,
@@ -406,6 +408,8 @@ export class UpgradeMinigameScreenView implements View {
     //Updates the complete phase: the score, then the weapon, armor, and potion changes, a loading message, or an error
     private renderComplete(state: UpgradeMinigameState): void {
         this.completeSolvedText.text(`You solved ${state.correctCount} of ${state.attemptedCount}!`);
+        this.completeTitleText.visible(!state.resultMessage);
+        this.completeSolvedText.visible(!state.resultMessage);
 
         if (state.resultMessage) {
             this.statRows.visible(false);
