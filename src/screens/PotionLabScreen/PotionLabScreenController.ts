@@ -52,8 +52,11 @@ export class PotionLabScreenController extends ScreenController {
 
     startPotionLabScreen(): void {
         const player = this.gameSession.state.player;
+        const levelNum = this.gameSession.state.level.number;
         this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.selectedType = null;
+
+        this.view.setFloorNum(levelNum);
 
         if (this.lab.isClosed()) {
             this.view.showResult(false, "You already used the potion lab on this floor.");

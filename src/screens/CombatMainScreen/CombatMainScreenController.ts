@@ -285,6 +285,7 @@ ${effects}` : "")
         if (state.combat === null) state.combat = new Combat(state.player, new BasicMonster(node.difficulty), node.difficulty);
         this.answering = false;
         this.pendingResult = null;
+        this.view.setFloorNum(state.level.number);
         state.combat.startNextQuestion();
         this.syncCombat();
         this.view.returnToCombat();

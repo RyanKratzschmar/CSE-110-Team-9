@@ -51,6 +51,7 @@ export class PotionLabScreenView implements View {
     private readonly canType: () => boolean;
     private pemdasHelpButton: Konva.Rect;
     private pemdasHelpText: Konva.Text;
+    private floorText: Konva.Text;
 
     constructor(
         onLeaveClick : () => void,
@@ -165,7 +166,7 @@ export class PotionLabScreenView implements View {
         });
         this.group.add(settingsText);
 
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -174,7 +175,7 @@ export class PotionLabScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
 
         // Text at the top that says "Potions"
         const potionsText = new Konva.Text({
@@ -773,6 +774,11 @@ export class PotionLabScreenView implements View {
         this.answerValue.text(this.answerBuffer || "_");
         this.group.getLayer()?.batchDraw();
     };
+
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
+    }
+
 
     /**
      * Show the screen

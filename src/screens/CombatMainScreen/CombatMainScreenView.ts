@@ -40,6 +40,7 @@ export class CombatMainScreenView implements View {
     private explanationText: Konva.Text;
     private cancelAttackButton: Konva.Rect;
     private cancelAttackText: Konva.Text;
+    private floorText: Konva.Text;
 
     constructor(
         onHintClick : () => void,
@@ -285,7 +286,7 @@ export class CombatMainScreenView implements View {
         this.group.add(scoreBug);
 
         // Text Denoting Which Floor player is on.
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -294,7 +295,7 @@ export class CombatMainScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
 
         // Create Hint Button
         this.hintButton = new Konva.Rect({
@@ -840,6 +841,10 @@ export class CombatMainScreenView implements View {
         this.answerValue.text(this.answerBuffer || "_");
         this.group.getLayer()?.batchDraw();
     };
+
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
+    }
 
 	getGroup(): Konva.Group {
 		return this.group;
