@@ -10,7 +10,7 @@ import { MultiOperationEquation } from "../backend/equations/MultiOperationEquat
 
 // MultiplicationEquation Test
 describe("Multiplication", () => {
-    // Test for starting difficulty 1 -> base equation
+    // Test for starting difficulty 1 -> first term should be increased bounds 100-200, second term bounds 0-100
     it("works with difficulty 1", () => {
         const mult = new MultiplicationEquation(1);
         // Type should be multiplication
@@ -20,11 +20,11 @@ describe("Multiplication", () => {
         let term1 = mult.getEquation()[0];
         let term2 = mult.getEquation()[2];
         // Term 1 is a 2-3 digit number
-        expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeLessThanOrEqual(200);
+        expect(term1).toBeGreaterThanOrEqual(100);
         // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeLessThanOrEqual(100);
+        expect(term2).toBeGreaterThanOrEqual(0);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -32,7 +32,7 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
       });
 
-    // Test for input 0 -> should be same as 1
+    // Test for input 0 -> should have both bounds unaltered
     it("works with difficulty 0", () => {
         const mult = new MultiplicationEquation(0);
         // Type should be multiplication
@@ -43,10 +43,10 @@ describe("Multiplication", () => {
         let term2 = mult.getEquation()[2];
         // Term 1 is a 2-3 digit number
         expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeGreaterThanOrEqual(0);
         // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeLessThanOrEqual(100);
+        expect(term2).toBeGreaterThanOrEqual(0);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -54,7 +54,7 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
     });
 
-    // Test that first digit can be larger
+    // Test that both digits can be larger
     it("scales the first term with higher difficulty", () => {
         const mult = new MultiplicationEquation(20);
         // Type should be multiplication
@@ -63,12 +63,12 @@ describe("Multiplication", () => {
         expect(mult.getEquation().length).toBe(3);
         let term1 = mult.getEquation()[0];
         let term2 = mult.getEquation()[2];
-        // Term 1 is a 2-4 digit number
-        expect(term1).toBeLessThanOrEqual(1000);
-        expect(term1).toBeGreaterThanOrEqual(10);
-        // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        // Term 1 should have increased 10 times from 0-100 to 1000-1100
+        expect(term1).toBeLessThanOrEqual(1100);
+        expect(term1).toBeGreaterThanOrEqual(100);
+        // Term 2 should have increased 10 times from 0-100 to 1000-1100
+        expect(term2).toBeLessThanOrEqual(1100);
+        expect(term2).toBeGreaterThanOrEqual(100);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -76,31 +76,31 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
     });
 
-    // Test for difficulties greater than 25 -> should be larger than 2 terms
-    it("works with difficulty 30 (>25)", () => {
-        const mult = new MultiplicationEquation(30);
-        // Type should be multiplication
-        expect(mult.getType()).toBe("Multiplication")
-        // Equation is first term, mult symbol, second term
-        expect(mult.getEquation().length).toBe(5);
-        let term1 = mult.getEquation()[0];
-        let term2 = mult.getEquation()[2];
-        let term3 = mult.getEquation()[4];
-        // Term 1 is a 2-3 digit number
-        expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
-        // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
-        // Term 3 is a 2-4 digit number
-        expect(term3).toBeLessThanOrEqual(1000);
-        expect(term3).toBeGreaterThanOrEqual(10);
-        // Answer is first term times second term
-        expect(mult.getAnswer()).toBe(term1 * term2 * term3);
-        // Check print based on terms
-        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " " + "\u00D7" + " " + String(term3) + " = ?";
-        expect(mult.getPrint()).toBe(print);
-      });
+    // Test for difficulties greater than 25 -> should be larger than 2 terms -> NO LONGER NEEDED, NO MORE EXTRA TERMS
+    // it("works with difficulty 30 (>25)", () => {
+    //     const mult = new MultiplicationEquation(30);
+    //     // Type should be multiplication
+    //     expect(mult.getType()).toBe("Multiplication")
+    //     // Equation is first term, mult symbol, second term
+    //     expect(mult.getEquation().length).toBe(5);
+    //     let term1 = mult.getEquation()[0];
+    //     let term2 = mult.getEquation()[2];
+    //     let term3 = mult.getEquation()[4];
+    //     // Term 1 is a 2-3 digit number
+    //     expect(term1).toBeLessThanOrEqual(100);
+    //     expect(term1).toBeGreaterThanOrEqual(10);
+    //     // Term 2 is a 2-4 digit number
+    //     expect(term2).toBeLessThanOrEqual(1000);
+    //     expect(term2).toBeGreaterThanOrEqual(10);
+    //     // Term 3 is a 2-4 digit number
+    //     expect(term3).toBeLessThanOrEqual(1000);
+    //     expect(term3).toBeGreaterThanOrEqual(10);
+    //     // Answer is first term times second term
+    //     expect(mult.getAnswer()).toBe(term1 * term2 * term3);
+    //     // Check print based on terms
+    //     let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " " + "\u00D7" + " " + String(term3) + " = ?";
+    //     expect(mult.getPrint()).toBe(print);
+    //   });
 
     // Test for negative difficulties -> should have terms less than 13, product less than 145
     it("works with negative input", () => {
