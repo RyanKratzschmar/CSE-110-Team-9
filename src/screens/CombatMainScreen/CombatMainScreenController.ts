@@ -162,6 +162,7 @@ export class CombatMainScreenController extends ScreenController {
         this.answering = false;
         this.syncCombat();
         this.pendingResult = result.result;
+        this.view.animateAttack(result.correct);
         let feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
         if (result.strengthBoosted) feedback += " Your strength potion doubled the damage!";
         if (result.poisonDamage > 0) feedback += ` Poison did ${result.poisonDamage} damage.`;
@@ -240,6 +241,7 @@ export class CombatMainScreenController extends ScreenController {
 
         this.potionPopUp.hide();
         this.syncCombat();
+        this.view.animateAttack(false);
         const healedText = result.healed > 0 ? ` +${result.healed} HP.` : "";
         const effects = this.describeActiveEffects(combat);
         this.view.setPotionStatus(
