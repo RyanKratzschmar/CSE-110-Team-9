@@ -19,45 +19,37 @@ export class MultiplicationEquation extends RandomEquation{
         }
 
         if (difficulty >= 0) {
-            // Difficulty determines the number of terms (one extra term every X difficulty)
-            let numExtraTerms = Math.floor(difficulty / this.difficultyPerTerm) + 1;
+            // Difficulty determines the size of terms (one extra digit every 20 difficulty)
 
             // Difficulty determines the size of each term
-            let lowerBound = 10;
-            let upperBound = 1000;
+            let lowerBoundOne = 0;
+            let upperBoundOne = 100;
 
+            let lowerBoundTwo = 0;
+            let upperBoundTwo = 100;
 
-            // TermOne size is 3 digits only if difficulty mod 25 > 13
-            if ((difficulty % this.difficultyPerTerm) < (this.difficultyPerTerm / 2)) {
-                upperBound = 100; 
+            for (let i = 0; i < difficulty; i++) {
+                if ((i%2) == 0) {
+                    lowerBoundOne = lowerBoundOne + 100;
+                    upperBoundOne = upperBoundOne + 100;
+                } else {
+                    lowerBoundTwo = lowerBoundTwo + 100;
+                    upperBoundTwo = upperBoundTwo + 100;
+                }
             }
             
-            // Put term one in the equation and set product equal to term one
-            let termOne = this.generateNumber(lowerBound, upperBound);
-            this.equation.push(termOne);
-            let product = termOne;
+            // Generate both terms based on their bounds
+            let termOne = this.generateNumber(lowerBoundOne, upperBoundOne);
+            let termTwo = this.generateNumber(lowerBoundTwo, upperBoundTwo);
 
-            // Reset upperbound if it was changed
-            upperBound = 1000;
-            
-            // Get the rest of the terms, multiplying product and storing in the equation
-            for (let i = 0; i < numExtraTerms; i++) {
-                let extraTerm = this.generateNumber(lowerBound, upperBound);
-                this.equation.push(this.symbol);
-                this.equation.push(extraTerm);
-                product = product * extraTerm;
-            }
+            // Input them into the equation
+            this.equation = [termOne, this.symbol, termTwo];
 
-            // Answer is equal to the product of all factors
-            this.answer = product;
+            // Answer is equal to the product
+            this.answer = termOne * termTwo;
 
-            // Print holds the string version of the equation
-            let written = "";
-            for (let i = 0; i < this.equation.length; i++) {
-                written = written + String(this.equation[i]) + " ";
-            }
-            written = written + "= ?";
-            this.print = written;
+            // print equation
+            this.print = String(termOne) + " " + this.symbol + " " + String(termTwo) + " = ?"
         } else {
             // If difficulty less than zero, do a basic times table but with division
             // factorOne = x, factorTwo = y, product = z
