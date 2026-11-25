@@ -8,6 +8,10 @@
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
 
 export class RestScreenView implements View {
     private group: Konva.Group;
@@ -18,10 +22,13 @@ export class RestScreenView implements View {
     private purpleRect: Konva.Rect;
     private whiteRect: Konva.Rect;
     private hpRestoredText: Konva.Text;
+
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private hpRect: Konva.Rect;
     private newHealthBar: Konva.Rect;
     private newHPText: Konva.Text;
+
     private continueButton: Konva.Rect;
     private continueButtonText: Konva.Text;
     private popUpOverlay: Konva.Rect;
@@ -29,6 +36,7 @@ export class RestScreenView implements View {
     private upgradeButton: Konva.Circle;
     private potionButtonText: Konva.Text;
     private upgradeButtonText: Konva.Text;
+    private floorText: Konva.Text;
 
     constructor(
         onContinueClick: () => void,
@@ -74,12 +82,20 @@ export class RestScreenView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, 400
+        );
+        this.group.add(this.healthPercentage);
+
+
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -94,6 +110,7 @@ export class RestScreenView implements View {
         this.group.add(hpText);
 
         // Score Text
+        /*
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -135,8 +152,9 @@ export class RestScreenView implements View {
             fill: "black",
         });
         this.group.add(settingsText);
+        */
 
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -145,7 +163,7 @@ export class RestScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
 
         // add rectangle containing take a rest text
         this.restRect = new Konva.Rect({
@@ -222,7 +240,7 @@ export class RestScreenView implements View {
         // add new health bar
         this.newHealthBar = new Konva.Rect({
             fill: "#0bba14",
-            stroke: "#42a847",  
+            stroke: "#42a847",
             width: 200,
             height: 30,
             x: 675,
@@ -235,6 +253,17 @@ export class RestScreenView implements View {
         this.newHPText = new Konva.Text({
             fill: "white",
             text: "HP                              100/100",
+            fontSize: 25,
+            fontFamily: "arial",
+            x: 635,
+            y: 492.5,
+        });
+        this.group.add(this.newHPText);
+
+        // adds new HP text
+        this.newHPText = new Konva.Text({
+            fill: "white",
+            text: "HP",
             fontSize: 25,
             fontFamily: "arial",
             x: 635,
@@ -407,17 +436,14 @@ export class RestScreenView implements View {
         this.group.add(leave);
     }
 
-    // set the player's health bar
+    // Update the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }
@@ -439,6 +465,11 @@ export class RestScreenView implements View {
         this.potionButtonText.visible(false);
         this.upgradeButtonText.visible(false);
     }
+
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
+    }
+
 
     /**
      * Show the screen

@@ -90,6 +90,7 @@ export class RestScreenController extends ScreenController {
             this.view.hideMinigamePopUp();
         }
         const player = state.player;
+        this.view.setFloorNum(state.level.number)
         this.combatModel.setPlayerHealth(player.hp);
         this.combatModel.setPlayerMaxHealth(player.maxHp);
         this.view.setPlayerHealthBar(player.hp, player.maxHp);

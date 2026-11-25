@@ -42,6 +42,9 @@ export class UpgradeMinigameScreenController extends ScreenController {
 
     //Resets to the ready phase and shows the screen
     startUpgradeMinigame(): void {
+        const levelNum = this.gameSession.state.level.number;
+        this.view.setFloorNum(levelNum);
+
         this.game = null;
         this.questionId = null;
 
