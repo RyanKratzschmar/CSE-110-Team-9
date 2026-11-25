@@ -13,8 +13,8 @@ import { LeaderboardScreenView } from "../src/screens/LeaderboardScreen/Leaderbo
 import { LeaderBoardScreenController } from "../src/screens/LeaderboardScreen/LeaderboardScreenController";
 import { FloorLeaderboard } from "../backend/game/Leaderboard/FloorLeaderboard";
 import { GameSession } from "../src/GameSession";
-import { GameState } from "../backend/game/GameState";
-import { finishRest } from "../backend/game/GameManager";
+import { GameOverScreenController } from "../src/screens/GameOverScreen/GameOverScreenController";
+import { finishCombat, finishRest } from "../backend/game/GameManager";
 import { FIGHTS_PER_LEVEL } from "../backend/game/Level";
 
 //Creates a mock file system so that the tests never change the real leaderboard.json
@@ -41,15 +41,15 @@ const ENTRIES: LeaderboardEntry[] = [
 ];
 
 const FLOORS: FloorEntry[] = [
-    { timestamp: "2026-11-03T00:00:00.000Z", floor: 3 },
-    { timestamp: "2026-11-02T00:00:00.000Z", floor: 2 },
-    { timestamp: "2026-11-01T00:00:00.000Z", floor: 1 },
+    { gameNumber: 1, floor: 3 },
+    { gameNumber: 2, floor: 2 },
+    { gameNumber: 3, floor: 1 },
 ];
 
 
 //Creates many entries so that we can test the scrollability of the sorted list (descending order)
 function manyEntries(n: number): FloorEntry[] {
-    return Array.from({ length: n }, (_, i) => ({ timestamp: "2026-11-01T00:00:00.000Z", floor: n - i }));
+    return Array.from({ length: n }, (_, i) => ({ gameNumber: i + 1, floor: n - i }));
 }
 
 //Returns all the text drawn in the view so tests can check what is shown on screen
@@ -57,10 +57,10 @@ function textsIn(view: LeaderboardScreenView): string[] {
     return view.getGroup().find("Text").map((node) => (node as Konva.Text).text());
 }
 
-//Creates a game session whose floor log already has these floors
+//Creates a game session whose leaderboard already has games that cleared these floors
 function sessionWithFloors(...floors: number[]): GameSession {
     const session = new GameSession();
-    floors.forEach((f) => session.state.floorLog.recordFloor(f));
+    floors.forEach((f) => session.leaderboard.recordGame(f));
     return session;
 }
 
@@ -170,44 +170,57 @@ describe("FloorLeaderboard", () => {
         expect(new FloorLeaderboard().getSorted()).toEqual([]);
     });
 
-    it("returns floors highest first with valid timestamps", () => {
-        const log = new FloorLeaderboard();
-        log.recordFloor(1);
-        log.recordFloor(2);
-        log.recordFloor(3);
-        const result = log.getSorted();
-        expect(result.map((e) => e.floor)).toEqual([3, 2, 1]);
-        result.forEach((e) => expect(Number.isNaN(Date.parse(e.timestamp))).toBe(false));
+    it("numbers games in order and sorts by floor, tied games earliest first", () => {
+        const board = new FloorLeaderboard();
+        [2, 5, 2].forEach((f) => board.recordGame(f));
+        expect(board.getSorted()).toEqual([
+            { gameNumber: 2, floor: 5 },
+            { gameNumber: 1, floor: 2 },
+            { gameNumber: 3, floor: 2 },
+        ]);
     });
 
-    it("records the same floor only once", () => {
-        const log = new FloorLeaderboard();
-        log.recordFloor(2);
-        log.recordFloor(2);
-        expect(log.getSorted()).toHaveLength(1);
-    });
-
-    it("getSorted returns a copy, so changing it does not change the log", () => {
-        const log = new FloorLeaderboard();
-        log.recordFloor(1);
-        log.getSorted().pop();
-        expect(log.getSorted()).toHaveLength(1);
+    it("getSorted returns a copy, so changing it does not change the leaderboard", () => {
+        const board = new FloorLeaderboard();
+        board.recordGame(1);
+        board.getSorted().pop();
+        expect(board.getSorted()).toHaveLength(1);
     });
 });
 
-describe("Floor recording during a run", () => {
-    it("newGame clears the previous run and records Floor 1", () => {
-        const session = sessionWithFloors(1, 2, 3);
+describe("Recording finished games", () => {
+    const openGameOver = (session: GameSession) => new GameOverScreenController({ switchToScreen: vi.fn() }, session).show();
+
+    it("records the highest floor cleared and keeps it after New Game", () => {
+        const session = new GameSession();
         session.newGame();
-        expect(session.state.floorLog.getSorted().map((e) => e.floor)).toEqual([1]);
+        for (let i = 0; i < FIGHTS_PER_LEVEL; i++) session.state.level.completeCurrent(); // reach the rest stop
+        finishRest(session.state);
+        openGameOver(session);
+        session.newGame();
+        expect(session.leaderboard.getSorted()).toEqual([{ gameNumber: 1, floor: 1 }]);
     });
 
-    it("finishRest records the next floor", () => {
-        const state = new GameState();
-        state.floorLog.recordFloor(1);
-        for (let i = 0; i < FIGHTS_PER_LEVEL; i++) state.level.completeCurrent(); // reach the rest stop
-        finishRest(state);
-        expect(state.floorLog.getSorted().map((e) => e.floor)).toEqual([2, 1]);
+    it("counts a game once even if Game Over opens twice", () => {
+        const session = new GameSession();
+        session.newGame();
+        openGameOver(session);
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toEqual([{ gameNumber: 1, floor: 0 }]);
+    });
+
+    it("counts a game lost in combat", () => {
+        const session = new GameSession();
+        session.newGame();
+        finishCombat(session.state, "lose"); // sets gameOver before the screen opens
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toHaveLength(1);
+    });
+
+    it("does not count Game Over when no game was started", () => {
+        const session = new GameSession();
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toEqual([]);
     });
 });
 
@@ -277,10 +290,10 @@ describe("LeaderboardScreenView", () => {
         expect(textsIn(view)).toContain("Loading...");
     });
 
-    it("shows 'No floors yet' when loaded with no entries", () => {
+    it("shows 'No games yet' when loaded with no entries", () => {
         const view = new LeaderboardScreenView(makeHandlers());
         view.render({ leaderboard: [], scrollY: 0, loading: false });
-        expect(textsIn(view)).toContain("No floors yet");
+        expect(textsIn(view)).toContain("No games yet");
         expect(textsIn(view)).not.toContain("Loading...");
     });
 
@@ -288,16 +301,37 @@ describe("LeaderboardScreenView", () => {
         const view = new LeaderboardScreenView(makeHandlers());
         view.render({ leaderboard: FLOORS, scrollY: 0, loading: false });
         const texts = textsIn(view);
-        expect(texts).toEqual(expect.arrayContaining(["1", "2", "3", "Floor 3", "Floor 2", "Floor 1"]));
+        expect(texts).toEqual(expect.arrayContaining(["1", "2", "3", "Game 1", "Game 2", "Game 3", "Floor 3", "Floor 2", "Floor 1"]));
         expect(texts.indexOf("Floor 3")).toBeLessThan(texts.indexOf("Floor 2"));
         expect(texts.indexOf("Floor 2")).toBeLessThan(texts.indexOf("Floor 1"));
-        expect(texts).not.toContain("No floors yet");
+        expect(texts).not.toContain("No games yet");
     });
 
-    it("shows an invalid timestamp as-is instead of crashing", () => {
+    it("shows the column headers only when there are games", () => {
         const view = new LeaderboardScreenView(makeHandlers());
-        view.render({ leaderboard: [{ timestamp: "not-a-date", floor: 5 }], scrollY: 0, loading: false });
-        expect(textsIn(view)).toContain("not-a-date");
+        view.render({ leaderboard: [], scrollY: 0, loading: false });
+        expect(view["headerGroup"].visible()).toBe(false);
+        view.render({ leaderboard: FLOORS, scrollY: 0, loading: false });
+        expect(view["headerGroup"].visible()).toBe(true);
+        view.render({ leaderboard: [], scrollY: 0, loading: true });
+        expect(view["headerGroup"].visible()).toBe(false);
+    });
+
+    it("gives tied games consecutive ranks and different medal colors", () => {
+        const view = new LeaderboardScreenView(makeHandlers());
+        view.render({
+            leaderboard: [
+                { gameNumber: 2, floor: 5 },
+                { gameNumber: 1, floor: 2 },
+                { gameNumber: 3, floor: 2 },
+                { gameNumber: 4, floor: 0 },
+            ],
+            scrollY: 0,
+            loading: false,
+        });
+        const rows = view["listGroup"].getChildren() as Konva.Group[];
+        expect(rows.map((row) => row.findOne<Konva.Text>("Text")!.text())).toEqual(["1", "2", "3", "4"]);
+        expect(rows[1].findOne<Konva.Rect>("Rect")!.fill()).not.toBe(rows[2].findOne<Konva.Rect>("Rect")!.fill());
     });
 
     it("has no scroll room for a short list and correct scroll room for a long one", () => {
@@ -347,20 +381,11 @@ describe("LeaderBoardScreenController", () => {
         controller.hide();
     });
 
-    it("shows 'No floors yet' before any game has been started", () => {
+    it("shows 'No games yet' before any game has been started", () => {
         const controller = new LeaderBoardScreenController(makeSwitcher(), new GameSession());
         controller.startLeaderboard();
-        expect(textsIn(controller.getView())).toContain("No floors yet");
+        expect(textsIn(controller.getView())).toContain("No games yet");
         expect(controller["model"].getState().loading).toBe(false);
-        controller.hide();
-    });
-
-    it("shows the new run's floors after New Game", () => {
-        const session = sessionWithFloors(1, 2, 3);
-        const controller = new LeaderBoardScreenController(makeSwitcher(), session);
-        session.newGame();
-        controller.startLeaderboard();
-        expect(controller["model"].getState().leaderboard.map((e) => e.floor)).toEqual([1]);
         controller.hide();
     });
 

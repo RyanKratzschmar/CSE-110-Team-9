@@ -5,7 +5,6 @@ import { Player } from "./Player";
 import type { UpgradeMinigame } from "./UpgradeMinigame";
 import type { Combat } from "./Combat";
 import { PotionLab } from "./PotionLab";
-import { FloorLeaderboard } from "./Leaderboard/FloorLeaderboard";
 
 // What the frontend receives (see the API table in the README)
 export interface GameStateJSON {
@@ -20,7 +19,6 @@ export class GameState {
   readonly player = new Player();
   level = new Level(1);
   gameOver = false;
-  readonly floorLog = new FloorLeaderboard();
   upgradeMinigame: UpgradeMinigame | null = null;
   upgradeMinigameLevel: number | null = null;
   upgradeClaimedLevel: number | null = null;

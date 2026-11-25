@@ -1,13 +1,12 @@
 import { ScreenController } from '../../types';
 import type { ScreenSwitcher } from '../../types';
-import type { LeaderboardEntry } from '../../../backend/game/Leaderboard/Leaderboard';
 import { LeaderboardScreenView } from './LeaderboardScreenView';
 import { LeaderboardScreenModel } from './LeaderboardScreenModel';
 import { GameSession } from '../../GameSession';
 
 const LINE_SCROLL = 60;
 
-//Connects the leaderboard model and view, loads scores from the server, and handles input
+//Connects the leaderboard model and view, loads the finished games, and handles input
 export class LeaderBoardScreenController extends ScreenController {
     private readonly screenSwitcher: ScreenSwitcher;
     private readonly model = new LeaderboardScreenModel();
@@ -29,9 +28,9 @@ export class LeaderBoardScreenController extends ScreenController {
         this.view.render(this.model.getState());
     }
 
-    //Shows the screen with a loading message, then fetches and displays the leaderboard
+    //Loads the finished games from this session and shows the screen
     startLeaderboard(): void {
-        this.model.setEntries(this.gameSession.state.floorLog.getSorted());
+        this.model.setEntries(this.gameSession.leaderboard.getSorted());
         this.show();    
     }
 
