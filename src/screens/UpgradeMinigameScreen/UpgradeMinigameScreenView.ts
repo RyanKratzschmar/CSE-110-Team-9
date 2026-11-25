@@ -67,6 +67,7 @@ export class UpgradeMinigameScreenView implements View {
     private readonly completePanel: Konva.Group;
 
     private readonly healthBar: Konva.Rect;
+    private floorText: Konva.Text;
 
     private readonly timerText: Konva.Text;
     private readonly solvedText: Konva.Text;
@@ -118,6 +119,21 @@ export class UpgradeMinigameScreenView implements View {
             height: STAGE_HEIGHT - FOOTER_Y, 
             fill: DARK
         }));
+
+        this.floorText = new Konva.Text({
+            x: STAGE_WIDTH - 260,
+            y: 0,
+            width: 200,
+            height: HEADER_HEIGHT,
+            align: "right",
+            verticalAlign: "middle",
+            text: "Floor X", 
+            fontSize: 32,
+            fontFamily: FONT,
+            fontStyle: "bold",
+            fill: "#F5E6C8"
+        });
+        this.group.add(this.floorText);
         
         this.leaveButton = this.createButton("Leave", STAGE_WIDTH - 260, 800, 200, 70, RED, "#FFFFFF", () => this.handlers.onLeave());
         this.exitButton = this.createButton("Exit", STAGE_WIDTH - 260, 800, 200, 70, RED, "#FFFFFF", () => this.handlers.onLeave());
@@ -573,20 +589,6 @@ export class UpgradeMinigameScreenView implements View {
             fill: SCORE_ORANGE
         }));
 
-        this.group.add(new Konva.Text({
-            x: STAGE_WIDTH - 260,
-            y: 0,
-            width: 200,
-            height: HEADER_HEIGHT,
-            align: "right",
-            verticalAlign: "middle",
-            text: "Floor X", 
-            fontSize: 32,
-            fontFamily: FONT,
-            fontStyle: "bold",
-            fill: "#F5E6C8"
-        }));
-
         return healthBar;
     }
     
@@ -661,6 +663,11 @@ export class UpgradeMinigameScreenView implements View {
     private resetHover(): void {
         document.body.style.cursor = "default";
         this.buttonBgs.forEach((bg) => bg.fill(bg.getAttr("baseFill")));
+    }
+
+    // Updates floor text to the correct number
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
     }
 
     //Creates a clickable button that changes color and shows a pointer cursor on hover

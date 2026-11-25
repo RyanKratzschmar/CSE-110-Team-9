@@ -29,6 +29,7 @@ export class RestScreenView implements View {
     private upgradeButton: Konva.Circle;
     private potionButtonText: Konva.Text;
     private upgradeButtonText: Konva.Text;
+    private floorText: Konva.Text;
 
     constructor(
         onContinueClick: () => void,
@@ -136,7 +137,7 @@ export class RestScreenView implements View {
         });
         this.group.add(settingsText);
 
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -145,7 +146,7 @@ export class RestScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
 
         // add rectangle containing take a rest text
         this.restRect = new Konva.Rect({
@@ -439,6 +440,11 @@ export class RestScreenView implements View {
         this.potionButtonText.visible(false);
         this.upgradeButtonText.visible(false);
     }
+
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
+    }
+
 
     /**
      * Show the screen

@@ -21,6 +21,11 @@ export class PotionLabScreenController extends ScreenController {
     private clickSound: HTMLAudioElement;
     private selectedType: PotionType | null = null;
 
+    private boomSound: HTMLAudioElement;
+    private fizzingSound: HTMLAudioElement;
+    private bubblingSound: HTMLAudioElement;
+    private magicSound: HTMLAudioElement;
+
     constructor(
         private readonly screenSwitcher: ScreenSwitcher,
         private readonly gameSession: GameSession,
@@ -38,6 +43,11 @@ export class PotionLabScreenController extends ScreenController {
             () => !this.explanationPopUp?.isOpen(),
         );
         this.clickSound = new Audio("/click.mp3");
+
+        this.boomSound = new Audio("/boom.mp3");
+        this.fizzingSound = new Audio("/fizzing.mp3");
+        this.bubblingSound = new Audio("/bubbling.mp3");
+        this.magicSound = new Audio("/magic.mp3");
     }
 
     // The same lab all level, kept in GameState
@@ -52,8 +62,11 @@ export class PotionLabScreenController extends ScreenController {
 
     startPotionLabScreen(): void {
         const player = this.gameSession.state.player;
+        const levelNum = this.gameSession.state.level.number;
         this.view.setPlayerHealthBar(player.hp, player.maxHp);
         this.selectedType = null;
+
+        this.view.setFloorNum(levelNum);
 
         if (this.lab.isClosed()) {
             this.view.showResult(false, "You already used the potion lab on this floor.");
@@ -103,9 +116,21 @@ export class PotionLabScreenController extends ScreenController {
         const correctAnswer = lab.getEquation()?.getAnswer();
         if (lab.submit(answer)) {
             this.view.showResult(true, `${POTION_NAMES[this.selectedType!]} potion added to your inventory.`);
+
+            this.magicSound.currentTime = 0;
+            this.magicSound.play();
+
+            this.fizzingSound.currentTime = 0;
+            this.fizzingSound.play();
         } else {
             // TODO: use Arushi's WrongAnswerPopUpController once there is a PEMDAS explainer
             this.view.showResult(false, `Not quite! The answer was ${correctAnswer}. Come back next floor.`);
+
+            this.boomSound.currentTime = 0;
+            this.boomSound.play();
+
+            this.bubblingSound.currentTime = 0;
+            this.bubblingSound.play();
         }
     }
 
@@ -117,6 +142,9 @@ export class PotionLabScreenController extends ScreenController {
     }
 
     handleContinueClick(): void {
+        this.fizzingSound.pause();
+        this.bubblingSound.pause();
+
         this.playClick();
         this.backToRest();
     }
