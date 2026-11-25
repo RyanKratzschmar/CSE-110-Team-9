@@ -569,6 +569,7 @@ export class UpgradeMinigameScreenView implements View {
             fill: "#FFFFFF"
         }));
 
+        /*
         this.group.add(new Konva.Rect({
             x: 1250, 
             y: 37, 
@@ -588,6 +589,7 @@ export class UpgradeMinigameScreenView implements View {
             fontFamily: FONT,
             fill: SCORE_ORANGE
         }));
+        */
 
         return healthBar;
     }

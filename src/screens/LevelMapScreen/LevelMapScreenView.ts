@@ -78,6 +78,7 @@ export class LevelMapScreenView implements View {
         this.group.add(hpText);
 
         // Score Text
+        /*
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -89,6 +90,7 @@ export class LevelMapScreenView implements View {
         this.group.add(scoreText);
 
         // Shape next to score
+        
         const scoreBug = new Konva.Rect({
             x: 570,
             y: 52,
@@ -119,6 +121,8 @@ export class LevelMapScreenView implements View {
             fill: "black",
         });
         this.group.add(settingsText);
+
+        */
 
         this.floorText = new Konva.Text({
             x: 1200,

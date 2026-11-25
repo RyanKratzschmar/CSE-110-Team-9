@@ -123,6 +123,7 @@ export class CombatMainScreenView implements View {
         this.group.add(hpText);
 
         // Button For Settings
+        /*
         const settingsButton = new Konva.Circle({
             x: STAGE_WIDTH - 100,
             y: 75,
@@ -130,6 +131,7 @@ export class CombatMainScreenView implements View {
             fill: "#94948e",
         });
         this.group.add(settingsButton);
+        */
 
         const settingsText = new Konva.Text({
             x: STAGE_WIDTH - 160,
@@ -275,6 +277,7 @@ export class CombatMainScreenView implements View {
         this.group.add(this.enemyHealthBar);
 
         // Score Text
+        /*
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -297,6 +300,7 @@ export class CombatMainScreenView implements View {
             stroke: "#cc721d",
         });
         this.group.add(scoreBug);
+        */
 
         // Text Denoting Which Floor player is on.
         this.floorText = new Konva.Text({

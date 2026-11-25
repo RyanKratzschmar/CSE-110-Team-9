@@ -95,6 +95,7 @@ export class RestScreenView implements View {
         this.group.add(hpText);
 
         // Score Text
+        /*
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -136,6 +137,7 @@ export class RestScreenView implements View {
             fill: "black",
         });
         this.group.add(settingsText);
+        */
 
         this.floorText = new Konva.Text({
             x: 1200,

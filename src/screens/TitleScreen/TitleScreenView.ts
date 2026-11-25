@@ -22,19 +22,20 @@ export class TitleScreenView implements View {
 		});
 		this.group.add(bg);
 
-		// Create Title Text at the Top of the Screen
-		const titleText = new Konva.Text({
-			x: 0,
-			y: 20,
-			width: STAGE_WIDTH,
-			text: "Math Dungeon",
-			fontSize: 100,
-			fontFamily: "Arial",
-			fontStyle: "bold",
-			fill: "#4E77BC",
-			align: "center",
+		const logoImage = new Image();
+
+		logoImage.src = "/logo.png";
+
+		const logo = new Konva.Image({
+			image: logoImage,
+			width: 800,
+			height: 800,
+			x: 400,
+			y: -100,
+			visible: true,
 		});
-		this.group.add(titleText);
+
+		this.group.add(logo);
 
         const buttonX = STAGE_WIDTH / 2;
         const buttonY = STAGE_HEIGHT - 200;
