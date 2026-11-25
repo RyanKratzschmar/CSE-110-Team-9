@@ -12,9 +12,15 @@ const POTION_COLORS: Record<PotionType, { basic: string; advanced: string }> = {
     poison: { basic: "#86efac", advanced: "#4ade80" },
 };
 
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
+
 export class PotionPopUpView implements View {
     private group: Konva.Group;
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private potionListGroup: Konva.Group;
     private onDrinkPotion: (index: number) => void;
     private onBack: () => void;
@@ -74,12 +80,18 @@ export class PotionPopUpView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, 400
+        );
+        this.group.add(this.healthPercentage);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -167,9 +179,15 @@ export class PotionPopUpView implements View {
     // Lists the player's potions, one card per kind (e.g. "Basic Strength Potion x2"), so every potion fits on screen.
     // healingBonus is the upgrade minigame's extra healing, shown in healing descriptions.
     updatePotions(potions: readonly Potion[], hp?: number, maxHp?: number, healingBonus = 0): void {
-        if (hp !== undefined && maxHp !== undefined && maxHp > 0) {
-            const width = Math.min(400, Math.max(0, (hp / maxHp) * 400));
-            this.healthBar.width(width);
+        if (hp !== undefined && maxHp !== undefined) {
+
+            // Update the player's HP bar and percentage.
+            updatePlayerHealthBar(
+                this.healthBar,
+                this.healthPercentage,
+                hp,
+                maxHp
+            );
         }
 
         this.potionListGroup.destroyChildren();

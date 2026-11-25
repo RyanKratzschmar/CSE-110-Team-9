@@ -2,6 +2,11 @@ import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
+
 export class CombatMainScreenView implements View {
     private group: Konva.Group;
 
@@ -11,6 +16,7 @@ export class CombatMainScreenView implements View {
     private hintXButton: Konva.Rect;
     private hintXText: Konva.Text;
     private enemyHealthBar: Konva.Rect;
+    private enemyHealthPercentage: Konva.Text;
     private victoryText: Konva.Text;
     private defeatText: Konva.Text;
     private potionStatusText: Konva.Text;
@@ -31,6 +37,7 @@ export class CombatMainScreenView implements View {
     private submitText: Konva.Text;
     private responseText: Konva.Text;
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private answerBuffer = "";
     private answerValue!: Konva.Text;
     private solving = false;
@@ -103,12 +110,18 @@ export class CombatMainScreenView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, 400
+        );
+        this.group.add(this.healthPercentage);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -273,6 +286,12 @@ export class CombatMainScreenView implements View {
             Stroke: "#940d03",
         });
         this.group.add(this.enemyHealthBar);
+
+        // Display the monster's HP percentage.
+        this.enemyHealthPercentage = createHealthPercentage(
+            this.enemyHealthBar, 350
+        );
+        this.group.add(this.enemyHealthPercentage);
 
         // Score Text
         const scoreText = new Konva.Text({
@@ -682,32 +701,26 @@ export class CombatMainScreenView implements View {
         this.group.getLayer()?.batchDraw();    
     }
 
-    // Updates enemy health
+    // Updates the monster's HP bar and percentage.
     updateEnemyHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.enemyHealthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.enemyHealthBar.width(350 * percentage);
+        updatePlayerHealthBar(
+            this.enemyHealthBar,
+            this.enemyHealthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }
 
-    // Updates Player Health Bar
+    // Updates the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }

@@ -1,6 +1,10 @@
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
 
 export class LevelMapScreenView implements View {
     private group: Konva.Group;
@@ -16,6 +20,7 @@ export class LevelMapScreenView implements View {
     private stairsText: Konva.Text;
     private levelIndicator: Konva.Line;
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private floorText: Konva.Text;
 
     constructor(
@@ -54,16 +59,22 @@ export class LevelMapScreenView implements View {
         });  
         this.group.add(healthBarBG);
 
-        //Player Health Bar
-        this.healthBar = new Konva.Rect({
-            x: 100,
-            y: 35,
-            width: 300,
-            height: 70,
-            fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
-        this.group.add(this.healthBar);
+    //Player Health Bar
+    this.healthBar = new Konva.Rect({
+        x: 100,
+        y: 35,
+        width: 400,
+        height: 70,
+        fill: "#0bba14",
+        stroke: "#42a847",
+    });
+    this.group.add(this.healthBar);
+
+    // Display the player's HP percentage.
+    this.healthPercentage = createHealthPercentage(
+        this.healthBar, 400
+    );
+    this.group.add(this.healthPercentage);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -301,17 +312,14 @@ export class LevelMapScreenView implements View {
         this.group.getLayer()?.batchDraw();
     }
 
-    // Updates Player Health Bar
+    // Updates the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }
