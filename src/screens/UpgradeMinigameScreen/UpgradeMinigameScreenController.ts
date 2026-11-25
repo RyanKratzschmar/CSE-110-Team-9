@@ -95,6 +95,13 @@ export class UpgradeMinigameScreenController extends ScreenController {
         if (this.model.getState().phase !== "ready") return;
         try {
             const game = startUpgradeMinigame(this.gameSession.state);
+            
+            // A finished game without an upgrade means this floor's attempt was already used
+            if (game.isFinished() && !game.hasEarnedUpgrade()) {
+                this.model.setResult("Upgrade attempt has already been made. Please try again on the next floor.", false);
+                return;
+            }
+
             this.game = game;
             this.questionId = game.currentQuestion().questionId;
             this.model.loadSession({

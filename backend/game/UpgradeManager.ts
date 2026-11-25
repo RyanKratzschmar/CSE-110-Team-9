@@ -10,7 +10,7 @@ export function startUpgradeMinigame(
     const level = state.level.number;
 
     if (state.upgradeClaimedLevel === level) {
-        throw new GameFlowError("Upgrade already claimed this level");
+        throw new GameFlowError("Upgrade has already been claimed for this floor.");
     }
 
     const existing = state.upgradeMinigame;
@@ -36,7 +36,7 @@ export function claimUpgrade(state: GameState): void {
     const level = state.level.number;
 
     if (state.upgradeClaimedLevel === level) {
-        throw new GameFlowError("Upgrade already claimed this level");
+        throw new GameFlowError("Upgrade has already been claimed for this floor.");
     }
 
     const game = state.upgradeMinigame;
