@@ -4,6 +4,10 @@ import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 import type { PotionType } from "../../../backend/game/Potion.ts";
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
 
 const POTION_TYPES: { type: PotionType; label: string }[] = [
     { type: "healing", label: "Healing" },
@@ -15,6 +19,7 @@ export class PotionLabScreenView implements View {
     private group: Konva.Group;
 
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private basicRecipeRect: Konva.Rect;
     private basicButton: Konva.Rect;
     private advancedRecipeRect:Konva.Rect;
@@ -104,12 +109,18 @@ export class PotionLabScreenView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, 400
+        );
+        this.group.add(this.healthPercentage);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -653,17 +664,14 @@ export class PotionLabScreenView implements View {
         this.group.add(this.messageText);
     }
 
-    // set the player's health bar
+    // Update the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }

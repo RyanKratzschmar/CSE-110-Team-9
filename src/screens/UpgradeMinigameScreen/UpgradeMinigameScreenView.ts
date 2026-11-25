@@ -3,6 +3,10 @@ import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 import { UPGRADE_INFO } from "./UpgradeMinigameScreenModel.ts";
 import type { UpgradeMinigameState, UpgradePhase, UpgradeType } from "./UpgradeMinigameScreenModel.ts";
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
 
 //Functions the view calls when the player clicks a button or presses a key
 export interface UpgradeMinigameViewHandlers {
@@ -67,6 +71,7 @@ export class UpgradeMinigameScreenView implements View {
     private readonly completePanel: Konva.Group;
 
     private readonly healthBar: Konva.Rect;
+    private readonly healthPercentage: Konva.Text;
     private floorText: Konva.Text;
 
     private readonly timerText: Konva.Text;
@@ -111,6 +116,12 @@ export class UpgradeMinigameScreenView implements View {
         }));
         
         this.healthBar = this.buildHeader();
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, HP_BAR_W
+        );
+        this.group.add(this.healthPercentage);
 
         this.group.add(new Konva.Rect({
             x: 0, 
@@ -655,10 +666,14 @@ export class UpgradeMinigameScreenView implements View {
         return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     }
 
-    //Resizes the green HP bar to match the player's current health
+    // Update the player's HP bar and percentage.
     private updateHealthBar(hp: number, maxHp: number): void {
-        const fraction = maxHp > 0 ? Math.max(0, Math.min(hp / maxHp, 1)) : 0;
-        this.healthBar.width(HP_BAR_W * fraction);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            hp,
+            maxHp
+        );
     }
 
     //Puts the cursor and every button color back to normal (used when a button hides while the mouse is over it)
