@@ -19,6 +19,7 @@ export class CombatMainScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
 
     private clickSound: HTMLAudioElement;
+    private hitSound: HTMLAudioElement;
     private battleMusic: BackgroundMusic;
 
     private explanationPopUp: WrongAnswerPopUpController;
@@ -60,6 +61,8 @@ export class CombatMainScreenController extends ScreenController {
         this.view.getGroup().add(this.potionPopUp.getGroup());
 
         this.clickSound = new Audio("/click.mp3");
+
+        this.hitSound = new Audio("/punch.mp3");
 
         // Battle music: the full track plays once as an intro, then the loop
         // version repeats for as long as the combat screen is showing
@@ -163,6 +166,10 @@ export class CombatMainScreenController extends ScreenController {
         this.syncCombat();
         this.pendingResult = result.result;
         this.view.animateAttack(result.correct);
+
+        this.hitSound.currentTime = 0;
+        this.hitSound.play();
+
         let feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
         if (result.strengthBoosted) feedback += " Your strength potion doubled the damage!";
         if (result.poisonDamage > 0) feedback += ` Poison did ${result.poisonDamage} damage.`;

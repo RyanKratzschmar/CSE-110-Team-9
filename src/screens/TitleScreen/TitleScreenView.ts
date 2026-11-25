@@ -27,7 +27,7 @@ export class TitleScreenView implements View {
 			x: 0,
 			y: 20,
 			width: STAGE_WIDTH,
-			text: "Game Title",
+			text: "Math Dungeon",
 			fontSize: 100,
 			fontFamily: "Arial",
 			fontStyle: "bold",
