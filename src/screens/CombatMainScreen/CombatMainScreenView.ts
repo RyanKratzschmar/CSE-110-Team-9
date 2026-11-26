@@ -2,6 +2,11 @@ import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
 
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
+
 export class CombatMainScreenView implements View {
     private group: Konva.Group;
 
@@ -11,6 +16,7 @@ export class CombatMainScreenView implements View {
     private hintXButton: Konva.Rect;
     private hintXText: Konva.Text;
     private enemyHealthBar: Konva.Rect;
+    private enemyHealthPercentage: Konva.Text;
     private victoryText: Konva.Text;
     private defeatText: Konva.Text;
     private potionStatusText: Konva.Text;
@@ -18,8 +24,8 @@ export class CombatMainScreenView implements View {
     private attackButtonText: Konva.Text;
     private potionButton: Konva.Rect;
     private potionButtonText: Konva.Text;
-    private enemy: Konva.Rect;
-    private player: Konva.Rect;
+    private enemy: Konva.Image;
+    private player: Konva.Image;
     private enemyHealthBarBG: Konva.Rect;
     private popUpOverlay: Konva.Rect;
     private equationTextBox: Konva.Rect;
@@ -31,6 +37,7 @@ export class CombatMainScreenView implements View {
     private submitText: Konva.Text;
     private responseText: Konva.Text;
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private answerBuffer = "";
     private answerValue!: Konva.Text;
     private solving = false;
@@ -40,6 +47,9 @@ export class CombatMainScreenView implements View {
     private explanationText: Konva.Text;
     private cancelAttackButton: Konva.Rect;
     private cancelAttackText: Konva.Text;
+    private floorText: Konva.Text;
+    private idleAnimation?: Konva.Animation;
+    private isAttacking = false;
 
     constructor(
         onHintClick : () => void,
@@ -100,12 +110,18 @@ export class CombatMainScreenView implements View {
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
+
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar, 400
+        );
+        this.group.add(this.healthPercentage);
 
         //Text that says "HP" next to the player's health
         const hpText = new Konva.Text({
@@ -120,6 +136,7 @@ export class CombatMainScreenView implements View {
         this.group.add(hpText);
 
         // Button For Settings
+        /*
         const settingsButton = new Konva.Circle({
             x: STAGE_WIDTH - 100,
             y: 75,
@@ -127,6 +144,7 @@ export class CombatMainScreenView implements View {
             fill: "#94948e",
         });
         this.group.add(settingsButton);
+        */
 
         const settingsText = new Konva.Text({
             x: STAGE_WIDTH - 160,
@@ -215,27 +233,38 @@ export class CombatMainScreenView implements View {
 		});
 
         this.attackButton.on("click tap", () => {
+            this.readyStance();
 			onAttackClick();
         });
 
         // The player Character
-        this.player = new Konva.Rect({
-            width: 300,
+        const playerImage = new Image();
+        playerImage.src = "/player.png";
+        this.player = new Konva.Image({
+            width: 280,
             height: 350,
             x: 175,
-            y:350,
-            fill: "#ffff"
+            y: 350,
+            image: playerImage,
         });
+        playerImage.onload = () => {
+            this.group.getLayer()?.batchDraw();
+        };
         this.group.add(this.player);
 
         // The enemy character
-        this.enemy = new Konva.Rect({
-            width: 300,
+        const enemyImage = new Image();
+        enemyImage.src = "/enemy.png";
+        this.enemy = new Konva.Image({
+            width: 280,
             height: 350,
-            x: STAGE_WIDTH - 475,
+            x: STAGE_WIDTH - 455,
             y: 350,
-            fill: "#ffff"
+            image: enemyImage,
         });
+        enemyImage.onload = () => {
+            this.group.getLayer()?.batchDraw();
+        };
         this.group.add(this.enemy);
 
         //Background for when enemy health is missing
@@ -260,7 +289,14 @@ export class CombatMainScreenView implements View {
         });
         this.group.add(this.enemyHealthBar);
 
+        // Display the monster's HP percentage.
+        this.enemyHealthPercentage = createHealthPercentage(
+            this.enemyHealthBar, 350
+        );
+        this.group.add(this.enemyHealthPercentage);
+
         // Score Text
+        /*
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -283,9 +319,10 @@ export class CombatMainScreenView implements View {
             stroke: "#cc721d",
         });
         this.group.add(scoreBug);
+        */
 
         // Text Denoting Which Floor player is on.
-        const floorText = new Konva.Text({
+        this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
@@ -294,7 +331,7 @@ export class CombatMainScreenView implements View {
             fontFamily: "arial",
             fontStyle: "bold",
         });
-        this.group.add(floorText);
+        this.group.add(this.floorText);
 
         // Create Hint Button
         this.hintButton = new Konva.Rect({
@@ -429,10 +466,12 @@ export class CombatMainScreenView implements View {
             y: 150,
             width: STAGE_WIDTH,
             height: 600,
-            fill: "#433550",
+            fill: "rgba(35, 15, 45, 0.75)",
             visible: false,
         });
         this.group.add(this.popUpOverlay);
+        this.player.moveToTop();
+        this.enemy.moveToTop();
 
         // Create Text Box for Equation
         this.equationTextBox = new Konva.Rect({
@@ -666,32 +705,26 @@ export class CombatMainScreenView implements View {
         this.group.getLayer()?.batchDraw();    
     }
 
-    // Updates enemy health
+    // Updates the monster's HP bar and percentage.
     updateEnemyHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.enemyHealthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.enemyHealthBar.width(350 * percentage);
+        updatePlayerHealthBar(
+            this.enemyHealthBar,
+            this.enemyHealthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }
 
-    // Updates Player Health Bar
+    // Updates the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
 
         this.group.getLayer()?.batchDraw();
     }
@@ -740,6 +773,8 @@ export class CombatMainScreenView implements View {
         this.feedbackText.visible(true);
         this.answerValue.visible(true);
         this.popUpOverlay.visible(true);
+        this.player.moveToTop();
+        this.enemy.moveToTop();
         this.equationTextBox.visible(true);
         this.hintButton.visible(true);
         this.hintText.visible(true);
@@ -789,6 +824,7 @@ export class CombatMainScreenView implements View {
 	show(): void {
         window.addEventListener("keydown", this.handleKeyDown);
 		this.group.visible(true);
+        this.startIdleAnimation();
 		this.group.getLayer()?.draw();
 	}
 
@@ -797,10 +833,52 @@ export class CombatMainScreenView implements View {
 	 */
 	hide(): void {
         window.removeEventListener("keydown", this.handleKeyDown);
+        this.stopIdleAnimation();
         this.returnToCombat();
 		this.group.visible(false);
 		this.group.getLayer()?.draw();
 	}
+
+    startIdleAnimation(): void {
+        if (this.idleAnimation) {
+            this.idleAnimation.start();
+            return;
+        }
+        const layer = this.group.getLayer();
+        let time = 0;
+        this.idleAnimation = new Konva.Animation((frame) => {
+            if (!frame) return;
+            time += frame.timeDiff / 1000;
+            const bob = Math.sin(time * 3) * 6;
+            if (!this.isAttacking) {
+                this.player.y(350 + bob);
+                this.enemy.y(350 - bob);
+            }
+        }, layer);
+        this.idleAnimation.start();
+    }
+
+    stopIdleAnimation(): void {
+        this.idleAnimation?.stop();
+        this.player.y(350);
+        this.enemy.y(350);
+    }
+
+    readyStance(): void {
+        const originalX = 175;
+        new Konva.Tween({
+            node: this.player,
+            duration: 0.12,
+            x: originalX + 25,
+            onFinish: () => {
+                new Konva.Tween({
+                    node: this.player,
+                    duration: 0.15,
+                    x: originalX,
+                }).play();
+            },
+        }).play();
+    }
 
     setQuestion(question: string): void {
         this.equationText.text(question);
@@ -840,6 +918,66 @@ export class CombatMainScreenView implements View {
         this.answerValue.text(this.answerBuffer || "_");
         this.group.getLayer()?.batchDraw();
     };
+
+    setFloorNum(floor: number){
+        this.floorText.text(`Floor: ${floor}`);
+    }
+    
+    animateAttack(isPlayer: boolean): void {
+        this.isAttacking = true;
+        const attacker = isPlayer ? this.player : this.enemy;
+        const originalX = isPlayer ? 175 : STAGE_WIDTH - 455;
+        const stepBack = isPlayer ? -30 : 30;
+        const lungeDistance = isPlayer ? 180 : -180;
+
+        // 1. Step backward slightly (wind-up)
+        new Konva.Tween({
+            node: attacker,
+            duration: 0.15,
+            x: originalX + stepBack,
+            onFinish: () => {
+                // 2. Dash forward to strike!
+                new Konva.Tween({
+                    node: attacker,
+                    duration: 0.18,
+                    x: originalX + lungeDistance,
+                    onFinish: () => {
+                        // Impact: target takes damage
+                        this.animateDamage(!isPlayer);
+
+                        // 3. Move back to original position
+                        new Konva.Tween({
+                            node: attacker,
+                            duration: 0.22,
+                            x: originalX,
+                            onFinish: () => {
+                                this.isAttacking = false;
+                            },
+                        }).play();
+                    },
+                }).play();
+            },
+        }).play();
+    }
+
+    animateDamage(isPlayer: boolean): void {
+        const target = isPlayer ? this.player : this.enemy;
+        const originalX = isPlayer ? 175 : STAGE_WIDTH - 455;
+
+        let shakes = 0;
+        const interval = setInterval(() => {
+            target.x(originalX + (shakes % 2 === 0 ? 16 : -16));
+            target.opacity(shakes % 2 === 0 ? 0.35 : 1);
+            this.group.getLayer()?.batchDraw();
+            shakes++;
+            if (shakes > 6) {
+                clearInterval(interval);
+                target.x(originalX);
+                target.opacity(1);
+                this.group.getLayer()?.batchDraw();
+            }
+        }, 45);
+    }
 
 	getGroup(): Konva.Group {
 		return this.group;

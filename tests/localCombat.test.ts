@@ -5,6 +5,7 @@ import { GameSession } from "../src/GameSession";
 import { Combat } from "../backend/game/Combat";
 import { Monster } from "../backend/game/Monster";
 import { MultiplicationEquation } from "../backend/equations/MultiplicationEquation";
+import { DivisionEquation } from "../backend/equations/DivisionEquation";
 import { CombatMainScreenController } from "../src/screens/CombatMainScreen/CombatMainScreenController";
 import { CombatMainScreenView } from "../src/screens/CombatMainScreen/CombatMainScreenView";
 
@@ -198,5 +199,40 @@ describe("Get Hint / Explain button swap", () => {
         const { c } = fixture(50, 200);
         c.handleAttackClick(); key("7"); key("Enter");
         expect(buttonVisible(c, "Explain")).toBe(false);
+    });
+});
+
+
+describe("Get Hint / Explain pop-ups", () => {
+    // Starts a fight that uses real generated equations, with mocked pop-ups
+    function popUpFixture(equation: MultiplicationEquation | DivisionEquation) {
+        const session = new GameSession();
+        session.state.combat = new Combat(session.state.player, new Monster(50, 15), 1, () => equation);
+        const explanation = { isOpen: () => false, close: vi.fn(), showLongMultiplicationExplanation: vi.fn(), showLongDivisionExplanation: vi.fn() };
+        const hint = { isOpen: () => false, close: vi.fn(), showLongMultiplicationHint: vi.fn(), showLongDivisionHint: vi.fn() };
+        const c = new CombatMainScreenController({ switchToScreen: vi.fn() }, explanation as never, hint as never, session);
+        controllers.push(c);
+        c.startGame();
+        return { c, explanation, hint };
+    }
+
+    it("opens the multiplication pop-ups with the numbers from the question", () => {
+        const equation = new MultiplicationEquation(1);
+        const [a, , b] = equation.getEquation();
+        const { c, explanation, hint } = popUpFixture(equation);
+        c.handleHintClick();
+        c.handleExplanationClick();
+        expect(hint.showLongMultiplicationHint).toHaveBeenCalledWith(a, b);
+        expect(explanation.showLongMultiplicationExplanation).toHaveBeenCalledWith(a, b);
+    });
+
+    it("opens the division pop-ups with the numbers from the question", () => {
+        const equation = new DivisionEquation(1);
+        const [a, , b] = equation.getEquation();
+        const { c, explanation, hint } = popUpFixture(equation);
+        c.handleHintClick();
+        c.handleExplanationClick();
+        expect(hint.showLongDivisionHint).toHaveBeenCalledWith(a, b);
+        expect(explanation.showLongDivisionExplanation).toHaveBeenCalledWith(a, b);
     });
 });

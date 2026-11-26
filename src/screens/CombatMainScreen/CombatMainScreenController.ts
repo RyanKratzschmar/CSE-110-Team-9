@@ -19,6 +19,7 @@ export class CombatMainScreenController extends ScreenController {
     private screenSwitcher: ScreenSwitcher;
 
     private clickSound: HTMLAudioElement;
+    private hitSound: HTMLAudioElement;
     private battleMusic: BackgroundMusic;
 
     private explanationPopUp: WrongAnswerPopUpController;
@@ -61,6 +62,8 @@ export class CombatMainScreenController extends ScreenController {
 
         this.clickSound = new Audio("/click.mp3");
 
+        this.hitSound = new Audio("/punch.mp3");
+
         // Battle music: the full track plays once as an intro, then the loop
         // version repeats for as long as the combat screen is showing
         this.battleMusic = new BackgroundMusic("/battle_bgm_intro.mp3", "/battle_bgm.ogg");
@@ -89,9 +92,9 @@ export class CombatMainScreenController extends ScreenController {
             // Audio not supported in environment
         }
 
-        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([*/])\s*(\d+)/);
+        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([×÷*/])\s*(\d+)/);
         if (!parts) return;
-        if (parts[2] === "*") this.hintPopUp.showLongMultiplicationHint(Number(parts[1]), Number(parts[3]));
+        if (parts[2] === "×" || parts[2] === "*") this.hintPopUp.showLongMultiplicationHint(Number(parts[1]), Number(parts[3]));
         else this.hintPopUp.showLongDivisionHint(Number(parts[1]), Number(parts[3]));
     }
 
@@ -164,6 +167,10 @@ export class CombatMainScreenController extends ScreenController {
         this.syncCombat();
         this.pendingResult = result.result;
         this.view.animateAttack(result.correct);
+
+        this.hitSound.currentTime = 0;
+        this.hitSound.play();
+
         let feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
         if (result.strengthBoosted) feedback += " Your strength potion doubled the damage!";
         if (result.poisonDamage > 0) feedback += ` Poison did ${result.poisonDamage} damage.`;
@@ -279,9 +286,9 @@ ${effects}` : "")
         this.clickSound.currentTime = 0;
         void this.clickSound.play().catch(() => { });
 
-        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([*/])\s*(\d+)/);
+        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([×÷*/])\s*(\d+)/);
         if (!parts) return;
-        if (parts[2] === "*") this.explanationPopUp.showLongMultiplicationExplanation(Number(parts[1]), Number(parts[3]));
+        if (parts[2] === "×" || parts[2] === "*") this.explanationPopUp.showLongMultiplicationExplanation(Number(parts[1]), Number(parts[3]));
         else this.explanationPopUp.showLongDivisionExplanation(Number(parts[1]), Number(parts[3]));
     }
 
@@ -292,6 +299,7 @@ ${effects}` : "")
         this.answering = false;
         this.pendingResult = null;
         this.hintPopUp?.reset?.();
+        this.view.setFloorNum(state.level.number);
         state.combat.startNextQuestion();
         this.syncCombat();
         this.view.returnToCombat();
