@@ -4,12 +4,20 @@ export interface HintPopUpState {
     readonly isOpen: boolean;
     readonly hint: HintData | null;
     readonly scrollY: number;
+    readonly currentStepIndex: number;
+    readonly unlockedStepCount: number;
 }
 
 export type HintPopUpListener = (state: HintPopUpState) => void;
 
 export class HintPopUpModel {
-    private state: HintPopUpState = { isOpen: false, hint: null, scrollY: 0 };
+    private state: HintPopUpState = {
+        isOpen: false,
+        hint: null,
+        scrollY: 0,
+        currentStepIndex: 0,
+        unlockedStepCount: 1,
+    };
     private readonly listeners = new Set<HintPopUpListener>();
 
     getState(): HintPopUpState {
@@ -24,7 +32,22 @@ export class HintPopUpModel {
     }
 
     open(hint: HintData): void {
-        this.setState({ isOpen: true, hint, scrollY: 0 });
+        const isSameProblem =
+            this.state.hint !== null &&
+            this.state.hint.problemText === hint.problemText &&
+            this.state.hint.operation === hint.operation;
+
+        if (isSameProblem) {
+            this.setState({ isOpen: true, hint, scrollY: 0 });
+        } else {
+            this.setState({
+                isOpen: true,
+                hint,
+                scrollY: 0,
+                currentStepIndex: 0,
+                unlockedStepCount: 1,
+            });
+        }
     }
 
     close(): void {
@@ -32,6 +55,58 @@ export class HintPopUpModel {
             return;
         }
         this.setState({ isOpen: false });
+    }
+
+    nextStep(): void {
+        if (!this.state.isOpen || !this.state.hint) {
+            return;
+        }
+        const total = this.state.hint.steps.length;
+        if (this.state.currentStepIndex < total - 1) {
+            const nextIndex = this.state.currentStepIndex + 1;
+            const nextUnlocked = Math.max(this.state.unlockedStepCount, nextIndex + 1);
+            this.setState({
+                currentStepIndex: nextIndex,
+                unlockedStepCount: nextUnlocked,
+                scrollY: 0,
+            });
+        }
+    }
+
+    prevStep(): void {
+        if (!this.state.isOpen || !this.state.hint) {
+            return;
+        }
+        if (this.state.currentStepIndex > 0) {
+            this.setState({
+                currentStepIndex: this.state.currentStepIndex - 1,
+                scrollY: 0,
+            });
+        }
+    }
+
+    goToStep(index: number): void {
+        if (!this.state.isOpen || !this.state.hint) {
+            return;
+        }
+        const total = this.state.hint.steps.length;
+        const clamped = Math.max(0, Math.min(this.state.unlockedStepCount - 1, Math.min(total - 1, index)));
+        if (clamped !== this.state.currentStepIndex) {
+            this.setState({
+                currentStepIndex: clamped,
+                scrollY: 0,
+            });
+        }
+    }
+
+    reset(): void {
+        this.setState({
+            isOpen: false,
+            hint: null,
+            scrollY: 0,
+            currentStepIndex: 0,
+            unlockedStepCount: 1,
+        });
     }
 
     scrollTo(y: number, maxScroll: number): void {
