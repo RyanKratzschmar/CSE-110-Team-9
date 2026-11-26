@@ -48,6 +48,7 @@ export class TitleScreenView implements View {
 
         const newGameButton = new Konva.Image({
 			image: newGame,
+			name: "new_game_button",
             x: 566,
             y: 500,
         });
