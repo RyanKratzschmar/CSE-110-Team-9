@@ -12,6 +12,7 @@ import { UpgradeMinigameScreenController } from "./screens/UpgradeMinigameScreen
 import { GameSession } from "./GameSession.ts";
 import { GameOverScreenController } from "./screens/GameOverScreen/GameOverScreenController.ts";
 import { createEndGameButton } from "./EndGameButton.ts";
+import { EndGameConfirmationView } from "./EndGameConfirmationView.ts";
 import { LeaderBoardScreenController } from "./screens/LeaderboardScreen/LeaderboardScreenController.ts";
 /**
  * Main Application - Coordinates all screens
@@ -36,6 +37,7 @@ class App implements ScreenSwitcher {
 	private leaderBoardScreenController: LeaderBoardScreenController;
 	private gameOverScreenController: GameOverScreenController;
 	private endGameButton: Konva.Group;
+	private endGameConfirmation: EndGameConfirmationView;
 
 	private readonly gameSession = new GameSession();
 
@@ -62,7 +64,7 @@ class App implements ScreenSwitcher {
 		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession, explanationPopUp);
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
-		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
+		this.leaderBoardScreenController = new LeaderBoardScreenController(this, this.gameSession);
 		this.gameOverScreenController = new GameOverScreenController(this, this.gameSession);
 
 		window.addEventListener("resize", () => {
@@ -82,8 +84,10 @@ class App implements ScreenSwitcher {
 
 		// Share the same End Game control across screens without duplicating their UI.
 		const controlsLayer = new Konva.Layer();
-		this.endGameButton = createEndGameButton(() => this.switchToScreen({ type: "gameover" }));
+		this.endGameConfirmation = new EndGameConfirmationView(() => this.switchToScreen({ type: "gameover" }));
+		this.endGameButton = createEndGameButton(() => this.endGameConfirmation.show());
 		controlsLayer.add(this.endGameButton);
+		controlsLayer.add(this.endGameConfirmation.getGroup());
 		this.stage.add(controlsLayer);
 
 		// Draw the layer (render everything to the canvas)
@@ -112,6 +116,7 @@ class App implements ScreenSwitcher {
 
     
 	switchToScreen(screen: Screen): void {
+		this.endGameConfirmation.hide();
         const player = this.gameSession.state.player;
         this.combatMainScreenController.getModel().setPlayerHealth(player.hp);
         this.combatMainScreenController.getModel().setPlayerMaxHealth(player.maxHp);
@@ -162,7 +167,7 @@ class App implements ScreenSwitcher {
 				this.leaderBoardScreenController.startLeaderboard();
 				break;
 		}
-		this.endGameButton.visible(screen.type !== "menu");
+		this.endGameButton.visible(screen.type === "game" || screen.type === "map" || screen.type === "rest");
 		this.endGameButton.getLayer()?.batchDraw();
 	}
 }

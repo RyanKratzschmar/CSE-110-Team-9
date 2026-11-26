@@ -1,7 +1,7 @@
-import type { LeaderboardEntry } from "../../../backend/game/Leaderboard/Leaderboard";
+import type { FloorEntry } from "../../../backend/game/Leaderboard/FloorLeaderboard";
 
 export interface LeaderboardScreenState {
-    readonly leaderboard: readonly LeaderboardEntry[];
+    readonly leaderboard: readonly FloorEntry[];
     readonly scrollY: number;
     readonly loading: boolean;
 }
@@ -27,7 +27,7 @@ export class LeaderboardScreenModel {
     }
 
     //Replaces the entries (sorted in descending order) and scrolls back to the top
-    setEntries(entries: readonly LeaderboardEntry[]): void {
+    setEntries(entries: readonly FloorEntry[]): void {
         this.setState({ leaderboard: entries, scrollY: 0, loading: false });
     }
 

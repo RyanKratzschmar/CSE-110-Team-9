@@ -1,7 +1,7 @@
 import Konva from "konva";
 import type { View } from "../../types";
 import type { LeaderboardScreenState } from "./LeaderboardScreenModel";
-import type { LeaderboardEntry } from "../../../backend/game/Leaderboard/Leaderboard";
+import type { FloorEntry } from "../../../backend/game/Leaderboard/FloorLeaderboard";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants";
 
 export interface LeaderboardViewHandlers {
@@ -20,8 +20,8 @@ const SCROLLBAR_WIDTH = 14;
 const MIN_THUMB_HEIGHT = 40;
 
 const RANK_W = 105;
-const DATE_W = 630;
-const SCORE_W = LIST_WIDTH - RANK_W - DATE_W;
+const GAME_W = 630;
+const FLOOR_W = LIST_WIDTH - RANK_W - GAME_W;
 
 const GOLD = "#D4AF37";
 const SILVER = "#C0C0C0";
@@ -30,14 +30,15 @@ const ROW_A = "#5A4A78";
 const ROW_B = "#4F4268";
 const DIVIDER = "#3A2E4A";
 
-//Draws the leaderboard screen with Konva: the title, the scrollable list of scores, the scrollbar, and the Leave button
+//Draws the leaderboard screen: the title, the scrollable list of floors, the scrollbar, and the Leave button
 export class LeaderboardScreenView implements View {
     private readonly group: Konva.Group;
     private readonly listGroup: Konva.Group;
+    private readonly headerGroup = new Konva.Group({ visible: false });
     private readonly scrollTrack: Konva.Rect;
     private readonly scrollThumb: Konva.Rect;
     private contentHeight = 0;
-    private renderedEntries: readonly LeaderboardEntry[] | null = null;
+    private renderedEntries: readonly FloorEntry[] | null = null;
     private renderedLoading: boolean | null = null;
     private readonly buttonBgs: Konva.Rect[] = [];
 
@@ -64,6 +65,30 @@ export class LeaderboardScreenView implements View {
             fill: "#FFD60A",
             align: "center"
         }));
+
+        const headers: [string, number, number][] = [
+            ["Rank", 0, RANK_W],
+            ["Game Number", RANK_W, GAME_W],
+            ["Highest Floor Cleared", RANK_W + GAME_W, FLOOR_W]
+        ];
+
+        for (const [text, x, width] of headers) {
+            this.headerGroup.add(new Konva.Text({
+                x: LIST_X + x,
+                y: 107,
+                width,
+                height: 26,
+                align: "center",
+                verticalAlign: "middle",
+                text,
+                fontSize: 22,
+                fontFamily: "Arial",
+                fontStyle: "bold",
+                fill: "#FFE9C2"
+            }));
+        }
+
+        this.group.add(this.headerGroup);
 
         this.group.add(this.createButton("Leave", LIST_X + LIST_WIDTH - 200, 815, "#F04A23", "#FFFFFF", () => this.handlers.onLeave()));
 
@@ -161,16 +186,17 @@ export class LeaderboardScreenView implements View {
         this.group.visible(false);
     }
 
-    //Draws one row per entry (rank, date, score) with gold, silver, and bronze for the top 3, or a loading/empty message
-    private buildRows(entries: readonly LeaderboardEntry[], loading: boolean): void {
+    //Draws one row per game (rank, game number, highest floor cleared) with gold, silver, and bronze for ranks 1-3, or a loading/empty message
+    private buildRows(entries: readonly FloorEntry[], loading: boolean): void {
         this.listGroup.destroyChildren();
+        this.headerGroup.visible(!loading && entries.length > 0);
 
         if (loading || entries.length === 0) {
             this.listGroup.add(new Konva.Text({
                 x: 0,
                 y: LIST_HEIGHT / 2 - 16,
                 width: LIST_WIDTH,
-                text: loading? "Loading..." : "No scores yet",
+                text: loading? "Loading..." : "No games yet",
                 fontSize: 32,
                 fontFamily: "Arial",
                 fill: "#BBBBBB",
@@ -181,14 +207,15 @@ export class LeaderboardScreenView implements View {
         }
 
         entries.forEach((entry, i) => {
+            const rank = i + 1;
             const row = new Konva.Group({ y: i * ROW_HEIGHT });
             row.add(new Konva.Rect({
                 width: LIST_WIDTH,
                 height: ROW_HEIGHT,
-                fill: i === 0 ? GOLD : i === 1 ? SILVER : i === 2 ? BRONZE : (i % 2 === 0 ? ROW_A : ROW_B)
+                fill: rank === 1 ? GOLD : rank === 2 ? SILVER : rank === 3 ? BRONZE : (i % 2 === 0 ? ROW_A : ROW_B)
             }));
             row.add(new Konva.Line({
-                points: [RANK_W + DATE_W, 0, RANK_W + DATE_W, ROW_HEIGHT],
+                points: [RANK_W + GAME_W, 0, RANK_W + GAME_W, ROW_HEIGHT],
                 stroke: DIVIDER,
                 strokeWidth: 1
             }));
@@ -206,9 +233,9 @@ export class LeaderboardScreenView implements View {
             }));
             
             const cells: [string, number, number][] = [
-                [String(i + 1), 0, RANK_W],
-                [this.formatDate(entry.timestamp), RANK_W, DATE_W],
-                [String(entry.score), RANK_W + DATE_W, SCORE_W]
+                [String(rank), 0, RANK_W],
+                [`Game ${entry.gameNumber}`, RANK_W, GAME_W],
+                [`Floor ${entry.floor}`, RANK_W + GAME_W, FLOOR_W]
             ];
 
             for (const [text, x, width] of cells) {
@@ -223,7 +250,7 @@ export class LeaderboardScreenView implements View {
                     fontSize: 26,
                     fontFamily: "Arial",
                     fontStyle: "bold",
-                    fill: i < 3 ? "#2B2233" : (x === 0 ? "#C9BEDD" : "#FFF")
+                    fill: rank <= 3 ? "#2B2233" : (x === 0 ? "#C9BEDD" : "#FFF")
                 }));
             }
 
@@ -246,13 +273,6 @@ export class LeaderboardScreenView implements View {
         const thumbHeight = Math.max(MIN_THUMB_HEIGHT, (LIST_HEIGHT / this.contentHeight) * LIST_HEIGHT);
         this.scrollThumb.height(thumbHeight);
         this.scrollThumb.y(LIST_Y + (scrollY / max) * (LIST_HEIGHT - thumbHeight));
-    }
-
-    //Formats a timestamp as a readable date and time, or returns it unchanged if it isn't a valid date
-    private formatDate(timestamp: string): string {
-        const date = new Date(timestamp);
-
-        return Number.isNaN(date.getTime())? timestamp : date.toLocaleString(undefined, {month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
     }
 
     //Creates a clickable button that changes color and shows a pointer cursor on hover

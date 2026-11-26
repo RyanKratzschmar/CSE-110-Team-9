@@ -1,24 +1,24 @@
 import Konva from "konva";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "./constants.ts";
 
-// One shared control for all non-title screens; navigation owns ending the run.
+// One shared footer control for gameplay screens; navigation owns ending the run.
 export function createEndGameButton(onEndGame: () => void): Konva.Group {
     const button = new Konva.Group({
         name: "end-game-button",
-        x: STAGE_WIDTH - 580,
-        y: STAGE_HEIGHT - 90,
+        x: STAGE_WIDTH - 260,
+        y: STAGE_HEIGHT - 112.5,
         visible: false,
     });
     button.add(new Konva.Rect({
         width: 220,
-        height: 70,
+        height: 75,
         cornerRadius: 10,
         fill: "#F04A23",
     }));
     button.add(new Konva.Text({
         text: "End Game",
         width: 220,
-        height: 70,
+        height: 75,
         align: "center",
         verticalAlign: "middle",
         fontSize: 30,

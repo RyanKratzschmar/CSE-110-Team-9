@@ -63,15 +63,33 @@ describe("End Game navigation across the real app", () => {
         expect(app["titleScreenController"].getView().getGroup().isVisible()).toBe(true);
     });
 
-    it.each(["game", "map", "potion", "rest", "upgrade", "leaderboard", "gameover"] as const)(
+    it.each(["leaderboard", "gameover", "upgrade", "potion"] as const)(
+        "keeps the button hidden and inactive on %s",
+        type => {
+            if (type === "upgrade" || type === "potion") reachRest();
+            app.switchToScreen({ type });
+            const showGameOver = vi.spyOn(app["gameOverScreenController"], "show");
+
+            expect(button().isVisible()).toBe(false);
+            button().fire("click");
+            button().fire("tap");
+            expect(showGameOver).not.toHaveBeenCalled();
+            showGameOver.mockRestore();
+        },
+    );
+
+    it.each(["game", "map", "rest"] as const)(
         "ends the run from %s and displays Game Over",
         type => {
-            if (["potion", "rest", "upgrade"].includes(type)) reachRest();
+            if (type === "rest") reachRest();
             app.switchToScreen({ type } as Screen);
             expect(button().isVisible()).toBe(true);
             expect(app["stage"].find(".end-game-button")).toHaveLength(1);
 
             button().fire("click");
+            expect(app["endGameConfirmation"].getGroup().isVisible()).toBe(true);
+            expect(app["gameSession"].state.gameOver).toBe(false);
+            app["endGameConfirmation"].getGroup().findOne(".confirm-end-game")!.fire("click");
 
             expect(app["gameSession"].state.gameOver).toBe(true);
             expect(app["gameSession"].state.combat).toBeNull();
@@ -81,7 +99,55 @@ describe("End Game navigation across the real app", () => {
         },
     );
 
-    it("stops the active upgrade timer when ending the run", () => {
+    it.each(["game", "map", "rest"] as const)("cancels ending the run from %s without changing state", type => {
+        if (type === "rest") reachRest();
+        app.switchToScreen({ type });
+        const state = app["gameSession"].state;
+        const combat = state.combat;
+        const hp = state.player.hp;
+        const currentIndex = state.level.currentIndex;
+
+        button().fire("tap");
+        app["endGameConfirmation"].getGroup().findOne(".cancel-end-game")!.fire("tap");
+
+        expect(app["endGameConfirmation"].getGroup().isVisible()).toBe(false);
+        expect(state.gameOver).toBe(false);
+        expect(state.combat).toBe(combat);
+        expect(state.player.hp).toBe(hp);
+        expect(state.level.currentIndex).toBe(currentIndex);
+        expect(button().isVisible()).toBe(true);
+    });
+
+    it("blocks combat typing during confirmation and restores input after Cancel", () => {
+        app.switchToScreen({ type: "game" });
+        app["combatMainScreenController"].handleAttackClick();
+        const view = app["combatMainScreenController"].getView();
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "1" }));
+        const answer = view["answerBuffer"];
+        expect(answer).toBe("1");
+
+        button().fire("click");
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "2" }));
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+        expect(view["answerBuffer"]).toBe(answer);
+        app["endGameConfirmation"].getGroup().findOne(".cancel-end-game")!.fire("click");
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "3" }));
+        expect(view["answerBuffer"]).toBe("13");
+    });
+
+    it("shows End Game again after returning from a minigame to Rest", () => {
+        reachRest();
+        app.switchToScreen({ type: "upgrade" });
+        expect(button().isVisible()).toBe(false);
+        app.switchToScreen({ type: "rest" });
+        expect(button().isVisible()).toBe(true);
+        app.switchToScreen({ type: "potion" });
+        expect(button().isVisible()).toBe(false);
+        app.switchToScreen({ type: "rest" });
+        expect(button().isVisible()).toBe(true);
+    });
+
+    it("stops the active upgrade timer when navigating to Game Over", () => {
         reachRest();
         app.switchToScreen({ type: "upgrade" });
         const upgradeView = app["upgradeMinigameScreenController"].getView();
@@ -93,7 +159,7 @@ describe("End Game navigation across the real app", () => {
         vi.advanceTimersByTime(1000);
         expect(remainingTime).toHaveBeenCalled();
 
-        button().fire("tap");
+        app.switchToScreen({ type: "gameover" });
         remainingTime.mockClear();
         vi.advanceTimersByTime(60_000);
 
@@ -105,6 +171,7 @@ describe("End Game navigation across the real app", () => {
     it("hides End Game again after Play Again returns to the title", () => {
         app.switchToScreen({ type: "map" });
         button().fire("tap");
+        app["endGameConfirmation"].getGroup().findOne(".confirm-end-game")!.fire("tap");
         app["gameOverScreenController"].getView().getGroup().findOne(".play-again")!.fire("click");
 
         expect(button().isVisible()).toBe(false);
