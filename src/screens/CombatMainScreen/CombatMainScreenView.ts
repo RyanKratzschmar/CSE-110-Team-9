@@ -335,7 +335,7 @@ export class CombatMainScreenView implements View {
 
         // Create Hint Button
         this.hintButton = new Konva.Rect({
-            x: 1300,
+            x: 1040,
             y: 787.5,
             width: 200,
             height: 75,
@@ -363,7 +363,7 @@ export class CombatMainScreenView implements View {
 
         // Text that says "get hint"
         this.hintText = new Konva.Text({
-            x: 1320,
+            x: 1060,
             y: 802.5,
             fontSize: 40,
             text: "Get Hint",
@@ -418,7 +418,7 @@ export class CombatMainScreenView implements View {
 
         // Create Explanation Button
         this.explanationButton = new Konva.Rect({
-            x: 1300,
+            x: 1040,
             y: 787.5,
             width: 200,
             height: 75,
@@ -446,7 +446,7 @@ export class CombatMainScreenView implements View {
 
         // Text that says "Explain"
         this.explanationText = new Konva.Text({
-            x: 1300,
+            x: 1040,
             y: 802.5,
             width: 200,
             align: "center",
