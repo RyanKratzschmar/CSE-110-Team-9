@@ -17,6 +17,7 @@ export class GameOverScreenController extends ScreenController {
     override show(): void {
         this.gameSession.state.gameOver = true;
         this.gameSession.state.combat = null;
+        this.gameSession.recordFinishedGame();
         this.view.show();
     }
 

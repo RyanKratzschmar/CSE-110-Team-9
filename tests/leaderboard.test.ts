@@ -1,42 +1,27 @@
 // @vitest-environment jsdom
 import "vitest-canvas-mock";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import request from "supertest";
 import Konva from "konva";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { getSortedLeaderboard, addScore } from "../backend/game/Leaderboard/Leaderboard";
-import type { LeaderboardEntry } from "../backend/game/Leaderboard/Leaderboard";
-import { app } from "../backend/app";
+import type { FloorEntry } from "../backend/game/Leaderboard/FloorLeaderboard";
 import { LeaderboardScreenModel } from "../src/screens/LeaderboardScreen/LeaderboardScreenModel";
 import { LeaderboardScreenView } from "../src/screens/LeaderboardScreen/LeaderboardScreenView";
 import { LeaderBoardScreenController } from "../src/screens/LeaderboardScreen/LeaderboardScreenController";
+import { FloorLeaderboard } from "../backend/game/Leaderboard/FloorLeaderboard";
+import { GameSession } from "../src/GameSession";
+import { GameOverScreenController } from "../src/screens/GameOverScreen/GameOverScreenController";
+import { finishCombat, finishRest } from "../backend/game/GameManager";
+import { FIGHTS_PER_LEVEL } from "../backend/game/Level";
 
-//Creates a mock file system so that the tests never change the real leaderboard.json
-vi.mock("node:fs", () => {
-    const fs = { existsSync: vi.fn(), readFileSync: vi.fn(), writeFileSync: vi.fn() };
-    return { ...fs, default: fs };
-});
-
-const mockExists = vi.mocked(existsSync);
-const mockRead = vi.mocked(readFileSync);
-const mockWrite = vi.mocked(writeFileSync);
-
-//Helper function that pretends leaderboard.json exists and contains these entries
-function mockFile(entries: LeaderboardEntry[]): void {
-    mockExists.mockReturnValue(true);
-    mockRead.mockReturnValue(JSON.stringify(entries));
-}
-
-//Mock leaderboard entries
-const ENTRIES: LeaderboardEntry[] = [
-    { timestamp: "2026-11-01T00:00:00.000Z", score: 50 },
-    { timestamp: "2026-11-02T00:00:00.000Z", score: 200 },
-    { timestamp: "2026-11-03T00:00:00.000Z", score: 120 },
+const FLOORS: FloorEntry[] = [
+    { gameNumber: 1, floor: 3 },
+    { gameNumber: 2, floor: 2 },
+    { gameNumber: 3, floor: 1 },
 ];
 
+
 //Creates many entries so that we can test the scrollability of the sorted list (descending order)
-function manyEntries(n: number): LeaderboardEntry[] {
-    return Array.from({ length: n }, (_, i) => ({ timestamp: "2026-11-01T00:00:00.000Z", score: 1000 - i }));
+function manyEntries(n: number): FloorEntry[] {
+    return Array.from({ length: n }, (_, i) => ({ gameNumber: i + 1, floor: n - i }));
 }
 
 //Returns all the text drawn in the view so tests can check what is shown on screen
@@ -44,9 +29,11 @@ function textsIn(view: LeaderboardScreenView): string[] {
     return view.getGroup().find("Text").map((node) => (node as Konva.Text).text());
 }
 
-//Creates a fake successful fetch response that returns the mock entries
-function okResponse(entries: LeaderboardEntry[]) {
-    return { ok: true, status: 200, json: async () => entries };
+//Creates a game session whose leaderboard already has games that cleared these floors
+function sessionWithFloors(...floors: number[]): GameSession {
+    const session = new GameSession();
+    floors.forEach((f) => session.leaderboard.recordGame(f));
+    return session;
 }
 
 //Creates mock view handlers so we can check when the view calls them and with what values
@@ -54,101 +41,70 @@ function makeHandlers() {
     return { onScrollBy: vi.fn(), onScrollTo: vi.fn(), onLeave: vi.fn() };
 }
 
-const fetchMock = vi.fn(); //Fake fetch created for testing so that a real network request isn't made
 const playMock = vi.fn(); //Fake play to test whether the click sound plays without real audio
 
 //Runs before every test so each test starts fresh
 beforeEach(() => {
     vi.clearAllMocks(); //Clears all mock calls from the previous test
-    vi.stubGlobal("fetch", fetchMock); //Ensures controller's fetch calls are mock ones rather than real ones
     vi.stubGlobal("Audio", vi.fn(() => ({ currentTime: 0, play: playMock }))); //Replaces Audio with a fake so no real sound plays and we can check play() was called
 });
 
-
-describe("Leaderboard backend", () => {
-    it("returns entries sorted by score, highest first", () => {
-        mockFile(ENTRIES);
-        const result = getSortedLeaderboard();
-        expect(result.map((e) => e.score)).toEqual([200, 120, 50]);
-        expect(result[0].timestamp).toBe("2026-11-02T00:00:00.000Z");
+describe("FloorLeaderboard", () => {
+    it("starts empty", () => {
+        expect(new FloorLeaderboard().getSorted()).toEqual([]);
     });
 
-    it("returns an empty list when the leaderboard file does not exist", () => {
-        mockExists.mockReturnValue(false);
-        expect(getSortedLeaderboard()).toEqual([]);
-        expect(mockRead).not.toHaveBeenCalled();
+    it("numbers games in order and sorts by floor, tied games earliest first", () => {
+        const board = new FloorLeaderboard();
+        [2, 5, 2].forEach((f) => board.recordGame(f));
+        expect(board.getSorted()).toEqual([
+            { gameNumber: 2, floor: 5 },
+            { gameNumber: 1, floor: 2 },
+            { gameNumber: 3, floor: 2 },
+        ]);
     });
 
-    it("addScore appends the new entry and saves all entries", () => {
-        mockFile([ENTRIES[0]]);
-        const newEntry = { timestamp: "2026-11-04T00:00:00.000Z", score: 75 };
-        addScore(newEntry);
-        expect(mockWrite).toHaveBeenCalledTimes(1);
-        const saved = JSON.parse(mockWrite.mock.calls[0][1] as string);
-        expect(saved).toEqual([ENTRIES[0], newEntry]);
-    });
-
-    it("addScore creates the file when none exists yet", () => {
-        mockExists.mockReturnValue(false);
-        const newEntry = { timestamp: "2026-11-04T00:00:00.000Z", score: 10 };
-        addScore(newEntry);
-        const saved = JSON.parse(mockWrite.mock.calls[0][1] as string);
-        expect(saved).toEqual([newEntry]);
-    });
-
-    it("throws when the leaderboard file is corrupted", () => {
-        mockExists.mockReturnValue(true);
-        mockRead.mockReturnValue("{ not valid json");
-        expect(() => getSortedLeaderboard()).toThrow();
+    it("getSorted returns a copy, so changing it does not change the leaderboard", () => {
+        const board = new FloorLeaderboard();
+        board.recordGame(1);
+        board.getSorted().pop();
+        expect(board.getSorted()).toHaveLength(1);
     });
 });
 
-describe("GET /api/leaderboard", () => {
-    it("responds 200 with the sorted leaderboard", async () => {
-        mockFile(ENTRIES);
-        const res = await request(app).get("/api/leaderboard");
-        expect(res.status).toBe(200);
-        expect(res.body.map((e: LeaderboardEntry) => e.score)).toEqual([200, 120, 50]);
+describe("Recording finished games", () => {
+    const openGameOver = (session: GameSession) => new GameOverScreenController({ switchToScreen: vi.fn() }, session).show();
+
+    it("records the highest floor cleared and keeps it after New Game", () => {
+        const session = new GameSession();
+        session.newGame();
+        for (let i = 0; i < FIGHTS_PER_LEVEL; i++) session.state.level.completeCurrent(); // reach the rest stop
+        finishRest(session.state);
+        openGameOver(session);
+        session.newGame();
+        expect(session.leaderboard.getSorted()).toEqual([{ gameNumber: 1, floor: 1 }]);
     });
 
-    it("responds 200 with an empty array when there are no scores", async () => {
-        mockExists.mockReturnValue(false);
-        const res = await request(app).get("/api/leaderboard");
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual([]);
+    it("counts a game once even if Game Over opens twice", () => {
+        const session = new GameSession();
+        session.newGame();
+        openGameOver(session);
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toEqual([{ gameNumber: 1, floor: 0 }]);
     });
 
-    it("responds 500 when the leaderboard file is corrupted", async () => {
-        mockExists.mockReturnValue(true);
-        mockRead.mockReturnValue("garbage");
-        const res = await request(app).get("/api/leaderboard");
-        expect(res.status).toBe(500);
-    });
-});
-
-describe("POST /api/leaderboard", () => {
-    it("saves a valid score with a timestamp and responds 200", async () => {
-        mockExists.mockReturnValue(false);
-        const res = await request(app).post("/api/leaderboard").send({ score: 150 });
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual({ message: "Saved" });
-        const saved = JSON.parse(mockWrite.mock.calls[0][1] as string);
-        expect(saved).toHaveLength(1);
-        expect(saved[0].score).toBe(150);
-        expect(Number.isNaN(Date.parse(saved[0].timestamp))).toBe(false);
+    it("counts a game lost in combat", () => {
+        const session = new GameSession();
+        session.newGame();
+        finishCombat(session.state, "lose"); // sets gameOver before the screen opens
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toHaveLength(1);
     });
 
-    it("responds 400 and saves nothing when score is missing", async () => {
-        const res = await request(app).post("/api/leaderboard").send({});
-        expect(res.status).toBe(400);
-        expect(res.body).toEqual({ error: "score (number) required" });
-        expect(mockWrite).not.toHaveBeenCalled();
-    });
-
-    it("responds 400 and saves nothing when score is not a number", async () => {
-        const res = await request(app).post("/api/leaderboard").send({ score: "100" });
-        expect(res.status).toBe(400);
-        expect(mockWrite).not.toHaveBeenCalled();
+    it("does not count Game Over when no game was started", () => {
+        const session = new GameSession();
+        openGameOver(session);
+        expect(session.leaderboard.getSorted()).toEqual([]);
     });
 });
 
@@ -161,13 +117,13 @@ describe("LeaderboardScreenModel", () => {
     it("setEntries stores entries, stops loading, and resets scroll to the top", () => {
         const model = new LeaderboardScreenModel();
         model.scrollTo(100, 500);
-        model.setEntries(ENTRIES);
-        expect(model.getState()).toEqual({ leaderboard: ENTRIES, scrollY: 0, loading: false });
+        model.setEntries(FLOORS);
+        expect(model.getState()).toEqual({ leaderboard: FLOORS, scrollY: 0, loading: false });
     });
     
     it("setLoading clears entries and goes back to loading", () => {
         const model = new LeaderboardScreenModel();
-        model.setEntries(ENTRIES);
+        model.setEntries(FLOORS);
         model.setLoading();
         expect(model.getState()).toEqual({ leaderboard: [], scrollY: 0, loading: true });
     });
@@ -176,7 +132,7 @@ describe("LeaderboardScreenModel", () => {
         const model = new LeaderboardScreenModel();
         const listener = vi.fn();
         const unsubscribe = model.subscribe(listener);
-        model.setEntries(ENTRIES);
+        model.setEntries(FLOORS);
         expect(listener).toHaveBeenCalledTimes(1);
         expect(listener).toHaveBeenCalledWith(model.getState());
         unsubscribe();
@@ -218,33 +174,53 @@ describe("LeaderboardScreenView", () => {
         expect(textsIn(view)).toContain("Loading...");
     });
 
-    it("shows 'No scores yet' when loaded with no entries", () => {
+    it("shows 'No games yet' when loaded with no entries", () => {
         const view = new LeaderboardScreenView(makeHandlers());
         view.render({ leaderboard: [], scrollY: 0, loading: false });
-        expect(textsIn(view)).toContain("No scores yet");
+        expect(textsIn(view)).toContain("No games yet");
         expect(textsIn(view)).not.toContain("Loading...");
     });
 
-    it("draws a row per entry with rank and score in the given order", () => {
+    it("draws a row per entry with rank and floor in the given order", () => {
         const view = new LeaderboardScreenView(makeHandlers());
-        const sorted = [...ENTRIES].sort((a, b) => b.score - a.score);
-        view.render({ leaderboard: sorted, scrollY: 0, loading: false });
+        view.render({ leaderboard: FLOORS, scrollY: 0, loading: false });
         const texts = textsIn(view);
-        expect(texts).toEqual(expect.arrayContaining(["1", "2", "3", "200", "120", "50"]));
-        expect(texts.indexOf("200")).toBeLessThan(texts.indexOf("120"));
-        expect(texts.indexOf("120")).toBeLessThan(texts.indexOf("50"));
-        expect(texts).not.toContain("No scores yet");
+        expect(texts).toEqual(expect.arrayContaining(["1", "2", "3", "Game 1", "Game 2", "Game 3", "Floor 3", "Floor 2", "Floor 1"]));
+        expect(texts.indexOf("Floor 3")).toBeLessThan(texts.indexOf("Floor 2"));
+        expect(texts.indexOf("Floor 2")).toBeLessThan(texts.indexOf("Floor 1"));
+        expect(texts).not.toContain("No games yet");
     });
 
-    it("shows an invalid timestamp as-is instead of crashing", () => {
+    it("shows the column headers only when there are games", () => {
         const view = new LeaderboardScreenView(makeHandlers());
-        view.render({ leaderboard: [{ timestamp: "not-a-date", score: 5 }], scrollY: 0, loading: false });
-        expect(textsIn(view)).toContain("not-a-date");
+        view.render({ leaderboard: [], scrollY: 0, loading: false });
+        expect(view["headerGroup"].visible()).toBe(false);
+        view.render({ leaderboard: FLOORS, scrollY: 0, loading: false });
+        expect(view["headerGroup"].visible()).toBe(true);
+        view.render({ leaderboard: [], scrollY: 0, loading: true });
+        expect(view["headerGroup"].visible()).toBe(false);
+    });
+
+    it("gives tied games consecutive ranks and different medal colors", () => {
+        const view = new LeaderboardScreenView(makeHandlers());
+        view.render({
+            leaderboard: [
+                { gameNumber: 2, floor: 5 },
+                { gameNumber: 1, floor: 2 },
+                { gameNumber: 3, floor: 2 },
+                { gameNumber: 4, floor: 0 },
+            ],
+            scrollY: 0,
+            loading: false,
+        });
+        const rows = view["listGroup"].getChildren() as Konva.Group[];
+        expect(rows.map((row) => row.findOne<Konva.Text>("Text")!.text())).toEqual(["1", "2", "3", "4"]);
+        expect(rows[1].findOne<Konva.Rect>("Rect")!.fill()).not.toBe(rows[2].findOne<Konva.Rect>("Rect")!.fill());
     });
 
     it("has no scroll room for a short list and correct scroll room for a long one", () => {
         const view = new LeaderboardScreenView(makeHandlers());
-        view.render({ leaderboard: ENTRIES, scrollY: 0, loading: false });
+        view.render({ leaderboard: FLOORS, scrollY: 0, loading: false });
         expect(view.getMaxScroll()).toBe(0);
         view.render({ leaderboard: manyEntries(20), scrollY: 0, loading: false });
         expect(view.getMaxScroll()).toBe(20 * 72 - 648);
@@ -280,61 +256,36 @@ describe("LeaderboardScreenView", () => {
 
 describe("LeaderBoardScreenController", () => {
     const makeSwitcher = () => ({ switchToScreen: vi.fn() });
-    it("startLeaderboard shows the screen and displays fetched entries", async () => {
-        fetchMock.mockResolvedValue(okResponse(ENTRIES));
-        const controller = new LeaderBoardScreenController(makeSwitcher());
-        await controller.startLeaderboard();
-        expect(fetchMock).toHaveBeenCalledWith("/api/leaderboard");
+    it("startLeaderboard shows the screen and displays the session's floors, highest first", () => {
+        const controller = new LeaderBoardScreenController(makeSwitcher(), sessionWithFloors(1, 2, 3));
+        controller.startLeaderboard();
         expect(controller.getView().getGroup().visible()).toBe(true);
-        expect(textsIn(controller.getView())).toEqual(expect.arrayContaining(["200", "120", "50"]));
+        expect(controller["model"].getState().leaderboard.map((e) => e.floor)).toEqual([3, 2, 1]);
+        expect(textsIn(controller.getView())).toEqual(expect.arrayContaining(["Floor 3", "Floor 2", "Floor 1"]));
         controller.hide();
     });
 
-    it("shows 'No scores yet' when the server responds with an error status", async () => {
-        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-        fetchMock.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
-        const controller = new LeaderBoardScreenController(makeSwitcher());
-        await controller.startLeaderboard();
-        expect(textsIn(controller.getView())).toContain("No scores yet");
-        expect(errorSpy).toHaveBeenCalled();
-        controller.hide();
-    });
-
-    it("shows 'No scores yet' when the network request fails", async () => {
-        vi.spyOn(console, "error").mockImplementation(() => {});
-        fetchMock.mockRejectedValue(new Error("network down"));
-        const controller = new LeaderBoardScreenController(makeSwitcher());
-        await controller.startLeaderboard();
-        expect(textsIn(controller.getView())).toContain("No scores yet");
+    it("shows 'No games yet' before any game has been started", () => {
+        const controller = new LeaderBoardScreenController(makeSwitcher(), new GameSession());
+        controller.startLeaderboard();
+        expect(textsIn(controller.getView())).toContain("No games yet");
         expect(controller["model"].getState().loading).toBe(false);
-        controller.hide();
-    });
-
-    it("ignores a slow older request that finishes after a newer one", async () => {
-        let resolveFirst!: (value: unknown) => void;
-        fetchMock.mockReturnValueOnce(new Promise((r) => { resolveFirst = r; })).mockResolvedValueOnce(okResponse([ENTRIES[1]]));
-        const controller = new LeaderBoardScreenController(makeSwitcher());
-        const first = controller.startLeaderboard();
-        await controller.startLeaderboard();
-        resolveFirst(okResponse(ENTRIES));
-        await first;
-        expect(controller["model"].getState().leaderboard).toEqual([ENTRIES[1]]);
         controller.hide();
     });
 
     it("Leave plays the click sound and switches to the menu", () => {
         const switcher = makeSwitcher();
-        const controller = new LeaderBoardScreenController(switcher);
+        const controller = new LeaderBoardScreenController(switcher, new GameSession());
         const leaveText = controller.getView().getGroup().find("Text").find((n) => (n as Konva.Text).text() === "Leave")!;
         leaveText.getParent()!.fire("click");
         expect(playMock).toHaveBeenCalledTimes(1);
         expect(switcher.switchToScreen).toHaveBeenCalledWith({ type: "menu" });
     });
 
-    it("End/Home keys scroll to the bottom/top, and keys are ignored after hide", async () => {
-        fetchMock.mockResolvedValue(okResponse(manyEntries(20)));
-        const controller = new LeaderBoardScreenController(makeSwitcher());
-        await controller.startLeaderboard();
+    it("End/Home keys scroll to the bottom/top, and keys are ignored after hide", () => {
+        const floors = Array.from({ length: 20 }, (_, i) => i + 1);
+        const controller = new LeaderBoardScreenController(makeSwitcher(), sessionWithFloors(...floors));
+        controller.startLeaderboard();
         const max = controller.getView().getMaxScroll();
         window.dispatchEvent(new KeyboardEvent("keydown", { key: "End" }));
         expect(controller["model"].getState().scrollY).toBe(max);

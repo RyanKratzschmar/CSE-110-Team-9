@@ -64,7 +64,7 @@ class App implements ScreenSwitcher {
 		this.potionLabScreenController = new PotionLabScreenController(this, this.gameSession, explanationPopUp);
 		this.restScreenController = new RestScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
 		this.upgradeMinigameScreenController = new UpgradeMinigameScreenController(this, this.combatMainScreenController.getModel(), this.gameSession);
-		this.leaderBoardScreenController = new LeaderBoardScreenController(this);
+		this.leaderBoardScreenController = new LeaderBoardScreenController(this, this.gameSession);
 		this.gameOverScreenController = new GameOverScreenController(this, this.gameSession);
 
 		window.addEventListener("resize", () => {
