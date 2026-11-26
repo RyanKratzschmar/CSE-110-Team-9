@@ -134,6 +134,24 @@ describe("UpgradeMinigameScreenController", () => {
         expect(window.alert).not.toHaveBeenCalled();
     });
 
+    it("says the attempt was already made when restarting after a failed round", () => {
+        vi.advanceTimersByTime(60_000);
+        controller["handleLeave"]();
+        controller.startUpgradeMinigame();
+        controller["handleStart"]();
+        expect(controller["model"].getState().phase).toBe("complete");
+        expect(findText(controller.getView(), "Upgrade attempt has already been made. Please try again on the next floor.").isVisible()).toBe(true);
+    });
+
+    it("says the upgrade was already claimed when restarting after a successful round", () => {
+        for (let i = 0; i < 10; i++) controller["handleSubmit"]("1");
+        vi.advanceTimersByTime(60_000);
+        controller["handleLeave"]();
+        controller.startUpgradeMinigame();
+        controller["handleStart"]();
+        expect(findText(controller.getView(), "Upgrade has already been claimed for this floor.").isVisible()).toBe(true);
+    });
+
     it("grants the reward once using the shared player and preserves HP", () => {
         session.state.player.takeDamage(20);
         const hp = session.state.player.hp;

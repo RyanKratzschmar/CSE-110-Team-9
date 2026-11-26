@@ -10,7 +10,7 @@ import { MultiOperationEquation } from "../backend/equations/MultiOperationEquat
 
 // MultiplicationEquation Test
 describe("Multiplication", () => {
-    // Test for starting difficulty 1 -> base equation
+    // Test for starting difficulty 1 -> first term should be increased bounds 100-200, second term bounds 0-100
     it("works with difficulty 1", () => {
         const mult = new MultiplicationEquation(1);
         // Type should be multiplication
@@ -20,11 +20,11 @@ describe("Multiplication", () => {
         let term1 = mult.getEquation()[0];
         let term2 = mult.getEquation()[2];
         // Term 1 is a 2-3 digit number
-        expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeLessThanOrEqual(200);
+        expect(term1).toBeGreaterThanOrEqual(100);
         // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeLessThanOrEqual(100);
+        expect(term2).toBeGreaterThanOrEqual(0);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -32,7 +32,7 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
       });
 
-    // Test for input 0 -> should be same as 1
+    // Test for input 0 -> should have both bounds unaltered
     it("works with difficulty 0", () => {
         const mult = new MultiplicationEquation(0);
         // Type should be multiplication
@@ -43,10 +43,10 @@ describe("Multiplication", () => {
         let term2 = mult.getEquation()[2];
         // Term 1 is a 2-3 digit number
         expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeGreaterThanOrEqual(0);
         // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeLessThanOrEqual(100);
+        expect(term2).toBeGreaterThanOrEqual(0);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -54,7 +54,7 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
     });
 
-    // Test that first digit can be larger
+    // Test that both digits can be larger
     it("scales the first term with higher difficulty", () => {
         const mult = new MultiplicationEquation(20);
         // Type should be multiplication
@@ -63,12 +63,12 @@ describe("Multiplication", () => {
         expect(mult.getEquation().length).toBe(3);
         let term1 = mult.getEquation()[0];
         let term2 = mult.getEquation()[2];
-        // Term 1 is a 2-4 digit number
-        expect(term1).toBeLessThanOrEqual(1000);
-        expect(term1).toBeGreaterThanOrEqual(10);
-        // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        // Term 1 should have increased 10 times from 0-100 to 1000-1100
+        expect(term1).toBeLessThanOrEqual(1100);
+        expect(term1).toBeGreaterThanOrEqual(100);
+        // Term 2 should have increased 10 times from 0-100 to 1000-1100
+        expect(term2).toBeLessThanOrEqual(1100);
+        expect(term2).toBeGreaterThanOrEqual(100);
         // Answer is first term times second term
         expect(mult.getAnswer()).toBe(term1 * term2);
         // Check print based on terms
@@ -76,31 +76,31 @@ describe("Multiplication", () => {
         expect(mult.getPrint()).toBe(print);
     });
 
-    // Test for difficulties greater than 25 -> should be larger than 2 terms
-    it("works with difficulty 30 (>25)", () => {
-        const mult = new MultiplicationEquation(30);
-        // Type should be multiplication
-        expect(mult.getType()).toBe("Multiplication")
-        // Equation is first term, mult symbol, second term
-        expect(mult.getEquation().length).toBe(5);
-        let term1 = mult.getEquation()[0];
-        let term2 = mult.getEquation()[2];
-        let term3 = mult.getEquation()[4];
-        // Term 1 is a 2-3 digit number
-        expect(term1).toBeLessThanOrEqual(100);
-        expect(term1).toBeGreaterThanOrEqual(10);
-        // Term 2 is a 2-4 digit number
-        expect(term2).toBeLessThanOrEqual(1000);
-        expect(term2).toBeGreaterThanOrEqual(10);
-        // Term 3 is a 2-4 digit number
-        expect(term3).toBeLessThanOrEqual(1000);
-        expect(term3).toBeGreaterThanOrEqual(10);
-        // Answer is first term times second term
-        expect(mult.getAnswer()).toBe(term1 * term2 * term3);
-        // Check print based on terms
-        let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " " + "\u00D7" + " " + String(term3) + " = ?";
-        expect(mult.getPrint()).toBe(print);
-      });
+    // Test for difficulties greater than 25 -> should be larger than 2 terms -> NO LONGER NEEDED, NO MORE EXTRA TERMS
+    // it("works with difficulty 30 (>25)", () => {
+    //     const mult = new MultiplicationEquation(30);
+    //     // Type should be multiplication
+    //     expect(mult.getType()).toBe("Multiplication")
+    //     // Equation is first term, mult symbol, second term
+    //     expect(mult.getEquation().length).toBe(5);
+    //     let term1 = mult.getEquation()[0];
+    //     let term2 = mult.getEquation()[2];
+    //     let term3 = mult.getEquation()[4];
+    //     // Term 1 is a 2-3 digit number
+    //     expect(term1).toBeLessThanOrEqual(100);
+    //     expect(term1).toBeGreaterThanOrEqual(10);
+    //     // Term 2 is a 2-4 digit number
+    //     expect(term2).toBeLessThanOrEqual(1000);
+    //     expect(term2).toBeGreaterThanOrEqual(10);
+    //     // Term 3 is a 2-4 digit number
+    //     expect(term3).toBeLessThanOrEqual(1000);
+    //     expect(term3).toBeGreaterThanOrEqual(10);
+    //     // Answer is first term times second term
+    //     expect(mult.getAnswer()).toBe(term1 * term2 * term3);
+    //     // Check print based on terms
+    //     let print = String(term1) + " " + "\u00D7" + " " + String(term2) + " " + "\u00D7" + " " + String(term3) + " = ?";
+    //     expect(mult.getPrint()).toBe(print);
+    //   });
 
     // Test for negative difficulties -> should have terms less than 13, product less than 145
     it("works with negative input", () => {
@@ -230,16 +230,16 @@ describe("Pemdas", () => {
         // Each term should be between the base values as determined by mult and division (from 2-5 digits)
         let term1 = pemdas.getEquation()[0];
         expect(term1).toBeLessThanOrEqual(10000);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeGreaterThanOrEqual(0);
         let term2 = pemdas.getEquation()[2];
         expect(term2).toBeLessThanOrEqual(10000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeGreaterThanOrEqual(0);
         let term3 = pemdas.getEquation()[4];
         expect(term3).toBeLessThanOrEqual(10000);
-        expect(term3).toBeGreaterThanOrEqual(10);
+        expect(term3).toBeGreaterThanOrEqual(0);
         let term4 = pemdas.getEquation()[6];
         expect(term4).toBeLessThanOrEqual(10000);
-        expect(term4).toBeGreaterThanOrEqual(10);
+        expect(term4).toBeGreaterThanOrEqual(0);
         // Answer should be combined from equations
         let ans1;
         let ans2;
@@ -278,16 +278,16 @@ describe("Pemdas", () => {
         // Each term should be between the base values as determined by mult and division (from 2-5 digits)
         let term1 = pemdas.getEquation()[0];
         expect(term1).toBeLessThanOrEqual(10000);
-        expect(term1).toBeGreaterThanOrEqual(10);
+        expect(term1).toBeGreaterThanOrEqual(0);
         let term2 = pemdas.getEquation()[2];
         expect(term2).toBeLessThanOrEqual(10000);
-        expect(term2).toBeGreaterThanOrEqual(10);
+        expect(term2).toBeGreaterThanOrEqual(0);
         let term3 = pemdas.getEquation()[4];
         expect(term3).toBeLessThanOrEqual(10000);
-        expect(term3).toBeGreaterThanOrEqual(10);
+        expect(term3).toBeGreaterThanOrEqual(0);
         let term4 = pemdas.getEquation()[6];
         expect(term4).toBeLessThanOrEqual(10000);
-        expect(term4).toBeGreaterThanOrEqual(10);
+        expect(term4).toBeGreaterThanOrEqual(0);
         // Answer should be combined from equations
         let ans1;
         let ans2;
@@ -331,22 +331,22 @@ describe("Pemdas", () => {
             // Length 11: Each equation is only two terms
             let term1 = pemdas.getEquation()[0];
             expect(term1).toBeLessThanOrEqual(200000);
-            expect(term1).toBeGreaterThanOrEqual(10);
+            expect(term1).toBeGreaterThanOrEqual(0);
             let term2 = pemdas.getEquation()[2];
             expect(term2).toBeLessThanOrEqual(200000);
-            expect(term2).toBeGreaterThanOrEqual(10);
+            expect(term2).toBeGreaterThanOrEqual(0);
             let term3 = pemdas.getEquation()[4];
             expect(term3).toBeLessThanOrEqual(200000);
-            expect(term3).toBeGreaterThanOrEqual(10);
+            expect(term3).toBeGreaterThanOrEqual(0);
             let term4 = pemdas.getEquation()[6];
             expect(term4).toBeLessThanOrEqual(200000);
-            expect(term4).toBeGreaterThanOrEqual(10);
+            expect(term4).toBeGreaterThanOrEqual(0);
             let term5 = pemdas.getEquation()[8];
             expect(term5).toBeLessThanOrEqual(200000);
-            expect(term5).toBeGreaterThanOrEqual(10);
+            expect(term5).toBeGreaterThanOrEqual(0);
             let term6 = pemdas.getEquation()[10];
             expect(term6).toBeLessThanOrEqual(200000);
-            expect(term6).toBeGreaterThanOrEqual(10);
+            expect(term6).toBeGreaterThanOrEqual(0);
             // Answer should be combined from equations
             let ans1;
             let ans2;
@@ -387,30 +387,34 @@ describe("Pemdas", () => {
             // Print should be based on the bounds of the size
             const print = String(term1) + " x " + String(term2) + " x " + String(term3) + " x " + String(term4) + " x " + String(term5) + " x " + String(term6) + " = ?";
             expect(pemdas.getPrint().length).toBe(print.length);
+
+            // EVERYTHING BELOW THIS PART IS TECHNICALLY UNUSED
+            // WAS BEFORE WE MADE IT SO EQUATIONS HAD FIXED TERM AMOUNTS
+
         } else if (pemdas.getEquation().length == 13) {
             // Length 13, one equation has an extra term, total of 7 terms
             // 1 * 2 * 3 +- 4 */ 5 +- 6 */ 7 OR 1 */ 2 +- 3 * 4 * 5 +- 6 */ 7 OR 1 */ 2 +- 3 */ 4 +- 5 * 6 * 7
             let term1 = pemdas.getEquation()[0];
             expect(term1).toBeLessThanOrEqual(200000);
-            expect(term1).toBeGreaterThanOrEqual(10);
+            expect(term1).toBeGreaterThanOrEqual(0);
             let term2 = pemdas.getEquation()[2];
             expect(term2).toBeLessThanOrEqual(200000);
-            expect(term2).toBeGreaterThanOrEqual(10);
+            expect(term2).toBeGreaterThanOrEqual(0);
             let term3 = pemdas.getEquation()[4];
             expect(term3).toBeLessThanOrEqual(200000);
-            expect(term3).toBeGreaterThanOrEqual(10);
+            expect(term3).toBeGreaterThanOrEqual(0);
             let term4 = pemdas.getEquation()[6];
             expect(term4).toBeLessThanOrEqual(200000);
-            expect(term4).toBeGreaterThanOrEqual(10);
+            expect(term4).toBeGreaterThanOrEqual(0);
             let term5 = pemdas.getEquation()[8];
             expect(term5).toBeLessThanOrEqual(200000);
-            expect(term5).toBeGreaterThanOrEqual(10);
+            expect(term5).toBeGreaterThanOrEqual(0);
             let term6 = pemdas.getEquation()[10];
             expect(term6).toBeLessThanOrEqual(200000);
-            expect(term6).toBeGreaterThanOrEqual(10);
+            expect(term6).toBeGreaterThanOrEqual(0);
             let term7 = pemdas.getEquation()[12];
             expect(term7).toBeLessThanOrEqual(200000);
-            expect(term7).toBeGreaterThanOrEqual(10);
+            expect(term7).toBeGreaterThanOrEqual(0);
 
             // Calculate answer -> find where the two term is, either add/sub is 3-4 and 5-6, 2-3 and 5-6, or 2-3, 4-5
             // first index is 2-3, index 3
@@ -548,28 +552,28 @@ describe("Pemdas", () => {
             // 1 * 2 * 3 +- 4 * 5 * 6 +- 7 */8 OR 1 * 2 * 3 +- 4 */ 5 +- 6 * 7 * 8 OR 1 */ 2 +- 3 * 4 * 5 +- 6 * 7 * 8
             let term1 = pemdas.getEquation()[0];
             expect(term1).toBeLessThanOrEqual(200000);
-            expect(term1).toBeGreaterThanOrEqual(10);
+            expect(term1).toBeGreaterThanOrEqual(0);
             let term2 = pemdas.getEquation()[2];
             expect(term2).toBeLessThanOrEqual(200000);
-            expect(term2).toBeGreaterThanOrEqual(10);
+            expect(term2).toBeGreaterThanOrEqual(0);
             let term3 = pemdas.getEquation()[4];
             expect(term3).toBeLessThanOrEqual(200000);
-            expect(term3).toBeGreaterThanOrEqual(10);
+            expect(term3).toBeGreaterThanOrEqual(0);
             let term4 = pemdas.getEquation()[6];
             expect(term4).toBeLessThanOrEqual(200000);
-            expect(term4).toBeGreaterThanOrEqual(10);
+            expect(term4).toBeGreaterThanOrEqual(0);
             let term5 = pemdas.getEquation()[8];
             expect(term5).toBeLessThanOrEqual(200000);
-            expect(term5).toBeGreaterThanOrEqual(10);
+            expect(term5).toBeGreaterThanOrEqual(0);
             let term6 = pemdas.getEquation()[10];
             expect(term6).toBeLessThanOrEqual(200000);
-            expect(term6).toBeGreaterThanOrEqual(10);
+            expect(term6).toBeGreaterThanOrEqual(0);
             let term7 = pemdas.getEquation()[12];
             expect(term7).toBeLessThanOrEqual(200000);
-            expect(term7).toBeGreaterThanOrEqual(10);
+            expect(term7).toBeGreaterThanOrEqual(0);
             let term8 = pemdas.getEquation()[14];
             expect(term8).toBeLessThanOrEqual(200000);
-            expect(term8).toBeGreaterThanOrEqual(10);
+            expect(term8).toBeGreaterThanOrEqual(0);
             // Calculate answer -> find where the two term is, either add/sub is 3-4 and 6-7, 3-4 and 5-6, or 2-3, 5-6
             // first index is 2-3, index 3
             let firstIndex = false;
@@ -683,31 +687,31 @@ describe("Pemdas", () => {
             // 1 * 2 * 3 +- 4 * 5 * 6 +- 7 * 8 * 9
             let term1 = pemdas.getEquation()[0];
             expect(term1).toBeLessThanOrEqual(100000);
-            expect(term1).toBeGreaterThanOrEqual(10);
+            expect(term1).toBeGreaterThanOrEqual(0);
             let term2 = pemdas.getEquation()[2];
             expect(term2).toBeLessThanOrEqual(200000);
-            expect(term2).toBeGreaterThanOrEqual(10);
+            expect(term2).toBeGreaterThanOrEqual(0);
             let term3 = pemdas.getEquation()[4];
             expect(term3).toBeLessThanOrEqual(200000);
-            expect(term3).toBeGreaterThanOrEqual(10);
+            expect(term3).toBeGreaterThanOrEqual(0);
             let term4 = pemdas.getEquation()[6];
             expect(term4).toBeLessThanOrEqual(200000);
-            expect(term4).toBeGreaterThanOrEqual(10);
+            expect(term4).toBeGreaterThanOrEqual(0);
             let term5 = pemdas.getEquation()[8];
             expect(term5).toBeLessThanOrEqual(200000);
-            expect(term5).toBeGreaterThanOrEqual(10);
+            expect(term5).toBeGreaterThanOrEqual(0);
             let term6 = pemdas.getEquation()[10];
             expect(term6).toBeLessThanOrEqual(200000);
-            expect(term6).toBeGreaterThanOrEqual(10);
+            expect(term6).toBeGreaterThanOrEqual(0);
             let term7 = pemdas.getEquation()[12];
             expect(term7).toBeLessThanOrEqual(200000);
-            expect(term7).toBeGreaterThanOrEqual(10);
+            expect(term7).toBeGreaterThanOrEqual(0);
             let term8 = pemdas.getEquation()[14];
             expect(term8).toBeLessThanOrEqual(200000);
-            expect(term8).toBeGreaterThanOrEqual(10);
+            expect(term8).toBeGreaterThanOrEqual(0);
             let term9 = pemdas.getEquation()[16];
             expect(term9).toBeLessThanOrEqual(200000);
-            expect(term9).toBeGreaterThanOrEqual(10);
+            expect(term9).toBeGreaterThanOrEqual(0);
             // Calculate answer
             let ans1 = term1 * term2 * term3;
             let ans2 = term4 * term5 * term6;

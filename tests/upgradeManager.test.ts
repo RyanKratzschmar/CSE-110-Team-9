@@ -85,8 +85,8 @@ describe("UpgradeManager", () => {
         answerCorrectly(startUpgradeMinigame(state));
         claimUpgrade(state);
         const afterReward = state.toJSON();
-        expect(() => claimUpgrade(state)).toThrow("Upgrade already claimed this level");
-        expect(() => startUpgradeMinigame(state)).toThrow("Upgrade already claimed this level");
+        expect(() => claimUpgrade(state)).toThrow("Upgrade has already been claimed for this floor.");
+        expect(() => startUpgradeMinigame(state)).toThrow("Upgrade has already been claimed for this floor.");
         expect(state.toJSON()).toEqual(afterReward);
         expect(state.player.potionHealingBonus).toBe(10);
     });

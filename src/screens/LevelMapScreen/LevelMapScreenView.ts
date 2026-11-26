@@ -1,38 +1,55 @@
 import Konva from "konva";
 import type { View } from "../../types.ts";
 import { STAGE_WIDTH, STAGE_HEIGHT } from "../../constants.ts";
+import {
+    createHealthPercentage,
+    updatePlayerHealthBar
+} from "../../PlayerHealthBar.ts";
+
+interface NodeConfig {
+    title: string;
+    icon: string;
+    bg: string;
+    x: number;
+    y: number;
+}
+
+const NODES: NodeConfig[] = [
+    { title: "Fight 1", icon: "/icon_swords.png", bg: "#3D2B52", x: 140, y: 465 },
+    { title: "Fight 2", icon: "/icon_swords.png", bg: "#3D2B52", x: 420, y: 235 },
+    { title: "Fight 3", icon: "/icon_swords.png", bg: "#3D2B52", x: 710, y: 345 },
+    { title: "Rest", icon: "/icon_campfire.png", bg: "#2B4842", x: 1000, y: 235 },
+    { title: "Next Floor", icon: "/icon_stairs.png", bg: "#3D2B52", x: 1280, y: 465 },
+];
 
 export class LevelMapScreenView implements View {
     private group: Konva.Group;
-    private fight1: Konva.Rect;
-    private fight1Text: Konva.Text;
-    private fight2: Konva.Rect;
-    private fight2Text: Konva.Text;
-    private fight3: Konva.Rect;
-    private fight3Text: Konva.Text;
-    private rest: Konva.Line;
-    private restText: Konva.Text;
-    private stairs: Konva.Line;
-    private stairsText: Konva.Text;
-    private levelIndicator: Konva.Line;
     private healthBar: Konva.Rect;
+    private healthPercentage: Konva.Text;
     private floorText: Konva.Text;
 
-    constructor(
-        onGoClick : () => void,
-    ){
-    this.group = new Konva.Group({ visible: false });
-        
-    // Create Background Look
-    const bg = new Konva.Rect({
-        x: 0,
-        y: 0,
-        width: STAGE_WIDTH,
-        height: STAGE_HEIGHT,
-        fill: "#EEE4C8",
+    private cardBorders: Konva.Rect[] = [];
+    private cardGroups: Konva.Group[] = [];
+    private cardSparkles: Konva.Group[] = [];
+    private arrowIndicator: Konva.Line;
+
+    private readonly cardWidth = 160;
+    private readonly cardHeight = 200;
+
+    constructor(onGoClick: () => void) {
+        this.group = new Konva.Group({ visible: false });
+
+        // Background
+        const bg = new Konva.Rect({
+            x: 0,
+            y: 0,
+            width: STAGE_WIDTH,
+            height: STAGE_HEIGHT,
+            fill: "#EEE4C8",
         });
         this.group.add(bg);
 
+        // Top HUD Bar
         const upperRect = new Konva.Rect({
             x: 0,
             y: 0,
@@ -43,29 +60,36 @@ export class LevelMapScreenView implements View {
         });
         this.group.add(upperRect);
 
-        //Background for health bar when health is missing
+        // Background for health bar when health is missing
         const healthBarBG = new Konva.Rect({
             x: 100,
             y: 35,
             width: 400,
             height: 70,
             fill: "#c4c4c4ff",
-            stroke: "#42a847",      
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(healthBarBG);
 
-        //Player Health Bar
+        // Player Health Bar
         this.healthBar = new Konva.Rect({
             x: 100,
             y: 35,
-            width: 300,
+            width: 400,
             height: 70,
             fill: "#0bba14",
-            stroke: "#42a847",        
-        });  
+            stroke: "#42a847",
+        });
         this.group.add(this.healthBar);
 
-        //Text that says "HP" next to the player's health
+        // Display the player's HP percentage.
+        this.healthPercentage = createHealthPercentage(
+            this.healthBar,
+            400
+        );
+        this.group.add(this.healthPercentage);
+
+        // "HP" text next to the health bar
         const hpText = new Konva.Text({
             x: 25,
             y: 50,
@@ -74,11 +98,11 @@ export class LevelMapScreenView implements View {
             fontFamily: "Arial",
             fontStyle: "bold",
             fill: "#0bba14",
-        })
+        });
         this.group.add(hpText);
 
-        // Score Text
         /*
+        // Score Text
         const scoreText = new Konva.Text({
             x: 600,
             y: 50,
@@ -90,7 +114,6 @@ export class LevelMapScreenView implements View {
         this.group.add(scoreText);
 
         // Shape next to score
-        
         const scoreBug = new Konva.Rect({
             x: 570,
             y: 52,
@@ -102,7 +125,7 @@ export class LevelMapScreenView implements View {
             stroke: "#cc721d",
         });
         this.group.add(scoreBug);
-        
+
         const settingsButton = new Konva.Circle({
             x: STAGE_WIDTH - 100,
             y: 75,
@@ -121,216 +144,235 @@ export class LevelMapScreenView implements View {
             fill: "black",
         });
         this.group.add(settingsText);
-
         */
 
+        // Floor Text
         this.floorText = new Konva.Text({
             x: 1200,
             y: 50,
             text: "Floor: X",
             fill: "white",
             fontSize: 40,
-            fontFamily: "arial",
+            fontFamily: "Arial",
             fontStyle: "bold",
         });
         this.group.add(this.floorText);
 
-        // Create map location for fight 1
-        this.fight1 = new Konva.Rect({
-            cornerRadius: 10,
-            width: 150,
-            height: 150,
-            x: 150,
-            y: 500,
-            fill: "#433550",
-        })
-        this.group.add(this.fight1);
-
-        // Create Text for fight 1
-        this.fight1Text = new Konva.Text({
-            text: "Fight 1",
-            x: 160,
-            y: 690,
-            fontSize: 40,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            fill: "black",
-        })
-        this.group.add(this.fight1Text);
-
-        // Create map location for fight 2
-        this.fight2 = new Konva.Rect({
-            cornerRadius: 10,
-            width: 150,
-            height: 150,
-            x: 425,
-            y: 300,
-            fill: "#3b3a3b",
-        })
-        this.group.add(this.fight2);
-
-        this.fight2Text = new Konva.Text({
-            text: "Fight 2",
-            x: 435,
-            y: 490,
-            fontSize: 40,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            fill: "black",
-        })
-        this.group.add(this.fight2Text);
-
-        // Create map location for fight 3
-        this.fight3 = new Konva.Rect({
-            cornerRadius: 10,
-            width: 150,
-            height: 150,
-            x: 720,
-            y: 400,
-            fill: "#3b3a3b",
-        })
-        this.group.add(this.fight3);
-
-        this.fight3Text = new Konva.Text({
-            text: "Fight 3",
-            x: 730,
-            y: 590,
-            fontSize: 40,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            fill: "black",
+        // Connecting Trail Path
+        const trailLine = new Konva.Line({
+            points: [
+                NODES[0].x + this.cardWidth / 2, NODES[0].y + this.cardHeight / 2,
+                NODES[1].x + this.cardWidth / 2, NODES[1].y + this.cardHeight / 2,
+                NODES[2].x + this.cardWidth / 2, NODES[2].y + this.cardHeight / 2,
+                NODES[3].x + this.cardWidth / 2, NODES[3].y + this.cardHeight / 2,
+                NODES[4].x + this.cardWidth / 2, NODES[4].y + this.cardHeight / 2,
+            ],
+            stroke: "#B8AB88",
+            strokeWidth: 4,
+            dash: [12, 10],
+            lineCap: "round",
+            lineJoin: "round",
         });
-        this.group.add(this.fight3Text);
+        this.group.add(trailLine);
 
-        // Adds rest icon on the map
-        this.rest = new Konva.Line({
-            sides: 3,
-            points: [1005, 290, 1155, 290, 1080, 440],
+        // Staggered Cards
+        NODES.forEach((node) => {
+            const cardGroup = new Konva.Group({
+                x: node.x,
+                y: node.y,
+            });
+
+            // Card background & border
+            const cardBorder = new Konva.Rect({
+                width: this.cardWidth,
+                height: this.cardHeight,
+                cornerRadius: 18,
+                fill: node.bg,
+                stroke: "#5C4F72",
+                strokeWidth: 5,
+            });
+            cardGroup.add(cardBorder);
+            this.cardBorders.push(cardBorder);
+
+            // Sparkles for active card
+            const sparkles = new Konva.Group({ visible: false });
+            sparkles.add(new Konva.Line({
+                points: [16, 10, 19, 15, 24, 17, 19, 19, 16, 24, 13, 19, 8, 17, 13, 15],
+                closed: true,
+                fill: "#F6C12C",
+            }));
+            sparkles.add(new Konva.Line({
+                points: [142, 12, 144, 16, 149, 18, 144, 20, 142, 24, 140, 20, 135, 18, 140, 16],
+                closed: true,
+                fill: "#F6C12C",
+            }));
+            cardGroup.add(sparkles);
+            this.cardSparkles.push(sparkles);
+
+            // Icon Image
+            const img = new Image();
+            img.src = node.icon;
+            const icon = new Konva.Image({
+                x: (this.cardWidth - 85) / 2,
+                y: 26,
+                width: 85,
+                height: 85,
+                image: img,
+                listening: false,
+            });
+            img.onload = () => {
+                this.group.getLayer()?.batchDraw();
+            };
+            cardGroup.add(icon);
+
+            // Bottom Pill Badge
+            const pillRect = new Konva.Rect({
+                x: 12,
+                y: 138,
+                width: this.cardWidth - 24,
+                height: 44,
+                cornerRadius: 10,
+                fill: "#FFF8EC",
+                stroke: "#22132C",
+                strokeWidth: 2,
+            });
+            cardGroup.add(pillRect);
+
+            const pillText = new Konva.Text({
+                x: 12,
+                y: 150,
+                width: this.cardWidth - 24,
+                align: "center",
+                text: node.title,
+                fontSize: 20,
+                fontFamily: "Arial",
+                fontStyle: "bold",
+                fill: "#22132C",
+                listening: false,
+            });
+            cardGroup.add(pillText);
+
+            this.group.add(cardGroup);
+            this.cardGroups.push(cardGroup);
+        });
+
+        // Downward Arrow Indicator
+        this.arrowIndicator = new Konva.Line({
+            points: [-16, -22, 16, -22, 0, 0],
             closed: true,
-            fill: "#3b3a3b",
+            fill: "#F6C12C",
+            stroke: "#22132C",
+            strokeWidth: 3,
+            x: NODES[0].x + this.cardWidth / 2,
+            y: NODES[0].y - 6,
         });
-        this.group.add(this.rest);
+        this.group.add(this.arrowIndicator);
 
-        this.restText = new Konva.Text({
-            text: "Rest",
-            x: 1035,
-            y: 460,
-            fontSize: 40,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            fill: "black",
-        });
-        this.group.add(this.restText);
-
-        // Adds stairs to next screen
-        this.stairs = new Konva.Line({
-            sides: 3,
-            points: [1290, 700, 1440, 700, 1440, 550],
-            closed: true,
-            fill: "#3b3a3b"
-        });
-        this.group.add(this.stairs);
-
-        this.stairsText = new Konva.Text({
-            text: "Next Floor",
-            x: 1270,
-            y: 735,
-            fontSize: 40,
-            fontStyle: "bold",
-            fontFamily: "arial",
-            fill: "black",
-        });
-        this.group.add(this.stairsText);
-
-        const goButton = new Konva.Rect({
-            width: 200,
-            height: 100,
-            fill: "#FFC943",
-            stroke: "#dda71e",
-            cornerRadius: 10,
+        // GO! Button
+        const goButton = new Konva.Group({
             x: 700,
             y: 750,
         });
-        this.group.add(goButton);
 
-        goButton.on("mouseenter", () => {
-			document.body.style.cursor = "pointer";
-		});
-
-		goButton.on("mouseleave", () => {
-			document.body.style.cursor = "default";
-		});
-
-        goButton.on("click tap", () => {
-			onGoClick();
+        const goRect = new Konva.Rect({
+            width: 200,
+            height: 90,
+            fill: "#FFC943",
+            stroke: "#dda71e",
+            cornerRadius: 14,
         });
+        goButton.add(goRect);
 
         const goButtonText = new Konva.Text({
             text: "GO!",
-            fontSize: 40,
+            width: 200,
+            height: 90,
+            align: "center",
+            verticalAlign: "middle",
+            fontSize: 38,
             fontStyle: "bold",
-            fontFamily: "arial",
-            x: 760,
-            y: 777.5,
+            fontFamily: "Arial",
+            fill: "#22132C",
             listening: false,
         });
-        this.group.add(goButtonText);
+        goButton.add(goButtonText);
 
-
-        // Indicates which leve you're on
-        this.levelIndicator = new Konva.Line({
-            sides: 3,
-            points: [200, 400, 250, 400, 225, 450],
-            fill: "#cf8e00",
-            closed: true,
-            stroke: "#976700",
+        goButton.on("mouseenter", () => {
+            document.body.style.cursor = "pointer";
+            goRect.fill("#FFD970");
+            this.group.getLayer()?.batchDraw();
         });
-        this.group.add(this.levelIndicator);
 
+        goButton.on("mouseleave", () => {
+            document.body.style.cursor = "default";
+            goRect.fill("#FFC943");
+            this.group.getLayer()?.batchDraw();
+        });
+
+        goButton.on("click tap", () => {
+            onGoClick();
+        });
+
+        this.group.add(goButton);
     }
 
+    // Lights up reached stops, moves arrow to current stop
+    showProgress(floor: number, currentIndex: number): void {
+        const clampedIndex = Math.max(0, Math.min(currentIndex, NODES.length - 1));
 
-    // Lights up the stops reached so far and moves the arrow (currentIndex: 0-2 fights, 3 rest)
-    showProgress(floor: number, currentIndex: number) : void {
-        const stops = [this.fight1, this.fight2, this.fight3, this.rest];
-        const arrows = [
-            [200, 400, 250, 400, 225, 450],
-            [475, 200, 525, 200, 500, 250],
-            [770, 300, 820, 300, 795, 350],
-            [1055, 200, 1105, 200, 1080, 250],
-        ];
-        stops.forEach((stop, i) => stop.fill(i <= currentIndex ? "#433550" : "#3b3a3b"));
-        this.levelIndicator.points(arrows[Math.min(currentIndex, arrows.length - 1)]);
+        // Position arrow indicator above current card
+        const targetNode = NODES[clampedIndex];
+        this.arrowIndicator.position({
+            x: targetNode.x + this.cardWidth / 2,
+            y: targetNode.y - 6,
+        });
+        this.arrowIndicator.visible(true);
+
+        this.cardBorders.forEach((border, i) => {
+            const sparkles = this.cardSparkles[i];
+            const group = this.cardGroups[i];
+
+            if (i === clampedIndex) {
+                // Active Card: Gold border, sparkles, full opacity
+                border.stroke("#F6C12C");
+                border.strokeWidth(6);
+                sparkles?.visible(true);
+                group.opacity(1.0);
+            } else if (i < clampedIndex) {
+                // Completed Card: Dimmed
+                border.stroke("#453757");
+                border.strokeWidth(4);
+                sparkles?.visible(false);
+                group.opacity(0.65);
+            } else {
+                // Upcoming Card: Standard border
+                border.stroke("#5C4F72");
+                border.strokeWidth(4);
+                sparkles?.visible(false);
+                group.opacity(0.95);
+            }
+        });
+
         this.floorText.text(`Floor: ${floor}`);
         this.group.getLayer()?.batchDraw();
     }
 
-    // Updates Player Health Bar
+    // Updates the player's HP bar and percentage.
     setPlayerHealthBar(currentHealth: number, maxHealth: number): void {
-        if (maxHealth <= 0) {
-            this.healthBar.width(0);
-            this.group.getLayer()?.batchDraw();
-            return;
-        }
-
-        const percentage = Math.max(0, Math.min(currentHealth / maxHealth, 1));
-
-        this.healthBar.width(400 * percentage);
-
+        updatePlayerHealthBar(
+            this.healthBar,
+            this.healthPercentage,
+            currentHealth,
+            maxHealth
+        );
         this.group.getLayer()?.batchDraw();
     }
 
-    /**
-     * Show the screen
-     */
     show(): void {
         this.group.visible(true);
         this.group.getLayer()?.draw();
     }
 
-    /**
-     * Hide the screen
-     */
     hide(): void {
         this.group.visible(false);
         this.group.getLayer()?.draw();

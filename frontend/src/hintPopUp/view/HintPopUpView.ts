@@ -6,6 +6,8 @@ export interface HintPopUpViewHandlers {
     onScrollBy(dy: number): void;
     onScrollTo(y: number): void;
     onClose(): void;
+    onNextHint(): void;
+    onPrevHint(): void;
 }
 
 interface Box {
@@ -17,6 +19,7 @@ interface Box {
 
 interface Built {
     hint: HintData;
+    currentStepIndex: number;
     stageWidth: number;
     stageHeight: number;
     content: Konva.Group;
@@ -31,7 +34,8 @@ const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PAD = 24;
 const PANEL_MARGIN = 16;
 const SCROLLBAR_GUTTER = 18;
-const STEP_GAP = 22;
+const STEP_GAP = 18;
+const FOOTER_HEIGHT = 60;
 
 const COLORS = {
     overlay: 'rgba(15, 23, 42, 0.60)',
@@ -55,6 +59,16 @@ const COLORS = {
     closeBgHover: 'rgba(255, 255, 255, 0.32)',
     track: '#f1f5f9',
     thumb: '#c4b5fd',
+    buttonPrevBg: '#ede9fe',
+    buttonPrevHover: '#ddd6fe',
+    buttonPrevText: '#6d28d9',
+    buttonPrevBorder: '#c4b5fd',
+    buttonNextBg: '#7c3aed',
+    buttonNextHover: '#6d28d9',
+    buttonNextText: '#ffffff',
+    buttonDisabledBg: '#f1f5f9',
+    buttonDisabledText: '#94a3b8',
+    buttonDisabledBorder: '#e2e8f0',
 } as const;
 const PANEL_RADIUS = 20;
 
@@ -63,7 +77,8 @@ function panelSize(available: number, preferredMin: number, max: number): number
 }
 
 /**
- * Renders the hints popup using text-only guidance, cards, and callout tips.
+ * Renders the hints popup displaying one hint card at a time with
+ * Previous Hint and Next Hint navigation.
  */
 export class HintPopUpView {
     private readonly stage: Konva.Stage;
@@ -101,11 +116,12 @@ export class HintPopUpView {
         const upToDate =
             b !== null &&
             b.hint === hint &&
+            b.currentStepIndex === state.currentStepIndex &&
             b.stageWidth === this.stage.width() &&
             b.stageHeight === this.stage.height();
 
         if (!upToDate) {
-            this.build(hint);
+            this.build(hint, state.currentStepIndex);
         }
 
         this.applyScroll(state.scrollY);
@@ -135,7 +151,7 @@ export class HintPopUpView {
         this.built = null;
     }
 
-    private build(hint: HintData): void {
+    private build(hint: HintData, currentStepIndex: number): void {
         this.layer.destroyChildren();
         this.layer.visible(true);
         this.layer.moveToTop();
@@ -143,6 +159,9 @@ export class HintPopUpView {
 
         const sw = this.stage.width();
         const sh = this.stage.height();
+        const totalSteps = hint.steps.length;
+        const safeIndex = Math.max(0, Math.min(totalSteps - 1, currentStepIndex));
+        const currentStep = hint.steps[safeIndex];
 
         // Dark dim overlay
         const overlay = new Konva.Rect({
@@ -192,7 +211,7 @@ export class HintPopUpView {
         const subtitle = new Konva.Text({
             x: PAD,
             y: title.y() + title.height() + 4,
-            text: 'Step-by-step guidance and strategies to help you solve this!',
+            text: `Step-by-step guidance (${safeIndex + 1} of ${totalSteps})`,
             fontFamily: FONT,
             fontSize: 13,
             fill: COLORS.headerMuted,
@@ -202,12 +221,24 @@ export class HintPopUpView {
         panel.add(this.headerBand(pw, headerBottom), title, subtitle);
         this.drawCloseButton(panel, pw - PAD - 32, PAD - 4);
 
-        // Viewport Group (clipping bounds)
+        // Footer Navigation Controls
+        const footerY = ph - FOOTER_HEIGHT;
+        panel.add(
+            new Konva.Line({
+                points: [0, footerY, pw, footerY],
+                stroke: COLORS.divider,
+                strokeWidth: 1,
+            }),
+        );
+
+        this.drawFooterNavigation(panel, pw, footerY, safeIndex, totalSteps);
+
+        // Viewport Group (clipping bounds between header and footer)
         const viewport: Box = {
             x: PAD,
             y: headerBottom + 1,
             width: pw - PAD * 2,
-            height: ph - headerBottom - 1 - 10,
+            height: Math.max(0, footerY - headerBottom - 1 - 8),
         };
 
         const viewportGroup = new Konva.Group({
@@ -217,33 +248,22 @@ export class HintPopUpView {
         });
         panel.add(viewportGroup);
 
-        // Content
+        // Content (Only displays the current hint step)
         const content = new Konva.Group();
         viewportGroup.add(content);
         const contentWidth = viewport.width - SCROLLBAR_GUTTER;
-        let y = STEP_GAP;
 
-        hint.steps.forEach((step: HintStep, i: number) => {
-            if (i > 0) {
-                content.add(
-                    new Konva.Line({
-                        points: [0, y, contentWidth, y],
-                        stroke: COLORS.divider,
-                        strokeWidth: 1,
-                        dash: [6, 6],
-                    }),
-                );
-                y += STEP_GAP;
-            }
-            y += this.drawStepText(content, step, i, y, contentWidth) + STEP_GAP;
-        });
+        let y = STEP_GAP;
+        if (currentStep) {
+            y += this.drawStepText(content, currentStep, safeIndex, y, contentWidth, totalSteps) + STEP_GAP;
+        }
         const contentHeight = y;
 
-        // Scrollbar
+        // Scrollbar (appears if the single step content exceeds viewport height)
         let thumb: Konva.Rect | null = null;
         const trackY = viewport.y + 6;
         const trackHeight = viewport.height - 12;
-        if (contentHeight > viewport.height) {
+        if (contentHeight > viewport.height && trackHeight > 0) {
             const trackX = viewport.x + viewport.width - 8;
             thumb = this.drawScrollbar(panel, trackX, trackY, trackHeight, viewport.height / contentHeight);
         }
@@ -252,6 +272,7 @@ export class HintPopUpView {
 
         this.built = {
             hint,
+            currentStepIndex: safeIndex,
             stageWidth: sw,
             stageHeight: sh,
             content,
@@ -261,6 +282,113 @@ export class HintPopUpView {
             trackY,
             trackHeight,
         };
+    }
+
+    private drawFooterNavigation(
+        panel: Konva.Group,
+        panelWidth: number,
+        footerY: number,
+        currentIndex: number,
+        totalSteps: number,
+    ): void {
+        const btnWidth = 145;
+        const btnHeight = 38;
+        const btnY = footerY + (FOOTER_HEIGHT - btnHeight) / 2;
+
+        // Previous Hint button
+        const canPrev = currentIndex > 0;
+        const prevGroup = new Konva.Group({ x: PAD, y: btnY });
+        const prevBg = new Konva.Rect({
+            width: btnWidth,
+            height: btnHeight,
+            fill: canPrev ? COLORS.buttonPrevBg : COLORS.buttonDisabledBg,
+            stroke: canPrev ? COLORS.buttonPrevBorder : COLORS.buttonDisabledBorder,
+            strokeWidth: 1,
+            cornerRadius: 10,
+        });
+        const prevText = new Konva.Text({
+            width: btnWidth,
+            height: btnHeight,
+            align: 'center',
+            verticalAlign: 'middle',
+            text: '← Previous Hint',
+            fontFamily: FONT,
+            fontSize: 13.5,
+            fontStyle: 'bold',
+            fill: canPrev ? COLORS.buttonPrevText : COLORS.buttonDisabledText,
+        });
+        prevGroup.add(prevBg, prevText);
+
+        if (canPrev) {
+            prevGroup.on('click tap', () => this.handlers?.onPrevHint());
+            prevGroup.on('mouseenter', () => {
+                prevBg.fill(COLORS.buttonPrevHover);
+                this.setCursor('pointer');
+                this.layer.batchDraw();
+            });
+            prevGroup.on('mouseleave', () => {
+                prevBg.fill(COLORS.buttonPrevBg);
+                this.setCursor('default');
+                this.layer.batchDraw();
+            });
+        }
+        panel.add(prevGroup);
+
+        // Center Step Indicator
+        const indicator = new Konva.Text({
+            x: PAD + btnWidth,
+            y: footerY,
+            width: Math.max(0, panelWidth - (PAD + btnWidth) * 2),
+            height: FOOTER_HEIGHT,
+            align: 'center',
+            verticalAlign: 'middle',
+            text: `Hint ${currentIndex + 1} of ${totalSteps}`,
+            fontFamily: FONT,
+            fontSize: 14,
+            fontStyle: 'bold',
+            fill: COLORS.muted,
+        });
+        panel.add(indicator);
+
+        // Next Hint button
+        const canNext = currentIndex < totalSteps - 1;
+        const nextX = panelWidth - PAD - btnWidth;
+        const nextGroup = new Konva.Group({ x: nextX, y: btnY });
+        const nextBg = new Konva.Rect({
+            width: btnWidth,
+            height: btnHeight,
+            fill: canNext ? COLORS.buttonNextBg : COLORS.buttonDisabledBg,
+            stroke: canNext ? COLORS.buttonNextBg : COLORS.buttonDisabledBorder,
+            strokeWidth: 1,
+            cornerRadius: 10,
+        });
+        const nextText = new Konva.Text({
+            width: btnWidth,
+            height: btnHeight,
+            align: 'center',
+            verticalAlign: 'middle',
+            text: canNext ? 'Next Hint →' : '✓ Final Hint',
+            fontFamily: FONT,
+            fontSize: 13.5,
+            fontStyle: 'bold',
+            fill: canNext ? COLORS.buttonNextText : COLORS.buttonDisabledText,
+        });
+        nextGroup.add(nextBg, nextText);
+
+        if (canNext) {
+            nextGroup.on('click tap', () => this.handlers?.onNextHint());
+            nextGroup.on('mouseenter', () => {
+                nextBg.fill(COLORS.buttonNextHover);
+                this.setCursor('pointer');
+                this.layer.batchDraw();
+            });
+            nextGroup.on('mouseleave', () => {
+                nextBg.fill(COLORS.buttonNextBg);
+                this.setCursor('default');
+                this.layer.batchDraw();
+            });
+        }
+        panel.add(nextGroup);
     }
 
     private drawScrollbar(
@@ -370,14 +498,15 @@ export class HintPopUpView {
         index: number,
         top: number,
         width: number,
+        totalSteps: number,
     ): number {
         let y = top;
 
-        // Badge: e.g. "HINT 1"
+        // Badge: e.g. "HINT 1 OF 4"
         const badge = new Konva.Text({
             x: 10,
             y: y + 4,
-            text: `HINT ${index + 1}`,
+            text: `HINT ${index + 1} OF ${totalSteps}`,
             fontFamily: FONT,
             fontSize: 12,
             fontStyle: 'bold',
@@ -393,7 +522,7 @@ export class HintPopUpView {
             cornerRadius: (badge.height() + 8) / 2,
         });
         parent.add(pill, badge);
-        y += pill.height() + 8;
+        y += pill.height() + 10;
 
         // Step Title
         const title = new Konva.Text({
@@ -407,7 +536,7 @@ export class HintPopUpView {
             fill: COLORS.ink,
         });
         parent.add(title);
-        y += title.height() + 8;
+        y += title.height() + 10;
 
         // Step Description
         const description = new Konva.Text({
@@ -425,7 +554,7 @@ export class HintPopUpView {
 
         // Bullet Details
         if (step.details.length > 0) {
-            y += 10;
+            y += 12;
         }
         for (const detail of step.details) {
             const bullet = new Konva.Text({
@@ -450,12 +579,12 @@ export class HintPopUpView {
                 fill: COLORS.ink,
             });
             parent.add(detailText);
-            y += detailText.height() + 6;
+            y += detailText.height() + 8;
         }
 
         // Tip Box Callout
         if (step.tip) {
-            y += 8;
+            y += 10;
             const tipInset = 12;
             const tipStripeWidth = 5;
             const tipTextWidth = width - tipInset * 2 - tipStripeWidth;

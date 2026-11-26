@@ -18,6 +18,8 @@ export class HintPopUpController {
             onScrollBy: (dy) => this.model.scrollBy(dy, this.view.getMaxScroll()),
             onScrollTo: (y) => this.model.scrollTo(y, this.view.getMaxScroll()),
             onClose: () => this.model.close(),
+            onNextHint: () => this.nextHint(),
+            onPrevHint: () => this.prevHint(),
         });
         this.unsubscribe = this.model.subscribe((state) => this.view.render(state));
         window.addEventListener('keydown', this.handleKeyDown);
@@ -36,12 +38,28 @@ export class HintPopUpController {
         this.model.open(data);
     }
 
+    nextHint(): void {
+        this.model.nextStep();
+    }
+
+    prevHint(): void {
+        this.model.prevStep();
+    }
+
+    reset(): void {
+        this.model.reset();
+    }
+
     close(): void {
         this.model.close();
     }
 
     isOpen(): boolean {
         return this.model.getState().isOpen;
+    }
+
+    getModel(): HintPopUpModel {
+        return this.model;
     }
 
     handleResize(): void {
@@ -64,6 +82,12 @@ export class HintPopUpController {
         const page = this.view.getViewportHeight() * 0.9;
 
         switch (event.key) {
+            case 'ArrowRight':
+                this.nextHint();
+                break;
+            case 'ArrowLeft':
+                this.prevHint();
+                break;
             case 'ArrowDown':
                 this.model.scrollBy(LINE_SCROLL, max);
                 break;
