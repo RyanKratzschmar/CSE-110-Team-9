@@ -92,9 +92,9 @@ export class CombatMainScreenController extends ScreenController {
             // Audio not supported in environment
         }
 
-        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([*/])\s*(\d+)/);
+        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([×÷])\s*(\d+)/);
         if (!parts) return;
-        if (parts[2] === "*") this.hintPopUp.showLongMultiplicationHint(Number(parts[1]), Number(parts[3]));
+        if (parts[2] === "×") this.hintPopUp.showLongMultiplicationHint(Number(parts[1]), Number(parts[3]));
         else this.hintPopUp.showLongDivisionHint(Number(parts[1]), Number(parts[3]));
     }
 
@@ -282,9 +282,9 @@ ${effects}` : "")
         this.clickSound.currentTime = 0;
         void this.clickSound.play().catch(() => {});
 
-        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([*/])\s*(\d+)/);
+        const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([×÷])\s*(\d+)/);
         if (!parts) return;
-        if (parts[2] === "*") this.explanationPopUp.showLongMultiplicationExplanation(Number(parts[1]), Number(parts[3]));
+        if (parts[2] === "×") this.explanationPopUp.showLongMultiplicationExplanation(Number(parts[1]), Number(parts[3]));
         else this.explanationPopUp.showLongDivisionExplanation(Number(parts[1]), Number(parts[3]));
     }
 
