@@ -42,17 +42,14 @@ export class TitleScreenView implements View {
         const buttonWidth = 240;
         const buttonHeight = 80;
 
+		const newGame = new Image();
 
-        const newGameButton = new Konva.RegularPolygon({
-            x: buttonX,
-            y: buttonY,
-            sides: 6,
-            radius: 90,
-            scaleX: buttonWidth / 100,
-            scaleY: buttonHeight /75,
-            fill: "#FFC943",
-            Stroke: "white",
-            strokeWidth: 3,
+		newGame.src = "/New Game.png"
+
+        const newGameButton = new Konva.Image({
+			image: newGame,
+            x: 566,
+            y: 500,
         });
 
 		newGameButton.on("click tap", () => {
@@ -61,33 +58,16 @@ export class TitleScreenView implements View {
 
 		newGameButton.on("mouseenter", () => {
 			document.body.style.cursor = "pointer";
-			newGameButton.fill("#B678D0");
-			newGameButton.getLayer()?.draw();
 		});
 
 		newGameButton.on("mouseleave", () => {
 			document.body.style.cursor = "default";
-			newGameButton.fill("#FFC943");
-			newGameButton.getLayer()?.draw();
 		});
 
         this.group.add(newGameButton);
 
-        const newGameText = new Konva.Text({
-			x: buttonX - buttonWidth / 2,
-			y: buttonY - 19,
-			width: buttonWidth,
-			text: "New Game",
-			fontSize: 40,
-			fontFamily: "Arial",
-			fontStyle: "bold",
-			fill: "black",
-			align: "center",
-			listening: false,
-		});
-        this.group.add(newGameText);
 
-
+		/*
         const continueGameButton = new Konva.RegularPolygon({
             x: buttonX + 500,
             y: buttonY - 50,
@@ -132,28 +112,27 @@ export class TitleScreenView implements View {
 		});
         this.group.add(continueGameText);
 
+		*/
 
-        const leaderboardButton = new Konva.RegularPolygon({
-            x: buttonX - 500,
-            y: buttonY - 50,
-            sides: 6,
-            radius: 90,
-            scaleX: buttonWidth / 100,
-            scaleY: buttonHeight /75,
-            fill: "#FFC943",
-            Stroke: "white",
-            strokeWidth: 3,
+		const leaderboard = new Image();
+
+		leaderboard.src = "/Leaderboard.png";
+
+        const leaderboardButton = new Konva.Image({
+			image: leaderboard,
+            x: 566,
+            y: 650,
+			width: 234 * 2,
+			height: 47 * 2,
         });
         //TODO Add Functionality
         leaderboardButton.on("mouseenter", () => {
 			document.body.style.cursor = "pointer";
-			leaderboardButton.fill("#B678D0");
 			leaderboardButton.getLayer()?.draw();
 		});
 
 		leaderboardButton.on("mouseleave", () => {
 			document.body.style.cursor = "default";
-			leaderboardButton.fill("#FFC943");
 			leaderboardButton.getLayer()?.draw();
 		});
         
@@ -163,19 +142,6 @@ export class TitleScreenView implements View {
 			onLeaderBoardClick();
         });
 
-        const leaderboardText = new Konva.Text({
-			x: buttonX - 625,
-			y: buttonY - 69,
-			width: buttonWidth + 5,
-			text: "Leaderboard",
-			fontSize: 40,
-			fontFamily: "Arial",
-			fontStyle: "bold",
-			fill: "black",
-			align: "center",
-			listening: false,
-		});
-        this.group.add(leaderboardText);
 	}
 
 	show(): void {
