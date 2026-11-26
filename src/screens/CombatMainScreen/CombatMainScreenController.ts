@@ -68,7 +68,7 @@ export class CombatMainScreenController extends ScreenController {
 
     handleAttackClick(): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         if (this.gameSession.state.combat === null || this.gameSession.state.gameOver) return;
         if (this.pendingResult !== null) return;
@@ -83,7 +83,7 @@ export class CombatMainScreenController extends ScreenController {
         try {
             const promise = this.clickSound.play();
             if (promise && typeof promise.catch === "function") {
-                promise.catch(() => {});
+                promise.catch(() => { });
             }
         } catch {
             // Audio not supported in environment
@@ -101,7 +101,7 @@ export class CombatMainScreenController extends ScreenController {
         try {
             const promise = this.clickSound.play();
             if (promise && typeof promise.catch === "function") {
-                promise.catch(() => {});
+                promise.catch(() => { });
             }
         } catch {
             // Audio not supported in environment
@@ -127,7 +127,7 @@ export class CombatMainScreenController extends ScreenController {
 
     handleCancelAttack(): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         this.answering = false;
         this.view.returnToCombat();
@@ -144,6 +144,7 @@ export class CombatMainScreenController extends ScreenController {
             this.view.returnToCombat();
             if (outcome === "ongoing" && game !== null) {
                 game.startNextQuestion();
+                this.hintPopUp?.reset?.();
                 this.syncCombat();
             } else {
                 this.hide();
@@ -162,6 +163,7 @@ export class CombatMainScreenController extends ScreenController {
         this.answering = false;
         this.syncCombat();
         this.pendingResult = result.result;
+        this.view.animateAttack(result.correct);
         let feedback = result.correct ? "Correct!" : `Incorrect. The correct answer is ${result.correctAnswer}.`;
         if (result.strengthBoosted) feedback += " Your strength potion doubled the damage!";
         if (result.poisonDamage > 0) feedback += ` Poison did ${result.poisonDamage} damage.`;
@@ -186,6 +188,9 @@ export class CombatMainScreenController extends ScreenController {
         const game = state.combat;
         if (game === null) return;
         const question = game.currentQuestion();
+        if (this.questionId !== question.questionId) {
+            this.hintPopUp?.reset?.();
+        }
         this.questionId = question.questionId;
         this.model.setPlayerHealth(state.player.hp);
         this.model.setPlayerMaxHealth(state.player.maxHp);
@@ -210,7 +215,7 @@ export class CombatMainScreenController extends ScreenController {
     // Opens the potion popup to view and use potions
     handlePotionClick(): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         const state = this.gameSession.state;
         const combat = state.combat;
@@ -222,14 +227,14 @@ export class CombatMainScreenController extends ScreenController {
 
     handlePotionBackClick(): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         this.potionPopUp.hide();
     }
 
     handleDrinkPotion(index: number): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         const state = this.gameSession.state;
         const combat = state.combat;
@@ -240,6 +245,7 @@ export class CombatMainScreenController extends ScreenController {
 
         this.potionPopUp.hide();
         this.syncCombat();
+        this.view.animateAttack(false);
         const healedText = result.healed > 0 ? ` +${result.healed} HP.` : "";
         const effects = this.describeActiveEffects(combat);
         this.view.setPotionStatus(
@@ -271,7 +277,7 @@ ${effects}` : "")
 
     handleExplanationClick(): void {
         this.clickSound.currentTime = 0;
-        void this.clickSound.play().catch(() => {});
+        void this.clickSound.play().catch(() => { });
 
         const parts = this.gameSession.state.combat?.currentQuestion().question.match(/(\d+)\s*([*/])\s*(\d+)/);
         if (!parts) return;
@@ -285,6 +291,7 @@ ${effects}` : "")
         if (state.combat === null) state.combat = new Combat(state.player, new BasicMonster(node.difficulty), node.difficulty);
         this.answering = false;
         this.pendingResult = null;
+        this.hintPopUp?.reset?.();
         state.combat.startNextQuestion();
         this.syncCombat();
         this.view.returnToCombat();
