@@ -60,8 +60,8 @@ describe("Game Over screen", () => {
         expect(switchToScreen).toHaveBeenCalledWith({ type: "menu" });
         switchToScreen.mockClear();
         vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
-        const title = new TitleScreenController({ switchToScreen }, session);
-        title.getView().getGroup().findOne("RegularPolygon")!.fire("click");
+        const title = new TitleScreenController({ switchToScreen }, session);   
+        title.getView().getGroup().findOne(".new_game_button")!.fire("click");
 
         expect(session.state).not.toBe(previous);
         expect(session.state.gameOver).toBe(false);
